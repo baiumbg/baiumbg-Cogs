@@ -1,0 +1,6 @@
+{
+    "AUTHOR" : "baiumbg",
+    "DESCRIPTION" : "This cog converts twitch/bttv emotes to actual links. Usage: #{emote}.",
+    "DISABLED" : false,
+    "NAME" : "Twitch meems"
+}
