@@ -48,7 +48,7 @@ class RadioPlayer:
         """Lists all available stations"""
         output = "**Name: URL**\n"
         for name, url in self.stations.items():
-            output += "{}: {}".format(name, url)
+            output += "{}: {}\n".format(name, url)
         await self.bot.say(output)
 
     @radio.command(pass_context=True)
