@@ -6,7 +6,6 @@ from discord.ext import commands
 class RadioPlayer:
     def __init__(self, bot):
         self.bot = bot
-        self.player = None
         self.voice_client = None
         self.stream = None
 
@@ -66,14 +65,14 @@ class RadioPlayer:
         self.voice_client = await self.bot.join_voice_channel(
             uvc)
         self.stream = urllib.request.urlopen(url)
-        self.player = self.voice_client.create_ffmpeg_player(self.stream, pipe=True)
-        self.player.start()
+        self.voice_client.audio_player = self.voice_client.create_ffmpeg_player(self.stream, pipe=True)
+        self.voice_client.audio_player.start()
 
     @radio.command(pass_context=True)
     async def stop(self, ctx):
         """Stops radio playback"""
-        if self.player.is_playing():
-            self.player.stop()
+        if self.voice_client.audio_player.is_playing():
+            self.voice_client.audio_player.stop()
 
 
 def setup(bot):
