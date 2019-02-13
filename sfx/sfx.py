@@ -212,7 +212,7 @@ class SFX(commands.Cog):
         sfx_config = await self.config.guild(ctx.guild).sfx()
 
         if soundname not in sfx_config['sounds'].keys():
-            await ctx.send(f'Sound `{soundname}` does not exist.')
+            await ctx.send(f'Sound `{soundname}` does not exist. Try `{ctx.prefix}allsfx` for a list.')
             return
 
         filepath = os.path.join(self.sound_base, str(ctx.guild.id), sfx_config['sounds'][soundname])
@@ -245,6 +245,27 @@ class SFX(commands.Cog):
         await ctx.send('Sounds for this server:')
         for page in paginator.pages:
             await ctx.send(page)
+
+    @commands.command(no_pm=True, pass_context=True, aliases=['getsound'])
+    async def getsfx(self, ctx, soundname: str):
+        """Gets the given sound."""
+
+        if str(ctx.guild.id) not in os.listdir(self.sound_base):
+            os.makedirs(os.path.join(self.sound_base, str(ctx.guild.id)))
+
+        sfx_config = await self.config.guild(ctx.guild).sfx()
+
+        if soundname not in sfx_config['sounds'].keys():
+            await ctx.send(f'Sound `{soundname}` does not exist. Try `{ctx.prefix}allsfx` for a list.')
+            return
+
+        filepath = os.path.join(self.sound_base, str(ctx.guild.id), sfx_config['sounds'][soundname])
+        if not os.path.exists(filepath):
+            del sfx_config['sounds'][soundname]
+            await ctx.send('Looks like this sound\'s file has gone missing! I\'ve removed it from the list of sounds.')
+            return
+
+        await ctx.send(file=discord.File(filepath))
 
     async def ll_check(self, player, event, reason):
         if self.current_tts is None and self.last_track_info is None:
