@@ -15,7 +15,7 @@ class SFX(commands.Cog):
     def __init__(self):
         self.tts_languages = list(gtts.lang.tts_langs().keys())
         self.last_track_info = None
-        self.current_tts = None
+        self.current_sfx = None
         self.config = Config.get_conf(self, identifier=134621854878007296)
         self.sound_base = (data_manager.cog_data_path(self) / 'sounds').as_posix()
         self.session = aiohttp.ClientSession()
@@ -48,7 +48,7 @@ class SFX(commands.Cog):
         """
 
         if not ctx.author.voice or not ctx.author.voice.channel:
-            await ctx.send(f'You must be in a voice channel to use `{ctx.prefix}tts`.')
+            await ctx.send('You are not connected to a voice channel.')
             return
 
         tts_config = await self.config.guild(ctx.guild).tts()
@@ -68,27 +68,7 @@ class SFX(commands.Cog):
         silence = pydub.AudioSegment.silent(duration=tts_config['padding'])
         padded_audio = silence + audio_data + silence
         padded_audio.export(audio_file, format='mp3')
-        player = await lavalink.connect(ctx.author.voice.channel)
-        track = (await player.get_tracks(query=audio_file))[0]
-
-        if player.current is None:
-            player.queue.append(track)
-            self.current_tts = track
-            await player.play()
-            return
-
-        if self.current_tts is not None:
-            player.queue.insert(0, track)
-            await player.skip()
-            os.remove(self.current_tts.uri)
-            self.current_tts = track
-            return
-
-        self.last_track_info = (player.current, player.position)
-        self.current_tts = track
-        player.queue.insert(0, track)
-        player.queue.insert(1, player.current)
-        await player.skip()
+        await self._play_sfx(ctx.author.voice.channel, audio_file)
 
     @commands.group(name='ttsconfig')
     async def ttsconfig(self, ctx):
@@ -157,7 +137,30 @@ class SFX(commands.Cog):
         await ctx.send(f"List of valid languages: {', '.join(self.tts_languages)}")
 
     @commands.command()
-    async def addsfx(self, ctx, name:str, link: str=None):
+    async def sfx(self, ctx, soundname: str):
+        if not ctx.author.voice or not ctx.author.voice.channel:
+            await ctx.send('You are not connected to a voice channel.')
+            return
+
+        if str(ctx.guild.id) not in os.listdir(self.sound_base):
+            os.makedirs(os.path.join(self.sound_base, str(ctx.guild.id)))
+
+        sfx_config = await self.config.guild(ctx.guild).sfx()
+        if soundname not in sfx_config['sounds'].keys():
+            await ctx.send(f'Sound `{soundname}` does not exist. Try `{ctx.prefix}allsfx` for a list.')
+            return
+
+        filepath = os.path.join(self.sound_base, str(ctx.guild.id), sfx_config['sounds'][soundname])
+        if not os.path.exists(filepath):
+            del sfx_config['sounds'][soundname]
+            await self.config.guild(ctx.guild).sfx.set(sfx_config)
+            await ctx.send('Looks like this sound\'s file has gone missing! I\'ve removed it from the list of sounds.')
+            return
+
+        await self._play_sfx(ctx.author.voice.channel, filepath)
+
+    @commands.command()
+    async def addsfx(self, ctx, name: str, link: str=None):
         sfx_config = await self.config.guild(ctx.guild).sfx()
 
         if str(ctx.guild.id) not in os.listdir(self.sound_base):
@@ -268,30 +271,53 @@ class SFX(commands.Cog):
 
         await ctx.send(file=discord.File(filepath))
 
+    async def _play_sfx(self, vc, filepath):
+        player = await lavalink.connect(vc)
+        track = (await player.get_tracks(query=filepath))[0]
+
+        if player.current is None:
+            player.queue.append(track)
+            self.current_sfx = track
+            await player.play()
+            return
+
+        if self.current_sfx is not None:
+            player.queue.insert(0, track)
+            await player.skip()
+            os.remove(self.current_sfx.uri)
+            self.current_sfx = track
+            return
+
+        self.last_track_info = (player.current, player.position)
+        self.current_sfx = track
+        player.queue.insert(0, track)
+        player.queue.insert(1, player.current)
+        await player.skip()
+
     async def ll_check(self, player, event, reason):
-        if self.current_tts is None and self.last_track_info is None:
+        if self.current_sfx is None and self.last_track_info is None:
             return
 
-        if event == lavalink.LavalinkEvents.TRACK_EXCEPTION and self.current_tts is not None:
-            os.remove(self.current_tts.uri)
-            self.current_tts = None
+        if event == lavalink.LavalinkEvents.TRACK_EXCEPTION and self.current_sfx is not None:
+            os.remove(self.current_sfx.uri)
+            self.current_sfx = None
             return
 
-        if event == lavalink.LavalinkEvents.TRACK_STUCK and self.current_tts is not None:
-            os.remove(self.current_tts.uri)
-            self.current_tts = None
+        if event == lavalink.LavalinkEvents.TRACK_STUCK and self.current_sfx is not None:
+            os.remove(self.current_sfx.uri)
+            self.current_sfx = None
             await player.skip()
             return
 
-        if event == lavalink.LavalinkEvents.TRACK_END and player.current is None and self.current_tts is not None:
-            os.remove(self.current_tts.uri)
-            self.current_tts = None
+        if event == lavalink.LavalinkEvents.TRACK_END and player.current is None and self.current_sfx is not None:
+            os.remove(self.current_sfx.uri)
+            self.current_sfx = None
             return
 
         if event == lavalink.LavalinkEvents.TRACK_END and player.current.track_identifier == self.last_track_info[0].track_identifier:
             print(str(self.last_track_info[0].uri))
-            os.remove(self.current_tts.uri)
-            self.current_tts = None
+            os.remove(self.current_sfx.uri)
+            self.current_sfx = None
             await player.pause()
             await player.seek(self.last_track_info[1])
             await player.pause(False)
