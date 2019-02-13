@@ -20,13 +20,9 @@ class SFX(commands.Cog):
         self.sound_base = (data_manager.cog_data_path(self) / 'sounds').as_posix()
         self.session = aiohttp.ClientSession()
         default_config = {
-            'tts': {
-                'lang': 'en',
-                'padding': 700
-            },
-            'sfx': {
-                'sounds': {}
-            }
+            'padding': 700,
+            'tts_lang': 'en',
+            'sounds': {}
         }
         self.config.register_guild(**default_config)
         lavalink.register_event_listener(self.ll_check)
@@ -52,13 +48,14 @@ class SFX(commands.Cog):
             await ctx.send('You are not connected to a voice channel.')
             return
 
-        tts_config = await self.config.guild(ctx.guild).tts()
-        lang = tts_config['lang']
+        cfg_tts_lang = await self.config.guild(ctx.guild).tts_lang()
+        cfg_padding = await self.config.guild(ctx.guild).padding()
+        lang = cfg_tts_lang
         try:
             lang, text = text.split(' ', maxsplit=1)
             if lang not in self.tts_languages:
                 text = f'{lang} {text}'
-                lang = tts_config['lang']
+                lang = cfg_tts_lang
         except ValueError:
             pass
 
@@ -66,19 +63,19 @@ class SFX(commands.Cog):
         audio_file = os.path.join(tempfile.gettempdir(), ''.join(random.choice('0123456789ABCDEF') for i in range(12)) + '.mp3')
         tts_audio.save(audio_file)
         audio_data = pydub.AudioSegment.from_mp3(audio_file)
-        silence = pydub.AudioSegment.silent(duration=tts_config['padding'])
+        silence = pydub.AudioSegment.silent(duration=cfg_padding)
         padded_audio = silence + audio_data + silence
         padded_audio.export(audio_file, format='mp3')
         await self._play_sfx(ctx.author.voice.channel, audio_file, True)
 
     @commands.group()
-    async def ttsconfig(self, ctx):
-        """Configures TTS."""
+    async def sfxconfig(self, ctx):
+        """Configures the SFX cog."""
         pass
 
-    @ttsconfig.command(usage='[language code]')
+    @sfxconfig.command(usage='[language code]')
     @checks.mod()
-    async def lang(self, ctx, lang: str = None):
+    async def tts_lang(self, ctx, lang: str = None):
         """
         Configures the default TTS language.
 
@@ -86,37 +83,40 @@ class SFX(commands.Cog):
         Use `[p]ttslangs` for a list of language codes.
         """
 
-        tts_config = await self.config.guild(ctx.guild).tts()
+        cfg_tts_lang = await self.config.guild(ctx.guild).tts_lang()
         if lang is None:
-            await ctx.send(f"Current value of `lang`: {tts_config['lang']}")
+            await ctx.send(f"Current value of `tts_lang`: {cfg_tts_lang}")
             return
 
         if lang not in self.tts_languages:
             await ctx.send('Invalid langauge. Use [p]ttsconfig langlist for a list of languages.')
             return
 
-        tts_config['lang'] = lang
-        await self.config.guild(ctx.guild).tts.set(tts_config)
-        await ctx.send(f'`lang` set to {lang}.')
+        cfg_tts_lang = lang
+        await self.config.guild(ctx.guild).tts_lang.set(cfg_tts_lang)
+        await ctx.send(f'`tts_lang` set to {lang}.')
 
 
-    @ttsconfig.command(usage='<duration>')
+    @sfxconfig.command(usage='<duration>')
     @checks.mod()
     async def padding(self, ctx, padding: int = None):
         """
-        Configures the default TTS padding.
+        Configures the default padding.
 
-        Gets/sets the default duration of padding (in ms) for the `[p]tts` command.
+        Gets/sets the default duration of padding (in ms) for the `[p]tts` and `[p]addsfx` commands.
         Adjust if the sound gets cut off at the beginning or the end.
+
+        Warning: Sounds do not get affected immediately. You have to re-add them for this to have an effect on them.
+        TTS gets affected immediately.
         """
 
-        tts_config = await self.config.guild(ctx.guild).tts()
+        cfg_padding = await self.config.guild(ctx.guild).padding()
         if padding is None:
-            await ctx.send(f"Current value of `padding`: {tts_config['padding']}")
+            await ctx.send(f"Current value of `padding`: {cfg_padding}")
             return
 
-        tts_config['padding'] = padding
-        await self.config.guild(ctx.guild).tts.set(tts_config)
+        cfg_padding = padding
+        await self.config.guild(ctx.guild).padding.set(cfg_padding)
         await ctx.send(f'`padding` set to {padding}.')
 
     @commands.command()
@@ -144,15 +144,15 @@ class SFX(commands.Cog):
         if str(ctx.guild.id) not in os.listdir(self.sound_base):
             os.makedirs(os.path.join(self.sound_base, str(ctx.guild.id)))
 
-        sfx_config = await self.config.guild(ctx.guild).sfx()
-        if soundname not in sfx_config['sounds'].keys():
+        cfg_sounds = await self.config.guild(ctx.guild).sounds()
+        if soundname not in cfg_sounds.keys():
             await ctx.send(f'Sound `{soundname}` does not exist. Try `{ctx.prefix}allsfx` for a list.')
             return
 
-        filepath = os.path.join(self.sound_base, str(ctx.guild.id), sfx_config['sounds'][soundname])
+        filepath = os.path.join(self.sound_base, str(ctx.guild.id), cfg_sounds[soundname])
         if not os.path.exists(filepath):
-            del sfx_config['sounds'][soundname]
-            await self.config.guild(ctx.guild).sfx.set(sfx_config)
+            del cfg_sounds[soundname]
+            await self.config.guild(ctx.guild).sounds.set(cfg_sounds)
             await ctx.send('Looks like this sound\'s file has gone missing! I\'ve removed it from the list of sounds.')
             return
 
@@ -164,9 +164,10 @@ class SFX(commands.Cog):
         """Adds a new sound.
 
         Either upload the file as a Discord attachment and make your comment
-        "[p]addsfx <name>", or use "[p]addsfx <name> <direct-URL-to-file>".
+        `[p]addsfx <name>`, or use `[p]addsfx <name> <direct-URL-to-file>`.
         """
-        sfx_config = await self.config.guild(ctx.guild).sfx()
+        cfg_sounds = await self.config.guild(ctx.guild).sounds()
+        cfg_padding = await self.config.guild(ctx.guild).padding()
 
         if str(ctx.guild.id) not in os.listdir(self.sound_base):
             os.makedirs(os.path.join(self.sound_base, str(ctx.guild.id)))
@@ -190,9 +191,14 @@ class SFX(commands.Cog):
             await ctx.send('You must provide either a Discord attachment or a direct link to a sound.')
             return
 
+        _, file_extension = os.path.splitext(filename)
+        if file_extension != '.wav' and file_extension != '.mp3':
+            await ctx.send('Only .wav and .mp3 sounds are currently supported.')
+            return
+
         filepath = os.path.join(self.sound_base, str(ctx.guild.id), filename)
 
-        if name in sfx_config['sounds'].keys():
+        if name in cfg_sounds.keys():
             await ctx.send('A sound with that name already exists. Please choose another name and try again.')
             return
 
@@ -205,8 +211,13 @@ class SFX(commands.Cog):
             f.write(await new_sound.read())
             f.close()
 
-        sfx_config['sounds'][name] = filename
-        await self.config.guild(ctx.guild).sfx.set(sfx_config)
+        audio_data = pydub.AudioSegment.from_file(filepath, format=file_extension[1:])
+        silence = pydub.AudioSegment.silent(duration=cfg_padding)
+        padded_audio = silence + audio_data + silence
+        padded_audio.export(filepath, format=file_extension[1:])
+
+        cfg_sounds[name] = filename
+        await self.config.guild(ctx.guild).sounds.set(cfg_sounds)
 
         await ctx.send(f'Sound {name} added.')
 
@@ -218,19 +229,19 @@ class SFX(commands.Cog):
         if str(ctx.guild.id) not in os.listdir(self.sound_base):
             os.makedirs(os.path.join(self.sound_base, str(ctx.guild.id)))
 
-        sfx_config = await self.config.guild(ctx.guild).sfx()
+        cfg_sounds = await self.config.guild(ctx.guild).sounds()
 
-        if soundname not in sfx_config['sounds'].keys():
+        if soundname not in cfg_sounds.keys():
             await ctx.send(f'Sound `{soundname}` does not exist. Try `{ctx.prefix}allsfx` for a list.')
             return
 
-        filepath = os.path.join(self.sound_base, str(ctx.guild.id), sfx_config['sounds'][soundname])
+        filepath = os.path.join(self.sound_base, str(ctx.guild.id), cfg_sounds[soundname])
 
         if os.path.exists(filepath):
             os.remove(filepath)
 
-        del sfx_config['sounds'][soundname]
-        await self.config.guild(ctx.guild).sfx.set(sfx_config)
+        del cfg_sounds[soundname]
+        await self.config.guild(ctx.guild).sounds.set(cfg_sounds)
 
         await ctx.send(f'Sound {soundname} deleted.')
 
@@ -242,14 +253,14 @@ class SFX(commands.Cog):
         if str(ctx.guild.id) not in os.listdir(self.sound_base):
             os.makedirs(os.path.join(self.sound_base, str(ctx.guild.id)))
 
-        sfx_config = await self.config.guild(ctx.guild).sfx()
+        cfg_sounds = await self.config.guild(ctx.guild).sounds()
 
-        if len(sfx_config['sounds'].items()) == 0:
+        if len(cfg_sounds.items()) == 0:
             await ctx.send(f'No sounds found. Use `{ctx.prefix}addsfx` to add one.')
             return
 
         paginator = discord.ext.commands.formatter.Paginator()
-        for soundname, filepath in sfx_config['sounds'].items():
+        for soundname, filepath in cfg_sounds.items():
             paginator.add_line(soundname)
 
         await ctx.send('Sounds for this server:')
@@ -264,16 +275,16 @@ class SFX(commands.Cog):
         if str(ctx.guild.id) not in os.listdir(self.sound_base):
             os.makedirs(os.path.join(self.sound_base, str(ctx.guild.id)))
 
-        sfx_config = await self.config.guild(ctx.guild).sfx()
+        cfg_sounds = await self.config.guild(ctx.guild).sounds()
 
-        if soundname not in sfx_config['sounds'].keys():
+        if soundname not in cfg_sounds.keys():
             await ctx.send(f'Sound `{soundname}` does not exist. Try `{ctx.prefix}allsfx` for a list.')
             return
 
-        filepath = os.path.join(self.sound_base, str(ctx.guild.id), sfx_config['sounds'][soundname])
+        filepath = os.path.join(self.sound_base, str(ctx.guild.id), cfg_sounds[soundname])
         if not os.path.exists(filepath):
-            del sfx_config['sounds'][soundname]
-            await self.config.guild(ctx.guild).sfx.set(sfx_config)
+            del cfg_sounds[soundname]
+            await self.config.guild(ctx.guild).sounds.set(cfg_sounds)
             await ctx.send('Looks like this sound\'s file has gone missing! I\'ve removed it from the list of sounds.')
             return
 
