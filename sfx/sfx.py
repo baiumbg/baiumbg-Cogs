@@ -225,6 +225,27 @@ class SFX(commands.Cog):
 
         await ctx.send(f'Sound {soundname} deleted.')
 
+    @commands.command()
+    async def allsfx(self, ctx):
+        """Prints all available sounds for this server."""
+
+        if str(ctx.guild.id) not in os.listdir(self.sound_base):
+            os.makedirs(os.path.join(self.sound_base, str(ctx.guild.id)))
+
+        sfx_config = await self.config.guild(ctx.guild).sfx()
+
+        if len(sfx_config['sounds'].items()) == 0:
+            await ctx.send(f'No sounds found. Use `{ctx.prefix}addsfx` to add one.')
+            return
+
+        paginator = discord.ext.commands.formatter.Paginator()
+        for soundname, filepath in sfx_config['sounds'].items():
+            paginator.add_line(soundname)
+
+        await ctx.send('Sounds for this server:')
+        for page in paginator.pages:
+            await ctx.send(page)
+
     async def ll_check(self, player, event, reason):
         if self.current_tts is None and self.last_track_info is None:
             return
