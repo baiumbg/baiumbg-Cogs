@@ -262,6 +262,7 @@ class SFX(commands.Cog):
         filepath = os.path.join(self.sound_base, str(ctx.guild.id), sfx_config['sounds'][soundname])
         if not os.path.exists(filepath):
             del sfx_config['sounds'][soundname]
+            await self.config.guild(ctx.guild).sfx.set(sfx_config)
             await ctx.send('Looks like this sound\'s file has gone missing! I\'ve removed it from the list of sounds.')
             return
 
