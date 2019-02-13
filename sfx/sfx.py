@@ -1,4 +1,4 @@
-from redbot.core import commands, checks, Config
+from redbot.core import commands, checks, data_manager, Config
 import tempfile
 import gtts
 import discord
@@ -7,23 +7,27 @@ import os
 import random
 import lavalink
 import pydub
+import aiohttp
 
 class SFX(commands.Cog):
-    """Play uploaded sounds or text-to-speech using gTTS"""
+    """Plays uploaded sounds or text-to-speech using gTTS."""
 
     def __init__(self):
         self.tts_languages = list(gtts.lang.tts_langs().keys())
         self.last_track_info = None
-        self.current_tts = None
+        self.current_sfx = None
         self.config = Config.get_conf(self, identifier=134621854878007296)
+        self.sound_base = (data_manager.cog_data_path(self) / 'sounds').as_posix()
+        self.session = aiohttp.ClientSession()
         default_config = {
-            'tts': {
-                'lang': 'en',
-                'padding': 700
-            }
+            'padding': 700,
+            'tts_lang': 'en',
+            'sounds': {}
         }
         self.config.register_guild(**default_config)
         lavalink.register_event_listener(self.ll_check)
+        if not os.path.exists(self.sound_base):
+            os.makedirs(self.sound_base)
 
 
     def __unload(self):
@@ -31,25 +35,27 @@ class SFX(commands.Cog):
 
 
     @commands.command(usage='[language code] <text>')
+    @commands.cooldown(rate=1, per=1, type=discord.ext.commands.cooldowns.BucketType.guild)
     async def tts(self, ctx, *, text):
         """
-        Text-to-speech
+        Plays the given text as TTS in your current voice channel.
 
         Turns a string of text into audio using the server's default language, if none is specified.
         Use `[p]ttslangs` for a list of valid language codes.
         """
 
         if not ctx.author.voice or not ctx.author.voice.channel:
-            await ctx.send(f'You must be in a voice channel to use `{ctx.prefix}tts`.')
+            await ctx.send('You are not connected to a voice channel.')
             return
 
-        tts_config = await self.config.guild(ctx.guild).tts()
-        lang = tts_config['lang']
+        cfg_tts_lang = await self.config.guild(ctx.guild).tts_lang()
+        cfg_padding = await self.config.guild(ctx.guild).padding()
+        lang = cfg_tts_lang
         try:
             lang, text = text.split(' ', maxsplit=1)
             if lang not in self.tts_languages:
-                lang = tts_config['lang']
                 text = f'{lang} {text}'
+                lang = cfg_tts_lang
         except ValueError:
             pass
 
@@ -57,121 +63,284 @@ class SFX(commands.Cog):
         audio_file = os.path.join(tempfile.gettempdir(), ''.join(random.choice('0123456789ABCDEF') for i in range(12)) + '.mp3')
         tts_audio.save(audio_file)
         audio_data = pydub.AudioSegment.from_mp3(audio_file)
-        silence = pydub.AudioSegment.silent(duration=tts_config['padding'])
+        silence = pydub.AudioSegment.silent(duration=cfg_padding)
         padded_audio = silence + audio_data + silence
         padded_audio.export(audio_file, format='mp3')
-        player = await lavalink.connect(ctx.author.voice.channel)
-        track = (await player.get_tracks(query=audio_file))[0]
+        await self._play_sfx(ctx.author.voice.channel, audio_file, True)
 
-        if player.current is None:
-            player.queue.append(track)
-            self.current_tts = track
-            await player.play()
-            return
-
-        if self.current_tts is not None:
-            player.queue.insert(0, track)
-            await player.skip()
-            os.remove(self.current_tts.uri)
-            self.current_tts = track
-            return
-
-        self.last_track_info = (player.current, player.position)
-        self.current_tts = track
-        player.queue.insert(0, track)
-        player.queue.insert(1, player.current)
-        await player.skip()
-
-    @commands.group(name='ttsconfig')
-    async def ttsconfig(self, ctx):
-        """Configure TTS"""
+    @commands.group()
+    async def sfxconfig(self, ctx):
+        """Configures the SFX cog."""
         pass
 
-    @ttsconfig.command(name='lang', usage='[language code]')
-    @checks.guildowner()
-    async def _tts_lang(self, ctx, *args):
+    @sfxconfig.command(usage='[language code]')
+    @checks.mod()
+    async def tts_lang(self, ctx, lang: str = None):
         """
-        Configure the default TTS language
+        Configures the default TTS language.
 
         Gets/sets the default language for the `[p]tts` command.
         Use `[p]ttslangs` for a list of language codes.
         """
 
-        tts_config = await self.config.guild(ctx.guild).tts()
-        if len(args) == 0:
-            await ctx.send(f"Current value of `lang`: {tts_config['lang']}")
+        cfg_tts_lang = await self.config.guild(ctx.guild).tts_lang()
+        if lang is None:
+            await ctx.send(f"Current value of `tts_lang`: {cfg_tts_lang}")
             return
 
-        lang = args[0]
         if lang not in self.tts_languages:
             await ctx.send('Invalid langauge. Use [p]ttsconfig langlist for a list of languages.')
             return
 
-        tts_config['lang'] = lang
-        await self.config.guild(ctx.guild).tts.set(tts_config)
-        await ctx.send(f'`lang` set to {lang}.')
+        cfg_tts_lang = lang
+        await self.config.guild(ctx.guild).tts_lang.set(cfg_tts_lang)
+        await ctx.send(f'`tts_lang` set to {lang}.')
 
 
-    @ttsconfig.command(name='padding', usage='<duration>')
-    @checks.guildowner()
-    async def _tts_padding(self, ctx, *args):
+    @sfxconfig.command(usage='<duration>')
+    @checks.mod()
+    async def padding(self, ctx, padding: int = None):
         """
-        Configure the default TTS padding
+        Configures the default padding.
 
-        Gets/sets the default duration of padding (in ms) for the `[p]tts` command.
+        Gets/sets the default duration of padding (in ms) for the `[p]tts` and `[p]addsfx` commands.
         Adjust if the sound gets cut off at the beginning or the end.
+
+        Warning: Sounds do not get affected immediately. You have to re-add them for this to have an effect on them.
+        TTS gets affected immediately.
         """
 
-        tts_config = await self.config.guild(ctx.guild).tts()
-        if len(args) == 0:
-            await ctx.send(f"Current value of `padding`: {tts_config['padding']}")
+        cfg_padding = await self.config.guild(ctx.guild).padding()
+        if padding is None:
+            await ctx.send(f"Current value of `padding`: {cfg_padding}")
             return
 
-        padding = 0
-        try:
-            padding = int(args[0])
-        except ValueError:
-            await ctx.send_help()
-            return
-
-        tts_config['padding'] = padding
-        await self.config.guild(ctx.guild).tts.set(tts_config)
+        cfg_padding = padding
+        await self.config.guild(ctx.guild).padding.set(cfg_padding)
         await ctx.send(f'`padding` set to {padding}.')
 
-    @commands.command(name='ttslangs')
-    async def _tts_lang_list(self, ctx):
+    @commands.command()
+    @commands.cooldown(rate=1, per=2, type=discord.ext.commands.cooldowns.BucketType.guild)
+    async def ttslangs(self, ctx):
         """
-        List of TTS Languages
+        Lists available TTS Languages.
 
         Prints the list of valid languages for use with `[p]tts`.
         """
 
         await ctx.send(f"List of valid languages: {', '.join(self.tts_languages)}")
 
+    @commands.command()
+    @commands.cooldown(rate=1, per=1, type=discord.ext.commands.cooldowns.BucketType.guild)
+    async def sfx(self, ctx, soundname: str):
+        """
+        Plays an existing sound in your current voice channel.
+        """
+
+        if not ctx.author.voice or not ctx.author.voice.channel:
+            await ctx.send('You are not connected to a voice channel.')
+            return
+
+        if str(ctx.guild.id) not in os.listdir(self.sound_base):
+            os.makedirs(os.path.join(self.sound_base, str(ctx.guild.id)))
+
+        cfg_sounds = await self.config.guild(ctx.guild).sounds()
+        if soundname not in cfg_sounds.keys():
+            await ctx.send(f'Sound `{soundname}` does not exist. Try `{ctx.prefix}allsfx` for a list.')
+            return
+
+        filepath = os.path.join(self.sound_base, str(ctx.guild.id), cfg_sounds[soundname])
+        if not os.path.exists(filepath):
+            del cfg_sounds[soundname]
+            await self.config.guild(ctx.guild).sounds.set(cfg_sounds)
+            await ctx.send('Looks like this sound\'s file has gone missing! I\'ve removed it from the list of sounds.')
+            return
+
+        await self._play_sfx(ctx.author.voice.channel, filepath)
+
+    @commands.command()
+    @checks.mod()
+    async def addsfx(self, ctx, name: str, link: str=None):
+        """Adds a new sound.
+
+        Either upload the file as a Discord attachment and make your comment
+        `[p]addsfx <name>`, or use `[p]addsfx <name> <direct-URL-to-file>`.
+        """
+        cfg_sounds = await self.config.guild(ctx.guild).sounds()
+        cfg_padding = await self.config.guild(ctx.guild).padding()
+
+        if str(ctx.guild.id) not in os.listdir(self.sound_base):
+            os.makedirs(os.path.join(self.sound_base, str(ctx.guild.id)))
+
+        attach = ctx.message.attachments
+        if len(attach) > 1 or (attach and link):
+            await ctx.send('Please only add one sound at a time.')
+            return
+
+        url = ''
+        filename = ''
+        if attach:
+            a = attach[0]
+            url = a.url
+            filename = a.filename
+        elif link:
+            url = ''.join(link)
+            filename = os.path.basename(
+                '_'.join(url.split()).replace('%20', '_'))
+        else:
+            await ctx.send('You must provide either a Discord attachment or a direct link to a sound.')
+            return
+
+        _, file_extension = os.path.splitext(filename)
+        if file_extension != '.wav' and file_extension != '.mp3':
+            await ctx.send('Only .wav and .mp3 sounds are currently supported.')
+            return
+
+        filepath = os.path.join(self.sound_base, str(ctx.guild.id), filename)
+
+        if name in cfg_sounds.keys():
+            await ctx.send('A sound with that name already exists. Please choose another name and try again.')
+            return
+
+        if os.path.exists(filepath):
+            await ctx.send('A sound with that filename already exists. Please change the filename and try again.')
+            return
+
+        async with self.session.get(url) as new_sound:
+            f = open(filepath, 'wb')
+            f.write(await new_sound.read())
+            f.close()
+
+        audio_data = pydub.AudioSegment.from_file(filepath, format=file_extension[1:])
+        silence = pydub.AudioSegment.silent(duration=cfg_padding)
+        padded_audio = silence + audio_data + silence
+        padded_audio.export(filepath, format=file_extension[1:])
+
+        cfg_sounds[name] = filename
+        await self.config.guild(ctx.guild).sounds.set(cfg_sounds)
+
+        await ctx.send(f'Sound {name} added.')
+
+    @commands.command()
+    @checks.mod()
+    async def delsfx(self, ctx, soundname: str):
+        """Deletes an existing sound."""
+
+        if str(ctx.guild.id) not in os.listdir(self.sound_base):
+            os.makedirs(os.path.join(self.sound_base, str(ctx.guild.id)))
+
+        cfg_sounds = await self.config.guild(ctx.guild).sounds()
+
+        if soundname not in cfg_sounds.keys():
+            await ctx.send(f'Sound `{soundname}` does not exist. Try `{ctx.prefix}allsfx` for a list.')
+            return
+
+        filepath = os.path.join(self.sound_base, str(ctx.guild.id), cfg_sounds[soundname])
+
+        if os.path.exists(filepath):
+            os.remove(filepath)
+
+        del cfg_sounds[soundname]
+        await self.config.guild(ctx.guild).sounds.set(cfg_sounds)
+
+        await ctx.send(f'Sound {soundname} deleted.')
+
+    @commands.command()
+    @commands.cooldown(rate=1, per=3, type=discord.ext.commands.cooldowns.BucketType.guild)
+    async def allsfx(self, ctx):
+        """Prints all available sounds for this server."""
+
+        if str(ctx.guild.id) not in os.listdir(self.sound_base):
+            os.makedirs(os.path.join(self.sound_base, str(ctx.guild.id)))
+
+        cfg_sounds = await self.config.guild(ctx.guild).sounds()
+
+        if len(cfg_sounds.items()) == 0:
+            await ctx.send(f'No sounds found. Use `{ctx.prefix}addsfx` to add one.')
+            return
+
+        paginator = discord.ext.commands.formatter.Paginator()
+        for soundname, filepath in cfg_sounds.items():
+            paginator.add_line(soundname)
+
+        await ctx.send('Sounds for this server:')
+        for page in paginator.pages:
+            await ctx.send(page)
+
+    @commands.command(no_pm=True, pass_context=True, aliases=['getsound'])
+    @commands.cooldown(rate=1, per=2, type=discord.ext.commands.cooldowns.BucketType.guild)
+    async def getsfx(self, ctx, soundname: str):
+        """Uploads the given sound."""
+
+        if str(ctx.guild.id) not in os.listdir(self.sound_base):
+            os.makedirs(os.path.join(self.sound_base, str(ctx.guild.id)))
+
+        cfg_sounds = await self.config.guild(ctx.guild).sounds()
+
+        if soundname not in cfg_sounds.keys():
+            await ctx.send(f'Sound `{soundname}` does not exist. Try `{ctx.prefix}allsfx` for a list.')
+            return
+
+        filepath = os.path.join(self.sound_base, str(ctx.guild.id), cfg_sounds[soundname])
+        if not os.path.exists(filepath):
+            del cfg_sounds[soundname]
+            await self.config.guild(ctx.guild).sounds.set(cfg_sounds)
+            await ctx.send('Looks like this sound\'s file has gone missing! I\'ve removed it from the list of sounds.')
+            return
+
+        await ctx.send(file=discord.File(filepath))
+
+    async def _play_sfx(self, vc, filepath, is_tts=False):
+        player = await lavalink.connect(vc)
+        track = (await player.get_tracks(query=filepath))[0]
+
+        if player.current is None:
+            player.queue.append(track)
+            self.current_sfx = (track, is_tts)
+            await player.play()
+            return
+
+        if self.current_sfx is not None:
+            player.queue.insert(0, track)
+            await player.skip()
+            os.remove(self.current_sfx[0].uri)
+            self.current_sfx = (track, is_tts)
+            return
+
+        self.last_track_info = (player.current, player.position)
+        self.current_sfx = (track, is_tts)
+        player.queue.insert(0, track)
+        player.queue.insert(1, player.current)
+        await player.skip()
+
     async def ll_check(self, player, event, reason):
-        if self.current_tts is None and self.last_track_info is None:
+        if self.current_sfx is None and self.last_track_info is None:
             return
 
-        if event == lavalink.LavalinkEvents.TRACK_EXCEPTION and self.current_tts is not None:
-            os.remove(self.current_tts.uri)
-            self.current_tts = None
+        if event == lavalink.LavalinkEvents.TRACK_EXCEPTION and self.current_sfx is not None:
+            if self.current_sfx[1]:
+                os.remove(self.current_sfx[0].uri)
+            self.current_sfx = None
             return
 
-        if event == lavalink.LavalinkEvents.TRACK_STUCK and self.current_tts is not None:
-            os.remove(self.current_tts.uri)
-            self.current_tts = None
+        if event == lavalink.LavalinkEvents.TRACK_STUCK and self.current_sfx is not None:
+            if self.current_sfx[1]:
+                os.remove(self.current_sfx[0].uri)
+            self.current_sfx = None
             await player.skip()
             return
 
-        if event == lavalink.LavalinkEvents.TRACK_END and player.current is None and self.current_tts is not None:
-            os.remove(self.current_tts.uri)
-            self.current_tts = None
+        if event == lavalink.LavalinkEvents.TRACK_END and player.current is None and self.current_sfx is not None:
+            if self.current_sfx[1]:
+                os.remove(self.current_sfx[0].uri)
+            self.current_sfx = None
             return
 
         if event == lavalink.LavalinkEvents.TRACK_END and player.current.track_identifier == self.last_track_info[0].track_identifier:
             print(str(self.last_track_info[0].uri))
-            os.remove(self.current_tts.uri)
-            self.current_tts = None
+            if self.current_sfx[1]:
+                os.remove(self.current_sfx[0].uri)
+            self.current_sfx = None
             await player.pause()
             await player.seek(self.last_track_info[1])
             await player.pause(False)
