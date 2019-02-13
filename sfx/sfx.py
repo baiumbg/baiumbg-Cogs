@@ -1,4 +1,4 @@
-from redbot.core import commands, checks, Config
+from redbot.core import commands, checks, data_manager, Config
 import tempfile
 import gtts
 import discord
@@ -7,6 +7,7 @@ import os
 import random
 import lavalink
 import pydub
+import aiohttp
 
 class SFX(commands.Cog):
     """Play uploaded sounds or text-to-speech using gTTS"""
@@ -16,14 +17,21 @@ class SFX(commands.Cog):
         self.last_track_info = None
         self.current_tts = None
         self.config = Config.get_conf(self, identifier=134621854878007296)
+        self.sound_base = (data_manager.cog_data_path(self) / 'sounds').as_posix()
+        self.session = aiohttp.ClientSession()
         default_config = {
             'tts': {
                 'lang': 'en',
                 'padding': 700
+            },
+            'sfx': {
+                'sounds': {}
             }
         }
         self.config.register_guild(**default_config)
         lavalink.register_event_listener(self.ll_check)
+        if not os.path.exists(self.sound_base):
+            os.makedirs(self.sound_base)
 
 
     def __unload(self):
@@ -147,6 +155,52 @@ class SFX(commands.Cog):
         """
 
         await ctx.send(f"List of valid languages: {', '.join(self.tts_languages)}")
+
+    @commands.command()
+    async def addsfx(self, ctx, name:str, link: str=None):
+        sfx_config = await self.config.guild(ctx.guild).sfx()
+
+        if str(ctx.guild.id) not in os.listdir(self.sound_base):
+            os.makedirs(os.path.join(self.sound_base, str(ctx.guild.id)))
+
+        attach = ctx.message.attachments
+        if len(attach) > 1 or (attach and link):
+            await ctx.send('Please only add one sound at a time.')
+            return
+
+        url = ''
+        filename = ''
+        if attach:
+            a = attach[0]
+            url = a.url
+            filename = a.filename
+        elif link:
+            url = ''.join(link)
+            filename = os.path.basename(
+                '_'.join(url.split()).replace('%20', '_'))
+        else:
+            await ctx.send('You must provide either a Discord attachment or a direct link to a sound.')
+            return
+
+        filepath = os.path.join(self.sound_base, str(ctx.guild.id), filename)
+
+        if name in sfx_config['sounds'].keys():
+            await ctx.send('A sound with that name already exists. Please choose another name and try again.')
+            return
+
+        if os.path.exists(filepath):
+            await ctx.send('A sound with that filename already exists. Please change the filename and try again.')
+            return
+
+        async with self.session.get(url) as new_sound:
+            f = open(filepath, 'wb')
+            f.write(await new_sound.read())
+            f.close()
+
+        sfx_config['sounds'][name] = filename
+        await self.config.guild(ctx.guild).sfx.set(sfx_config)
+
+        await ctx.send(f'Sound {name} added.')
 
     async def ll_check(self, player, event, reason):
         if self.current_tts is None and self.last_track_info is None:
