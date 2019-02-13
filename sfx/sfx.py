@@ -202,6 +202,29 @@ class SFX(commands.Cog):
 
         await ctx.send(f'Sound {name} added.')
 
+    @commands.command()
+    async def delsfx(self, ctx, soundname: str):
+        """Deletes an existing sound."""
+
+        if str(ctx.guild.id) not in os.listdir(self.sound_base):
+            os.makedirs(os.path.join(self.sound_base, str(ctx.guild.id)))
+
+        sfx_config = await self.config.guild(ctx.guild).sfx()
+
+        if soundname not in sfx_config['sounds'].keys():
+            await ctx.send(f'Sound `{soundname}` does not exist.')
+            return
+
+        filepath = os.path.join(self.sound_base, str(ctx.guild.id), sfx_config['sounds'][soundname])
+
+        if os.path.exists(filepath):
+            os.remove(filepath)
+
+        del sfx_config['sounds'][soundname]
+        await self.config.guild(ctx.guild).sfx.set(sfx_config)
+
+        await ctx.send(f'Sound {soundname} deleted.')
+
     async def ll_check(self, player, event, reason):
         if self.current_tts is None and self.last_track_info is None:
             return
