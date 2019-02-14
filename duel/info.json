@@ -1,0 +1,7 @@
+{
+    "author" : "CalebJ",
+    "name" : "Duel",
+    "short" : "Makes two users duel each other, with randomized moves and score tracking.",
+    "description" : "Makes two users duel each other, with randomized moves and score tracking. Ported to V3 by baiumbg.",
+    "tags" : ["duel", "fun", "fight", "combat"]
+}
