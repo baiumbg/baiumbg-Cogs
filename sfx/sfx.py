@@ -303,7 +303,8 @@ class SFX(commands.Cog):
         if self.current_sfx is not None:
             player.queue.insert(0, track)
             await player.skip()
-            os.remove(self.current_sfx[0].uri)
+            if self.current_sfx[1]:
+                os.remove(self.current_sfx[0].uri)
             self.current_sfx = (track, is_tts)
             return
 
