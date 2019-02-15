@@ -1,0 +1,7 @@
+{
+    "author" : "Will/tekulvw",
+    "description" : "Measures the lameness of names. Ported to V3 by baiumbg.",
+    "disabled" : false,
+    "short" : "Measures the lameness of names",
+    "name" : "Nickometer"
+}
