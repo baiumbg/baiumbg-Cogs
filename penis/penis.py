@@ -3,13 +3,13 @@ from redbot.core.utils.chat_formatting import pagify
 import discord
 import random
 
-class Penis:
+class Penis(commands.Cog):
     """Penis related commands."""
 
     def __init__(self):
         pass
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def penis(self, ctx, *users: discord.Member):
         """Detects user's penis length
 
