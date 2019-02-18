@@ -1,0 +1,7 @@
+{
+    "author" : "baiumbg",
+    "short" : "Some utility stuff for the Median XL Diablo II mod.",
+    "requirements" : ["beautifulsoup4", "requests"],
+    "tags" : ["fun", "utility"],
+    "disabled" : false
+}
