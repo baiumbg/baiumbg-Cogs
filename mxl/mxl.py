@@ -163,7 +163,7 @@ class MXL(commands.Cog):
                 await ctx.send('Couldn\'t login to the forums. Please report this to the plugin author.')
                 return
 
-        if not dom.tbody.find(no_transactions_found):
+        if dom.tbody.find(no_transactions_found):
             await ctx.send('No results found.')
             return
 
