@@ -137,6 +137,9 @@ class MXL(commands.Cog):
         def not_logged_in_function(tag):
             return 'We\'re sorry' in tag.text
 
+        def no_transactions_found(tag):
+            return 'No transactions found.' in tag.text
+
         def escape_underscore(text):
             return text.replace('_', '\\_')
 
@@ -160,15 +163,15 @@ class MXL(commands.Cog):
                 await ctx.send('Couldn\'t login to the forums. Please report this to the plugin author.')
                 return
 
+        if not dom.tbody.find(no_transactions_found):
+            await ctx.send('No results found.')
+            return
+
         pc_results_raw = [item for item in dom.tbody.contents if item != '\n']
         message = ''
         for result in pc_results_raw:
             columns = [column for column in result.contents if column != '\n']
-            message += f'--------------------------\n**Transaction note**: {escape_underscore(columns[3].text)}\n**From**: {escape_underscore(columns[0].a.text)}\n**To**: {escape_underscore(columns[2].a.text)}\n**TG**: {columns[1].div.text}\n'
-
-        if not message:
-            await ctx.send('No results found.')
-            return
+            message += f'--------------------------\n**Transaction note**: {escape_underscore(columns[3].text)}\n**From**: {escape_underscore(columns[0].a.text)}\n**To**: {escape_underscore(columns[2].a.text)}\n**TG**: {columns[1].div.text}\n**Date**: {columns[4].text}\n'
 
         for page in pagify(message, delims=['--------------------------']):
             embed = discord.Embed(title=f'Auctions for {item}', description=page)
