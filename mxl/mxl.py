@@ -164,7 +164,7 @@ class MXL(commands.Cog):
                 return
 
             pricecheck_response = requests.post(self.tradecenter_enpoint, data={'search': item, 'submit': ''}, cookies=config['cookies'])
-            dom = BeautifulSoup(pricecheck_response)
+            dom = BeautifulSoup(pricecheck_response.text)
             if dom.find(not_logged_in_function):
                 await ctx.send('Couldn\'t login to the forums. Please report this to the plugin author.')
                 return
