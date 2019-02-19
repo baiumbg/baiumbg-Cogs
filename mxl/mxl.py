@@ -132,6 +132,12 @@ class MXL(commands.Cog):
 
     @mxl.command(name="pricecheck", aliases=["pc"])
     async def pricecheck(self, ctx, *, item: str):
+        """
+        Checks all TG transactions for the provided item/string.
+
+        Note: Only looks at the first 25 results.
+        """
+
         config = await self._config.guild(ctx.guild).all()
 
         def not_logged_in_function(tag):
