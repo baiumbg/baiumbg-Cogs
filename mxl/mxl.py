@@ -154,10 +154,10 @@ class MXL(commands.Cog):
         if dom.find(not_logged_in_function):
             error, config = await self._login(ctx.guild)
             if error == LoginError.INCORRECT_USERNAME:
-                await ctx.send(f'Incorrect forum username. Please set a valid one using `[p]mxl config username`.')
+                await ctx.send(f'Incorrect forum username. Please set a valid one using `{ctx.prefix}mxl config username`.')
                 return
             elif error == LoginError.INCORRECT_PASSWORD:
-                await ctx.send(f'Incorrect forum password. Please set the proper one using `[p]mxl config password`.')
+                await ctx.send(f'Incorrect forum password. Please set the proper one using `{ctx.prefix}mxl config password`.')
                 return
             elif error == LoginError.UNKNOWN:
                 await ctx.send('Unknown error during login.')
