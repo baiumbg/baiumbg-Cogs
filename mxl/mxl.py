@@ -102,7 +102,7 @@ class MXL(commands.Cog):
     @mxl.group(name="config")
     @checks.mod()
     async def config(self, ctx):
-        """Configures cookie contents for bypassing the MXL trade center login."""
+        """Configures forum account login details for item pricechecking."""
 
         pass
 
@@ -141,6 +141,9 @@ class MXL(commands.Cog):
         """
 
         config = await self._config.guild(ctx.guild).all()
+        if not config['username']:
+            await ctx.send(f'No forum account is currently configured for this server. Use `{ctx.prefix}mxl config` to set one up.')
+            return
 
         def not_logged_in_function(tag):
             return 'We\'re sorry' in tag.text
