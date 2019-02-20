@@ -154,13 +154,13 @@ class MXL(commands.Cog):
         if dom.find(not_logged_in_function):
             error, config = await self._login(ctx.guild)
             if error == LoginError.INCORRECT_USERNAME:
-                await self.send(f'Incorrect forum username. Please set a valid one using `[p]mxl config username`.')
+                await ctx.send(f'Incorrect forum username. Please set a valid one using `[p]mxl config username`.')
                 return
             elif error == LoginError.INCORRECT_PASSWORD:
-                await self.send(f'Incorrect forum password. Please set the proper one using `[p]mxl config password`.')
+                await ctx.send(f'Incorrect forum password. Please set the proper one using `[p]mxl config password`.')
                 return
             elif error == LoginError.UNKNOWN:
-                await self.send('Unknown error during login.')
+                await ctx.send('Unknown error during login.')
                 return
 
             pricecheck_response = requests.post(self.tradecenter_enpoint, data={'search': item, 'submit': ''}, cookies=config['cookies'])
