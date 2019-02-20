@@ -11,7 +11,8 @@ class LoginError(enum.Enum):
     NONE = 0
     INCORRECT_USERNAME = 1,
     INCORRECT_PASSWORD = 2,
-    UNKNOWN = 3
+    LOGIN_ATTEMPTS_EXCEEDED = 3,
+    UNKNOWN = 4
 
 class MXL(commands.Cog):
     """Median XL utilities."""
@@ -19,6 +20,7 @@ class MXL(commands.Cog):
     def __init__(self):
         self.auctions_endpoint = 'https://forum.median-xl.com/api.php?mode=tradecenter'
         self.login_endpoint = 'https://forum.median-xl.com/ucp.php?mode=login'
+        self.logout_endpoint = 'https://forum.median-xl.com/ucp.php?mode=logout&sid={}'
         self.tradecenter_enpoint = 'https://forum.median-xl.com/tradegold.php'
 
         default_config = {
@@ -150,7 +152,7 @@ class MXL(commands.Cog):
             return text.replace('_', '\\_')
 
         pricecheck_response = requests.post(self.tradecenter_enpoint, data={'search': item, 'submit': ''}, cookies=config['cookies'])
-        dom = BeautifulSoup(pricecheck_response.text)
+        dom = BeautifulSoup(pricecheck_response.text, 'html.parser')
         if dom.find(not_logged_in_function):
             error, config = await self._login(ctx.guild)
             if error == LoginError.INCORRECT_USERNAME:
@@ -159,12 +161,15 @@ class MXL(commands.Cog):
             elif error == LoginError.INCORRECT_PASSWORD:
                 await ctx.send(f'Incorrect forum password. Please set the proper one using `{ctx.prefix}mxl config password`.')
                 return
+            elif error == LoginError.LOGIN_ATTEMPTS_EXCEEDED:
+                await ctx.send(f'Maximum login attempts exceeded. Please login to the forum manually (with the configured account) and solve the CAPTCHA.')
+                return
             elif error == LoginError.UNKNOWN:
                 await ctx.send('Unknown error during login.')
                 return
 
             pricecheck_response = requests.post(self.tradecenter_enpoint, data={'search': item, 'submit': ''}, cookies=config['cookies'])
-            dom = BeautifulSoup(pricecheck_response.text)
+            dom = BeautifulSoup(pricecheck_response.text, 'html.parser')
             if dom.find(not_logged_in_function):
                 await ctx.send('Couldn\'t login to the forums. Please report this to the plugin author.')
                 return
@@ -183,11 +188,44 @@ class MXL(commands.Cog):
             embed = discord.Embed(title=f'Auctions for {item}', description=page)
             await ctx.send(embed=embed)
 
+
+    @mxl.command(name="logout")
+    @checks.mod()
+    async def logout(self, ctx):
+        """
+        Logs out the current forum session.
+
+        Use if you want to change the forum account.
+        """
+
+        config = await self._config.guild(ctx.guild).all()
+        if not config['cookies']['MedianXL_sid']:
+            await ctx.send("Not logged in.")
+            return
+
+        logout_response = requests.get(self.logout_endpoint.format(config['cookies']['MedianXL_sid']), cookies=config['cookies'])
+        dom = BeautifulSoup(logout_response.text, 'html.parser')
+        if dom.find(title='Login'):
+            config['cookies'] = {
+                'MedianXL_u': '',
+                'MedianXL_k': '',
+                'MedianXL_sid': ''
+            }
+            await self._config.guild(ctx.guild).set(config)
+            await ctx.send('Logged out successfully.')
+            return
+
+        if dom.find(title='Logout'):
+            await ctx.send('Logout attempt was unsuccessful.')
+            return
+
+        await ctx.send('Unknown error during logout.')
+
     async def _login(self, guild):
         config = await self._config.guild(guild).all()
         session_id = requests.get(self.tradecenter_enpoint).cookies['MedianXL_sid']
         login_response = requests.post(self.login_endpoint, data={'username': config['username'], 'password': config['password'], 'autologin': 'on', 'login': 'Login', 'sid': session_id})
-        dom = BeautifulSoup(login_response.text)
+        dom = BeautifulSoup(login_response.text, 'html.parser')
         error = dom.find(class_='error')
         if error is None:
             config['cookies'] = {
@@ -204,13 +242,16 @@ class MXL(commands.Cog):
         if 'incorrect password' in error.text:
             return LoginError.INCORRECT_PASSWORD, None
 
+        if 'maximum allowed number of login attempts' in error.text:
+            return LoginError.LOGIN_ATTEMPTS_EXCEEDED, None
+
         return LoginError.UNKNOWN, None
 
 
     def _get_auction_embeds(self, raw_auctions):
         embeds = []
         for auction in raw_auctions:
-            soup = BeautifulSoup(auction)
+            soup = BeautifulSoup(auction, 'html.parser')
             current_bid = soup.find(class_='coins').text
             number_of_bids = soup.div.div.find(title='Bids').next_sibling.strip()
             title = soup.h4.text
