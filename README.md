@@ -6,7 +6,7 @@ A bunch of useless (and some questionably useful) cogs for [Red-DiscordBot](http
 * **Nickometer** - Measure the lameness of people's nicknames. Port of [tekulvw](https://github.com/tekulvw)'s Nickometer cog.
 * **Zalgo** - HE COMES. Port of [calebj](https://github.com/calebj)'s Zalgo cog.
 * **Penis** - Measure your penis size against other members! Port of [Twentysix26](https://github.com/Twentysix26)'s Penis cog.
-* **MXL** - A bunch of Median XL utilities like auction searching and item pricechecking.
+* **MXL** - A bunch of Median XL utilities like auction searching, item pricechecking and armory dumping.
 
 ## Credits
 * [Twentysix26](https://github.com/Twentysix26) and everyone else who has contributed to Red Bot.
