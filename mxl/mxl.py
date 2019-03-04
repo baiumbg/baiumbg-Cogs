@@ -592,7 +592,9 @@ IGNORED_ITEMS = [
     'Catalyst of Disenchantment',
     'Catalyst of Learning',
     'Signet of Gold',
-    'Greater Signet of Gold'
+    'Greater Signet of Gold',
+    'Large Axe (1)',
+    'Quilted Armor (1)'
 ]
 
 RUNEWORDS = [
@@ -1833,10 +1835,10 @@ class MXL(commands.Cog):
 
         bases_str = ''
         for item, amount in rw_bases.items():
-            bases_str += f'[item]{item}[/item] x{amount}\n' if amount > 1 else f'[item]{item}[/item]\n'
+            bases_str += f'[color=#808080]{item}[/color] x{amount}\n' if amount > 1 else f'[item]{item}[/item]\n'
 
         for item, amount in shrine_bases.items():
-            bases_str += f'[item]{item}[/item] x{amount}\n' if amount > 1 else f'[item]{item}[/item]\n'
+            bases_str += f'[color=#FFFF00]{item}[/color] x{amount}\n' if amount > 1 else f'[item]{item}[/item]\n'
 
         if bases_str:
             items += TRADE_POST_BASES_SECTION.format(items = bases_str)
