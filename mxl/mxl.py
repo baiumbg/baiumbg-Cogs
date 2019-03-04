@@ -396,7 +396,8 @@ AMULETS = [
     'The Buried Hawk',
     'Scarab of Death',
     'Athulua\'s Oracle',
-    'Witchmoon'
+    'Witchmoon',
+    'Jerhyn\'s Tawiz'
 ]
 
 JEWELS = [
