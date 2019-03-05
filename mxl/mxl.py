@@ -1853,7 +1853,7 @@ class MXL(commands.Cog):
 
         trophies_str = ''
         for item, amount in trophies.items():
-            trophies_str += f'[item]{item}[/item] x{amount}\n' if amount > 1 else f'[item]{item}[/item]\n'
+            trophies_str += f'[color=#FF7F50]{item}[/color] x{amount}\n' if amount > 1 else f'[color=#FF7F50]{item}[/color]\n'
 
         if trophies_str:
             items += TRADE_POST_TROPHIES_SECTION.format(items = trophies_str)
