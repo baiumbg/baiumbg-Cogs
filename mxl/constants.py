@@ -537,6 +537,25 @@ SHRINE_VESSELS = [
     'Abandoned Vessel'
 ]
 
+SHRINES = [
+    'Creepy Shrine',
+    'Sacred Shrine',
+    'Quiet Shrine',
+    'Hidden Shrine',
+    'Tainted Shrine',
+    'Ornate Shrine',
+    'Fascinating Shrine',
+    'Intimidating Shrine',
+    'Weird Shrine',
+    'Trinity Shrine',
+    'Spiritual Shrine',
+    'Eerie Shrine',
+    'Enchanted Shrine',
+    'Shimmering Shrine',
+    'Magical Shrine',
+    'Abandoned Shrine'
+]
+
 VESSEL_TO_SHRINE = {
     'Creepy Vessel': 'Creepy Shrine',
     'Sacred Vessel': 'Sacred Shrine',
@@ -1119,6 +1138,17 @@ RUNEWORDS = [
   'Curandera'
 ]
 
+ORANGE_IGNORED_ITEMS = [
+    'Emblem of Destruction',
+    'Emblem of Hatred',
+    'Emblem of Lies',
+    'Emblem of Pain',
+    'Emblem of Suffering',
+    'Emblem of Terror',
+    'Mark of Infusion',
+    'Belladonna Extract'
+]
+
 TRADE_POST_SETS_SECTION = '''[color=#00FF00][size=24]Sets[/size][/color]
 [hr][/hr]
 {items}'''
@@ -1164,6 +1194,11 @@ TRADE_POST_TROPHIES_SECTION = '''[color=#FFA500][size=24]Trophies[/size][/color]
 '''
 
 TRADE_POST_MISC_SECTION = '''[color=#FFFFFF][size=24]Misc[/size][/color]
+[hr][/hr]
+{items}
+'''
+
+TRADE_POST_CRAFTED_SECTION = '''[color=#CD853F][size=24]Crafted[/size][/color]
 [hr][/hr]
 {items}
 '''

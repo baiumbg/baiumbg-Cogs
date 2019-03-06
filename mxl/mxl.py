@@ -1,16 +1,17 @@
-from redbot.core import commands, checks, Config
+from redbot.core import commands, checks, Config, data_manager
 from redbot.core.utils.chat_formatting import pagify
 import discord
 import random
 import requests
 import re
 import enum
+import flickrapi
 from bs4 import BeautifulSoup
 from .pastebin import PasteBin
 from .constants import SU_ITEMS, SSU_ITEMS, SSSU_ITEMS, AMULETS, RINGS, JEWELS,\
                        MOS, RUNEWORDS, IGNORED_ITEMS, SHRINE_VESSELS,\
-                       VESSEL_TO_SHRINE, QUIVERS, CHARMS, TROPHIES
-from .dclasses import ItemDump
+                       VESSEL_TO_SHRINE, QUIVERS, CHARMS, TROPHIES, ORANGE_IGNORED_ITEMS
+from .dclasses import ItemDump, PostGenerationErrors
 
 class LoginError(enum.Enum):
     NONE = 0
@@ -31,6 +32,8 @@ class MXL(commands.Cog):
         self.armory_logout_endpoint = 'https://tsw.vn.cz/acc/logout.php' # GET
         self.armory_index_endpoint = 'https://tsw.vn.cz/acc/index.php'
         self.armory_character_endpoint = 'https://tsw.vn.cz/acc/char.php?name={}'
+        self.item_css = (data_manager.bundled_data_path(self) / 'item_style.css').as_posix()
+        self.flickr_client = None
 
         default_config = {
             'forum_username': '',
@@ -45,10 +48,19 @@ class MXL(commands.Cog):
             'armory_cookies': {
                 'PHPSESSID': ''
             },
-            'pastebin_api_key': ''
+            'pastebin_api_key': '',
+            'flickr_api_key': '',
+            'flickr_api_secret': '',
+            'flickr_cache': {}
+        }
+
+        default_member_config = {
+            'generate_crafted_images': False,
+            'crafted_as_base': False
         }
         self._config = Config.get_conf(self, identifier=134621854878007298)
         self._config.register_global(**default_config)
+        self._config.register_member(**default_member_config)
 
     @commands.guild_only()
     @commands.group(name="mxl")
@@ -186,6 +198,54 @@ class MXL(commands.Cog):
         await self._config.pastebin_api_key.set(key)
         await ctx.send('PasteBin API key set successfully.')
 
+    @config.command(name="flickr_api_key")
+    async def flickr_api_key(self, ctx, api_key: str = None):
+        """Gets/sets the flickr API key."""
+
+        if api_key is None:
+            channel = ctx.author.dm_channel or await ctx.author.create_dm()
+            current_api_key = await self._config.flickr_api_key()
+            await channel.send(f'Current flickr API key: {current_api_key}')
+            return
+
+        await self._config.flickr_api_key.set(api_key)
+        await ctx.message.delete()
+        await ctx.send('Flickr API key set successfully.')
+
+    @config.command(name="flickr_api_secret")
+    async def flickr_api_secret(self, ctx, api_secret: str = None):
+        """Gets/sets the flickr API secret."""
+
+        if api_secret is None:
+            channel = ctx.author.dm_channel or await ctx.author.create_dm()
+            current_api_secret = await self._config.flickr_api_secret()
+            await channel.send(f'Current flickr API key: {current_api_secret}')
+            return
+
+        await self._config.flickr_api_secret.set(api_secret)
+        await ctx.message.delete()
+        await ctx.send('Flickr API secret set successfully.')
+
+    @mxl.group(name="uconfig", invoke_without_command=True)
+    async def uconfig(self, ctx):
+        if ctx.invoked_subcommand is None:
+            user_config = await self._config.member(ctx.author).all()
+            config_str = ''
+            for key, value in user_config.items():
+                config_str += f'{key}: {str(value)}\n'
+            await ctx.send(f'Your current config:\n```py\n{config_str}```')
+            return
+
+    @uconfig.command(name="crafted_as_base")
+    async def crafted_as_base(self, ctx, enabled: bool):
+        await self._config.member(ctx.author).crafted_as_base.set(enabled)
+        await ctx.send(f'crafted_as_base {"enabled" if enabled else "disabled"}.')
+
+    @uconfig.command(name="generate_crafted_images")
+    async def generate_crafted_images(self, ctx, enabled: bool):
+        await self._config.member(ctx.author).generate_crafted_images.set(enabled)
+        await ctx.send(f'generate_crafted_images {"enabled" if enabled else "disabled"}.')
+
     @mxl.command(name="pricecheck", aliases=["pc"])
     async def pricecheck(self, ctx, *, item: str):
         """
@@ -322,12 +382,24 @@ class MXL(commands.Cog):
         """
 
         config = await self._config.all()
+        user_config = await self._config.member(ctx.author).all()
         if not config['pastebin_api_key']:
             await ctx.send(f'Pastebin API key hasn\'t been configured yet. Configure one using `{ctx.prefix}mxl config pastebin_api_key`.')
             return
 
         if not config['armory_username']:
             await ctx.send(f'Armory account hasn\'t been configured yet. Configure one using `{ctx.prefix}mxl config armory_username/armory_password`.')
+            return
+
+        if not config['flickr_api_key'] or not config['flickr_api_secret'] and self.flickr_client is None:
+            await ctx.send(f'Flickr API key/secret hasn\'t been configured yet. Configure using `{ctx.prefix}mxl config flickr_api_key/flickr_api_secret`.')
+            return
+
+        if not self.flickr_client:
+            self.flickr_client = flickrapi.FlickrAPI(config['flickr_api_key'], config['flickr_api_secret'], format='xmlnode')
+
+        if not self.flickr_client.token_valid(perms='write'):
+            await ctx.send(f'Missing flickr client token. Use `{ctx.prefix}mxl flickr` to configure one.')
             return
 
         items = ItemDump()
@@ -347,13 +419,24 @@ class MXL(commands.Cog):
                 continue
 
             item_dump = dom.find_all(class_='item-wrapper')
-            self._scrape_items(item_dump, items, character)
+            self._scrape_items(item_dump, items, character, user_config)
 
         if not items:
             await ctx.send('No items found.')
             return
 
-        post = items.to_trade_post()
+        post, cache_update, generation_error = items.to_trade_post(self.flickr_client, self.item_css, user_config, config['flickr_cache'])
+        if cache_update:
+            current_cache = await self._config.flickr_cache()
+            await self._config.flickr_cache.set({**cache_update, **current_cache})
+
+        if generation_error == PostGenerationErrors.IMAGE_UPLOAD_FAILED:
+            await ctx.send('An error occurred while uploading an item\'s image to flickr. Try again later.')
+            return
+        elif generation_error == PostGenerationErrors.UNKNOWN:
+            await ctx.send('An unknown error occurred while generating your trade post. Try again later.')
+            return
+
         pastebin_link = await self._create_pastebin(post, f'MXL trade post for characters: {", ".join(characters)}')
         channel = ctx.author.dm_channel or await ctx.author.create_dm()
         if pastebin_link:
@@ -363,6 +446,42 @@ class MXL(commands.Cog):
         await ctx.send('Couldn\'t create the trade post pastebin - 24h limit is probably reached. Check your DMs.')
         for page in pagify(post):
             await channel.send(embed=discord.Embed(description=page))
+
+    @mxl.command(name="flickr")
+    @checks.is_owner()
+    async def flickr(self, ctx, verify_code: str = None):
+        config = await self._config.all()
+
+        if not config['flickr_api_key'] or not config['flickr_api_secret'] and self.flickr_client is None:
+            await ctx.send(f'Flickr API key/secret hasn\'t been configured yet. Configure using `{ctx.prefix}mxl config flickr_api_key/flickr_api_secret`.')
+            return
+
+        if not self.flickr_client:
+            self.flickr_client = flickrapi.FlickrAPI(config['flickr_api_key'], config['flickr_api_secret'], format='xmlnode')
+
+        if self.flickr_client.token_valid(perms='write'):
+            await ctx.send(f'Flickr already authenticated.')
+            return
+
+        if verify_code:
+            self.flickr_client.get_access_token(verify_code)
+            await ctx.send('Flickr authenticated successfully.')
+            return
+
+        self.flickr_client.get_request_token(oauth_callback='oob')
+        authorize_url = self.flickr_client.auth_url(perms='write')
+        channel = ctx.author.dm_channel or await ctx.author.create_dm()
+        await channel.send(f'Click here to authorize flickr: {authorize_url}')
+
+    @mxl.group(name="flickrcache")
+    @checks.is_owner()
+    async def flickr_cache(self, ctx):
+        pass
+
+    @flickr_cache.command(name="clear")
+    async def flickr_cache_clear(self, ctx):
+        await self._config.flickr_cache.set({})
+        await ctx.send('Flickr cache cleared successfully.')
 
     async def _forum_login(self):
         config = await self._config.all()
@@ -404,7 +523,7 @@ class MXL(commands.Cog):
 
         return True, None
 
-    def _scrape_items(self, item_dump, items, character):
+    def _scrape_items(self, item_dump, items, character, user_config):
         for item in item_dump:
             if item.th:
                 continue
@@ -418,95 +537,103 @@ class MXL(commands.Cog):
             if set_match:
                 set_name = set_match.group(1)
                 item_name = item_name.split('[')[0].strip()
-                items.increment_set_item(set_name, item_name, character)
+                items.increment_set_item(set_name, item_name, character, item.parent.parent)
                 continue
 
             if item_name in SU_ITEMS:
-                items.increment_su(item_name, character)
+                items.increment_su(item_name, character, item.parent.parent)
                 continue
 
             if 'Hanfod' in item_name:
-                items.increment_su('Hanfod Tân', character)
+                items.increment_su('Hanfod Tân', character, item.parent.parent)
                 continue
 
             if item_name == 'Jewel':
-                items.increment_other('Jewel', character)
+                items.increment_other('Jewel', character, item.parent.parent)
                 continue
 
             if item_name in SSU_ITEMS:
-                items.increment_ssu(item_name, character)
+                items.increment_ssu(item_name, character, item.parent.parent)
                 continue
 
             if item_name in SSSU_ITEMS:
-                items.increment_sssu(item_name, character)
+                items.increment_sssu(item_name, character, item.parent.parent)
                 continue
 
             if item_name in RUNEWORDS:
-                items.increment_rw(item_name, character)
+                items.increment_rw(item_name, character, item.parent.parent)
                 continue
 
             if item_name in AMULETS:
-                items.increment_amulet(item_name, character)
+                items.increment_amulet(item_name, character, item.parent.parent)
                 continue
 
             if item_name in RINGS:
-                items.increment_ring(item_name, character)
+                items.increment_ring(item_name, character, item.parent.parent)
                 continue
 
             if item_name in JEWELS:
-                items.increment_jewel(item_name, character)
+                items.increment_jewel(item_name, character, item.parent.parent)
                 continue
 
             if item_name in QUIVERS:
-                items.increment_quiver(item_name, character)
+                items.increment_quiver(item_name, character, item.parent.parent)
                 continue
 
             if item_name in MOS:
-                items.increment_mo(item_name, character)
+                items.increment_mo(item_name, character, item.parent.parent)
                 continue
 
             if item.span['class'][0] == 'color-white' or item.span['class'][0] == 'color-blue':
                 base_name = item_name + ' [eth]' if '[ethereal]' in item.text else ''.join(item_name.split('Superior '))
-                items.increment_rw_base(base_name, character)
+                items.increment_rw_base(base_name, character, item.parent.parent)
                 continue
 
             if item.span['class'][0] == 'color-yellow':
-                items.increment_shrine_base(item_name, character)
+                items.increment_shrine_base(item_name, character, item.parent.parent)
                 continue
 
             if item_name in CHARMS:
-                items.increment_charm(item_name, character)
+                items.increment_charm(item_name, character, item.parent.parent)
                 continue
 
             shrine_match = re.search('Shrine \(([^\)]+)', item_name)
             if shrine_match:
                 shrine_name = item_name.split('(')[0].strip()
                 amount = int(shrine_match.group(1)) / 10
-                items.increment_shrine(shrine_name, character, amount)
+                items.increment_shrine(shrine_name, character, item.parent.parent, amount)
                 continue
 
             if item_name in SHRINE_VESSELS:
                 vessel_amount = int((re.search('Quantity: ([0-9]+)', item.find(class_='color-grey').text)).group(1))
                 shrine_name = VESSEL_TO_SHRINE[item_name]
-                items.increment_shrine(shrine_name, character, vessel_amount)
+                items.increment_shrine(shrine_name, character, item.parent.parent, vessel_amount)
                 continue
 
             if item_name == 'Arcane Cluster':
                 crystals_amount = int((re.search('Quantity: ([0-9]+)', item.find(class_='color-grey').text)).group(1))
-                items.increment_other('Arcane Crystal', character, crystals_amount)
+                items.increment_other('Arcane Crystal', character, item.parent.parent, crystals_amount)
                 continue
 
             AC_shards_match = re.search('Shards \(([^\)]+)', item_name)
             if AC_shards_match:
                 amount = int(AC_shards_match.group(1)) / 5
-                items.increment_other('Arcane Crystal', character, amount)
+                items.increment_other('Arcane Crystal', character, item.parent.parent, amount)
+                continue
+
+            if item.span['class'][0] == 'color-orange' and item_name not in ORANGE_IGNORED_ITEMS and item_name not in TROPHIES:
+                if user_config['crafted_as_base']:
+                    items.increment_shrine_base(item_name, character, item.parent.parent)
+                    continue
+
+                items.increment_crafted(item_name, character, item.parent.parent)
                 continue
 
             if item_name in TROPHIES:
-                items.increment_trophy(item_name, character)
+                items.increment_trophy(item_name, character, item.parent.parent)
                 continue
 
-            items.increment_other(item_name, character)
+            items.increment_other(item_name, character, item.parent.parent)
 
     async def _create_pastebin(self, text, title=None):
         api_key = await self._config.pastebin_api_key()

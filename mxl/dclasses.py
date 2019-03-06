@@ -2,21 +2,34 @@ import dataclasses
 from .constants import TRADE_POST_SETS_SECTION, TRADE_POST_SU_SECTION, TRADE_POST_SSU_SECTION,\
                        TRADE_POST_SSSU_SECTION, TRADE_POST_RUNEWORDS_SECTION, TRADE_POST_RAQMOJ_SECTION,\
                        TRADE_POST_BASES_SECTION, TRADE_POST_CHARMS_SECTION, TRADE_POST_TROPHIES_SECTION,\
-                       TRADE_POST_MISC_SECTION, TRADE_POST_TEMPLATE
-from typing import Set, Dict
+                       TRADE_POST_MISC_SECTION, TRADE_POST_CRAFTED_SECTION, TRADE_POST_TEMPLATE, SHRINES
+from typing import Set, Dict, List
+import imgkit
+import os
+import tempfile
+import random
+import flickrapi
+import hashlib
+import enum
+
+class PostGenerationErrors(enum.Enum):
+    IMAGE_UPLOAD_FAILED = 1,
+    UNKNOWN = 2
 
 @dataclasses.dataclass
 class Item:
     name: str
-    characters: Set[str] = dataclasses.field(default_factory=set)
+    characters: List = dataclasses.field(default_factory=list)
     amount: float = 0
+    html: List = dataclasses.field(default_factory=list)
 
     def __hash__(self):
         return hash(self.name)
 
-    def increment(self, character, amount = 1):
+    def increment(self, character, html, amount = 1):
         self.amount += amount
-        self.characters.add(character)
+        self.characters.append(character)
+        self.html.append(html)
 
 @dataclasses.dataclass
 class Set:
@@ -40,6 +53,7 @@ class ItemDump:
     charms: Dict[str, Item] = dataclasses.field(default_factory=dict)
     trophies: Dict[str, Item] = dataclasses.field(default_factory=dict)
     shrines: Dict[str, Item] = dataclasses.field(default_factory=dict)
+    crafted: Dict[str, Item] = dataclasses.field(default_factory=dict)
     other: Dict[str, Item] = dataclasses.field(default_factory=dict)
 
     def __bool__(self):
@@ -48,57 +62,61 @@ class ItemDump:
                self.runewords or self.rw_bases or self.shrine_bases or \
                self.charms or self.trophies or self.shrines or self.other)
 
-    def increment_set_item(self, set_name, item_name, character):
-        self.sets.setdefault(set_name, Set(name=set_name)).items.setdefault(item_name, Item(name=item_name)).increment(character)
+    def increment_set_item(self, set_name, item_name, character, html):
+        self.sets.setdefault(set_name, Set(name=set_name)).items.setdefault(item_name, Item(name=item_name)).increment(character, html)
 
-    def increment_su(self, item_name, character):
-        self.su.setdefault(item_name, Item(name=item_name)).increment(character)
+    def increment_su(self, item_name, character, html):
+        self.su.setdefault(item_name, Item(name=item_name)).increment(character, html)
 
-    def increment_ssu(self, item_name, character):
-        self.ssu.setdefault(item_name, Item(name=item_name)).increment(character)
+    def increment_ssu(self, item_name, character, html):
+        self.ssu.setdefault(item_name, Item(name=item_name)).increment(character, html)
 
-    def increment_sssu(self, item_name, character):
-        self.sssu.setdefault(item_name, Item(name=item_name)).increment(character)
+    def increment_sssu(self, item_name, character, html):
+        self.sssu.setdefault(item_name, Item(name=item_name)).increment(character, html)
 
-    def increment_amulet(self, item_name, character):
-        self.amulets.setdefault(item_name, Item(name=item_name)).increment(character)
+    def increment_amulet(self, item_name, character, html):
+        self.amulets.setdefault(item_name, Item(name=item_name)).increment(character, html)
 
-    def increment_ring(self, item_name, character):
-        self.rings.setdefault(item_name, Item(name=item_name)).increment(character)
+    def increment_ring(self, item_name, character, html):
+        self.rings.setdefault(item_name, Item(name=item_name)).increment(character, html)
 
-    def increment_jewel(self, item_name, character):
-        self.jewels.setdefault(item_name, Item(name=item_name)).increment(character)
+    def increment_jewel(self, item_name, character, html):
+        self.jewels.setdefault(item_name, Item(name=item_name)).increment(character, html)
 
-    def increment_mo(self, item_name, character):
-        self.mos.setdefault(item_name, Item(name=item_name)).increment(character)
+    def increment_mo(self, item_name, character, html):
+        self.mos.setdefault(item_name, Item(name=item_name)).increment(character, html)
 
-    def increment_quiver(self, item_name, character):
-        self.quivers.setdefault(item_name, Item(name=item_name)).increment(character)
+    def increment_quiver(self, item_name, character, html):
+        self.quivers.setdefault(item_name, Item(name=item_name)).increment(character, html)
 
-    def increment_rw(self, item_name, character):
-        self.runewords.setdefault(item_name, Item(name=item_name)).increment(character)
+    def increment_rw(self, item_name, character, html):
+        self.runewords.setdefault(item_name, Item(name=item_name)).increment(character, html)
 
-    def increment_rw_base(self, item_name, character):
-        self.rw_bases.setdefault(item_name, Item(name=item_name)).increment(character)
+    def increment_rw_base(self, item_name, character, html):
+        self.rw_bases.setdefault(item_name, Item(name=item_name)).increment(character, html)
 
-    def increment_shrine_base(self, item_name, character):
-        self.shrine_bases.setdefault(item_name, Item(name=item_name)).increment(character)
+    def increment_shrine_base(self, item_name, character, html):
+        self.shrine_bases.setdefault(item_name, Item(name=item_name)).increment(character, html)
 
-    def increment_charm(self, item_name, character):
-        self.charms.setdefault(item_name, Item(name=item_name)).increment(character)
+    def increment_charm(self, item_name, character, html):
+        self.charms.setdefault(item_name, Item(name=item_name)).increment(character, html)
 
-    def increment_trophy(self, item_name, character):
-        self.trophies.setdefault(item_name, Item(name=item_name)).increment(character)
+    def increment_trophy(self, item_name, character, html):
+        self.trophies.setdefault(item_name, Item(name=item_name)).increment(character, html)
 
-    def increment_shrine(self, item_name, character, amount = 1):
-        self.shrines.setdefault(item_name, Item(name=item_name)).increment(character, amount)
+    def increment_shrine(self, item_name, character, html, amount = 1):
+        self.shrines.setdefault(item_name, Item(name=item_name)).increment(character, html, amount)
 
-    def increment_other(self, item_name, character, amount = 1):
-        self.other.setdefault(item_name, Item(name=item_name)).increment(character, amount)
+    def increment_crafted(self, item_name, character, html):
+        self.crafted.setdefault(item_name, Item(name=item_name)).increment(character, html)
 
-    def to_trade_post(self):
+    def increment_other(self, item_name, character, html, amount = 1):
+        self.other.setdefault(item_name, Item(name=item_name)).increment(character, html, amount)
+
+    def to_trade_post(self, flickr_client, css_file, user_config, flickr_cache):
         items_section = ''
         sets_str = ''
+        cache_update = {}
         for set_ in sorted(self.sets.values(), key=lambda k: k.name):
             sets_str += f'[u][color=#00FF00]{set_.name}[/color][/u]\n'
             for item in sorted(set_.items.values(), key=lambda k: k.name):
@@ -136,6 +154,54 @@ class ItemDump:
 
         if runewords_str:
             items_section += TRADE_POST_RUNEWORDS_SECTION.format(items = runewords_str)
+
+        crafted_str = ''
+        for item in sorted(self.crafted.values(), key=lambda k: k.name):
+            crafted_str += f'[color=#FAAA23]{item.name}[/color] x{item.amount}\n' if item.amount > 1 else f'[color=#FAAA23]{item.name}[/color]\n'
+
+            if user_config['generate_crafted_images']:
+                crafted_str += '[spoil]\n'
+
+                for tag in item.html:
+                    if tag.find(class_='gear_img'):
+                        tag.img.extract()
+                    else:
+                        tag.img['src'] = f'https://tsw.vn.cz/acc/{tag.img["src"]}'
+                        tag.span.extract()
+
+                    tag.div['style'] = 'display: block; white-space: nowrap;'
+
+                    hash_md5 = hashlib.md5()
+                    hash_md5.update(str(tag).encode())
+                    item_md5 = hash_md5.hexdigest()
+                    if item_md5 in flickr_cache:
+                        crafted_str += f'[img]{flickr_cache[item_md5]}[/img]'
+                        continue
+
+                    if item_md5 in cache_update:
+                        crafted_str += f'[img]{cache_update[item_md5]}[/img]'
+                        continue
+
+                    image_file = os.path.join(tempfile.gettempdir(), ''.join(random.choice('0123456789ABCDEF') for i in range(12)) + '.png')
+                    imgkit.from_string(str(tag), image_file, css=css_file, options={'width': '0'})
+
+                    image_id = ''
+                    image_link = ''
+                    try:
+                        image_id = flickr_client.upload(image_file).photoid[0].text
+                        image_link = flickr_client.photos.getSizes(photo_id=image_id).sizes[0].size[-1]['source']
+                    except:
+                        return None, cache_update, PostGenerationErrors.IMAGE_UPLOAD_FAILED
+                    finally:
+                        os.remove(image_file)
+
+                    crafted_str += f'[img]{image_link}[/img]\n'
+                    cache_update[item_md5] = image_link
+
+                crafted_str += '[/spoil]\n'
+
+        if self.crafted:
+            items_section += TRADE_POST_CRAFTED_SECTION.format(items = crafted_str)
 
         raqmoj_str = ''
         for item in sorted(self.rings.values(), key=lambda k: k.name):
@@ -194,15 +260,15 @@ class ItemDump:
 
         other_str = ''
         for item in sorted(self.shrines.values(), key=lambda k: k.name):
-            other_str += f'[item]{item.name}[/item] x{item.amount}\n' if item.amount > 1 else f'[item]{item.name}[/item]\n'
+            other_str += f'[color=#FAAA23]{item.name}[/color] x{item.amount}\n' if item.amount != 1 else f'[color=#FAAA23]{item.name}[/color]\n'
 
         if self.shrines:
             other_str += '\n'
 
         for item in sorted(self.other.values(), key=lambda k: k.name):
-            other_str += f'[item]{item.name}[/item] x{item.amount}\n' if item.amount > 1 else f'[item]{item.name}[/item]\n'
+            other_str += f'{item.name} x{item.amount}\n' if item.amount != 1 else f'{item.name}\n'
 
         if other_str:
             items_section += TRADE_POST_MISC_SECTION.format(items = other_str)
 
-        return TRADE_POST_TEMPLATE.format(items = items_section)
+        return TRADE_POST_TEMPLATE.format(items = items_section), cache_update, None
