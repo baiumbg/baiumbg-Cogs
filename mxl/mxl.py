@@ -228,6 +228,8 @@ class MXL(commands.Cog):
 
     @mxl.group(name="uconfig", invoke_without_command=True)
     async def uconfig(self, ctx):
+        """Configures user options."""
+
         if ctx.invoked_subcommand is None:
             user_config = await self._config.member(ctx.author).all()
             config_str = ''
@@ -238,11 +240,19 @@ class MXL(commands.Cog):
 
     @uconfig.command(name="crafted_as_base")
     async def crafted_as_base(self, ctx, enabled: bool):
+        """Crafted items are counted as base items when enabled."""
+
         await self._config.member(ctx.author).crafted_as_base.set(enabled)
         await ctx.send(f'crafted_as_base {"enabled" if enabled else "disabled"}.')
 
     @uconfig.command(name="generate_crafted_images")
     async def generate_crafted_images(self, ctx, enabled: bool):
+        """
+        Images are generated for every crafted item in the supplied characters' inventories when enabled.
+
+        No effect if `crafted_as_base` is enabled.
+        Warning: Do not use with large amounts of crafted items - the command will most likely fail and will make the bot reconnect to Discord.
+        """
         await self._config.member(ctx.author).generate_crafted_images.set(enabled)
         await ctx.send(f'generate_crafted_images {"enabled" if enabled else "disabled"}.')
 
@@ -450,6 +460,11 @@ class MXL(commands.Cog):
     @mxl.command(name="flickr")
     @checks.is_owner()
     async def flickr(self, ctx, verify_code: str = None):
+        """
+        Connects a Flickr account that will be used when uploading images.
+
+        Use `[p]mxl flickr <code>` when you have obtained the code from the link that the bot sends you.
+        """
         config = await self._config.all()
 
         if not config['flickr_api_key'] or not config['flickr_api_secret'] and self.flickr_client is None:
@@ -476,12 +491,33 @@ class MXL(commands.Cog):
     @mxl.group(name="flickrcache")
     @checks.is_owner()
     async def flickr_cache(self, ctx):
+        """Manages the flickr image cache."""
+
         pass
 
     @flickr_cache.command(name="clear")
     async def flickr_cache_clear(self, ctx):
+        """
+        Clears the flickr image cache.
+
+        This will not delete the images from the connected flickr account - you have to do that manually.
+        """
+
         await self._config.flickr_cache.set({})
         await ctx.send('Flickr cache cleared successfully.')
+
+    @flickr_cache.command(name="list")
+    async def flickr_cache_list(self, ctx):
+        """Lists the currrent flickr cache in a DM."""
+
+        flickr_cache = await self._config.flickr_cache()
+        flickr_cache_msg = f'{"HTML MD5".ljust(32)} Image link'
+        for md5, link in flickr_cache.items():
+            flickr_cache_msg += f'{md5} {link}'
+
+        channel = ctx.author.dm_channel or await ctx.author.create_dm()
+        for page in pagify(flickr_cache_msg, page_length=1993):
+            await channel.send(f'```py{page}```')
 
     async def _forum_login(self):
         config = await self._config.all()
