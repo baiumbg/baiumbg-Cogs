@@ -511,13 +511,13 @@ class MXL(commands.Cog):
         """Lists the currrent flickr cache in a DM."""
 
         flickr_cache = await self._config.flickr_cache()
-        flickr_cache_msg = f'{"HTML MD5".ljust(32)} Image link'
+        flickr_cache_msg = f'{"HTML MD5".ljust(32)} Image link\n'
         for md5, link in flickr_cache.items():
-            flickr_cache_msg += f'{md5} {link}'
+            flickr_cache_msg += f'{md5} {link}\n'
 
         channel = ctx.author.dm_channel or await ctx.author.create_dm()
-        for page in pagify(flickr_cache_msg, page_length=1993):
-            await channel.send(f'```py{page}```')
+        for page in pagify(flickr_cache_msg, page_length=1992):
+            await channel.send(f'```py\n{page}```')
 
     async def _forum_login(self):
         config = await self._config.all()
