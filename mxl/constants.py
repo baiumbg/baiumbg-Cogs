@@ -400,7 +400,8 @@ JEWELS = [
     'Suicide Note',
     'Jewel of Luck',
     'Asheara\'s Cateye',
-    'Farsight Globe'
+    'Farsight Globe',
+    'Wishmaster'
 ]
 
 QUIVERS = [
