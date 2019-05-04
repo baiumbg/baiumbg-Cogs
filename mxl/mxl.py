@@ -8,7 +8,7 @@ import enum
 import flickrapi
 from bs4 import BeautifulSoup
 from .pastebin import PasteBin
-from .constants import SU_ITEMS, SSU_ITEMS, SSSU_ITEMS, AMULETS, RINGS, JEWELS,\
+from .constants import SU_ITEMS, SSU_ITEMS, SSSU_ITEMS, SETS, AMULETS, RINGS, JEWELS,\
                        MOS, RUNEWORDS, IGNORED_ITEMS, SHRINE_VESSELS,\
                        VESSEL_TO_SHRINE, QUIVERS, CHARMS, TROPHIES, ORANGE_IGNORED_ITEMS
 from .dclasses import ItemDump, PostGenerationErrors
@@ -561,11 +561,13 @@ class MXL(commands.Cog):
 
     def _scrape_items(self, item_dump, items, character, user_config):
         for item in item_dump:
-            if item.th:
-                continue
+            # For multi-line charm names
+            # Note: May need updating in the near future
+            if item.font.br:
+                item.font.br.extract()
 
-            item_name = item.span.text
-            set_match = re.search('\[([^\]]+)', item.span.text)
+            item_name = item.font.text
+            set_match = re.search('\[([^\]]+)', item.font.text)
 
             if item_name in IGNORED_ITEMS:
                 continue
@@ -573,6 +575,11 @@ class MXL(commands.Cog):
             if set_match:
                 set_name = set_match.group(1)
                 item_name = item_name.split('[')[0].strip()
+                items.increment_set_item(set_name, item_name, character, item.parent.parent)
+                continue
+
+            if item.span['class'][0] == 'color-green' and item_name in SETS.keys():
+                set_name = SETS[item_name]
                 items.increment_set_item(set_name, item_name, character, item.parent.parent)
                 continue
 
@@ -621,7 +628,7 @@ class MXL(commands.Cog):
                 continue
 
             if item.span['class'][0] == 'color-white' or item.span['class'][0] == 'color-blue':
-                base_name = item_name + ' [eth]' if '[ethereal]' in item.text else ''.join(item_name.split('Superior '))
+                base_name = item_name + ' [eth]' if 'Ethereal' in item.text else ''.join(item_name.split('Superior '))
                 items.increment_rw_base(base_name, character, item.parent.parent)
                 continue
 
@@ -650,6 +657,11 @@ class MXL(commands.Cog):
                 crystals_amount = int((re.search('Quantity: ([0-9]+)', item.find(class_='color-grey').text)).group(1))
                 items.increment_other('Arcane Crystal', character, item.parent.parent, crystals_amount)
                 continue
+
+            # TODO: Update when Aahz fixes runestone formatting
+            if item_name == ')':
+                item_name = f'Depleted Riftstone ({item.span.contents[1].text})'
+                items.increment_other(item_name, character, item.parent.parent)
 
             AC_shards_match = re.search('Shards \(([^\)]+)', item_name)
             if AC_shards_match:
