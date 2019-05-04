@@ -8,8 +8,8 @@ import enum
 import flickrapi
 from bs4 import BeautifulSoup
 from .pastebin import PasteBin
-from .constants import SU_ITEMS, SSU_ITEMS, SSSU_ITEMS, SETS, AMULETS, RINGS, JEWELS,\
-                       MOS, RUNEWORDS, IGNORED_ITEMS, SHRINE_VESSELS,\
+from .constants import SU_ITEMS, SSU_ITEMS, SSSU_ITEMS, SETS, AMULETS, RINGS, JEWELS, \
+                       MOS, RUNEWORDS, IGNORED_ITEMS, SHRINE_VESSELS, WHITE_IGNORED_ITEMS, \
                        VESSEL_TO_SHRINE, QUIVERS, CHARMS, TROPHIES, ORANGE_IGNORED_ITEMS
 from .dclasses import ItemDump, PostGenerationErrors
 
@@ -633,7 +633,7 @@ class MXL(commands.Cog):
                 items.increment_mo(item_name, character, item.parent.parent)
                 continue
 
-            if item.span['class'][0] == 'color-white' or item.span['class'][0] == 'color-blue':
+            if item.span['class'][0] == 'color-white' or item.span['class'][0] == 'color-blue' and item not in WHITE_IGNORED_ITEMS:
                 base_name = item_name + ' [eth]' if 'Ethereal' in item.text else ''.join(item_name.split('Superior '))
                 items.increment_rw_base(base_name, character, item.parent.parent)
                 continue

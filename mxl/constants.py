@@ -1361,7 +1361,16 @@ ORANGE_IGNORED_ITEMS = [
     'Ancient Book',
     'Cycle',
     'Oil of Conjuration',
-    'Sunless Crystal Bird'
+    'Sunless Crystal Bird',
+    'Deity\'s Bow',
+    'Oil of Enhancement',
+    'Oil of Craft',
+    'Oil of Renewal',
+    'Oil of Luck'
+]
+
+WHITE_IGNORED_ITEMS = [
+    'Mephisto\'s Soulstone'
 ]
 
 TRADE_POST_SETS_SECTION = '''[color=#00FF00][size=24]Sets[/size][/color]
