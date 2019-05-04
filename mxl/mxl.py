@@ -561,18 +561,19 @@ class MXL(commands.Cog):
     def _scrape_items(self, item_dump, items, character, user_config):
         for item in item_dump:
             item_name = ''
+            set_match = None
             if item.font:
                 if item.font.br:
                     item.font.br.extract()
 
                 item_name = item.font.text
+                set_match = re.search('\[([^\]]+)', item.font.text)
             else:
                 if item.span.br:
                     item.span.br.extract()
 
                 item_name = item.span.text
-
-            set_match = re.search('\[([^\]]+)', item.font.text)
+                set_match = re.search('\[([^\]]+)', item.span.text)
 
             if item_name in IGNORED_ITEMS:
                 continue
