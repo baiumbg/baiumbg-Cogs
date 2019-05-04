@@ -69,7 +69,7 @@ class MXL(commands.Cog):
 
         pass
 
-    @mxl.group(name="auctions", invoke_without_command=True)
+    @mxl.group(name="auctions")
     async def auctions(self, ctx):
         """MXL auction utilities."""
 
