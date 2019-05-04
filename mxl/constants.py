@@ -699,7 +699,8 @@ CHARMS = [
     'Corrupted Wormhole',
     'Demonsbane',
     'Lylia\'s Curse',
-    'Cold Fusion Schematics'
+    'Cold Fusion Schematics',
+    'Spirit of Creation'
 ]
 
 TROPHIES = [
