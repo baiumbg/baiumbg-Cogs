@@ -73,8 +73,7 @@ class MXL(commands.Cog):
     async def auctions(self, ctx):
         """MXL auction utilities."""
 
-        if ctx.invoked_subcommand is None:
-            await ctx.invoke(self.auctions_list)
+        pass
 
     @auctions.command(name="list")
     @commands.cooldown(1, 60, discord.ext.commands.BucketType.user)
