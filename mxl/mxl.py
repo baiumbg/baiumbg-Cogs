@@ -311,7 +311,7 @@ class MXL(commands.Cog):
             message += f'--------------------------\n**Transaction note**: {escape_underscore(columns[3].text)}\n**From**: {escape_underscore(columns[0].a.text)}\n**To**: {escape_underscore(columns[2].a.text)}\n**TG**: {columns[1].div.text}\n**Date**: {columns[5].text}\n'
 
             if columns[4].text:
-                message += f'**Bids**: {columns[4].text.strip('| ')}\n'
+                message += f"**Bids**: {columns[4].text.strip('| ')}\n"
 
             image = columns[4].find(title='Image')
             if image is not None:
