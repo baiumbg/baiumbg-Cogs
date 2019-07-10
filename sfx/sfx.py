@@ -259,7 +259,7 @@ class SFX(commands.Cog):
             await ctx.send(f'No sounds found. Use `{ctx.prefix}addsfx` to add one.')
             return
 
-        paginator = discord.ext.commands.formatter.Paginator()
+        paginator = discord.ext.commands.help.Paginator()
         for soundname, filepath in cfg_sounds.items():
             paginator.add_line(soundname)
 
