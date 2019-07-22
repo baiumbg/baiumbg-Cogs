@@ -49,6 +49,7 @@ class MXL(commands.Cog):
                 'PHPSESSID': ''
             },
             'pastebin_api_key': '',
+            'pastebin_user_key': '',
             'flickr_api_key': '',
             'flickr_api_secret': '',
             'flickr_cache': {}
@@ -196,6 +197,19 @@ class MXL(commands.Cog):
 
         await self._config.pastebin_api_key.set(key)
         await ctx.send('PasteBin API key set successfully.')
+
+    @config.command(name="pastebin_api_key")
+    async def pastebin_user_key(self, ctx, key: str = None):
+        """Gets/sets the user key to be used when creating pastebins."""
+
+        if key is None:
+            channel = ctx.author.dm_channel or await ctx.author.create_dm()
+            current_user_key = await self._config.pastebin_user_key()
+            await channel.send(f'Current user key: {current_user_key}')
+            return
+
+        await self._config.pastebin_user_key.set(key)
+        await ctx.send('PasteBin user key set successfully.')
 
     @config.command(name="flickr_api_key")
     async def flickr_api_key(self, ctx, api_key: str = None):
@@ -693,7 +707,8 @@ class MXL(commands.Cog):
 
     async def _create_pastebin(self, text, title=None):
         api_key = await self._config.pastebin_api_key()
-        pb = PasteBin(api_key)
+        user_key = await self._config.pastebin_user_key()
+        pb = PasteBin(api_key, user_key)
         pb_link = pb.paste(text, name=title, private='1', expire='1D')
         return None if 'Bad API request' in pb_link or 'Post limit' in pb_link else pb_link
 
