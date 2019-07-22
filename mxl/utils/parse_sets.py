@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import pprint
 
 def clean(span_text):
     span_text = span_text.replace('\n', '')
@@ -15,17 +16,11 @@ if __name__ == "__main__":
         row = table.find_all('tr')[1]
 
         spans = row.td.find_all('span')
-        print(spans[0])
-        print(spans[1])
-        print(spans[2])
-        print(spans[3])
-        print(spans[4])
-        print(spans[5])
         set_name = clean(spans[0].text)
-        result[clean(spans[1].text)] = set_name
-        result[clean(spans[2].text)] = set_name
-        result[clean(spans[3].text)] = set_name
-        result[clean(spans[4].text)] = set_name
-        result[clean(spans[5].text)] = set_name
+        for span in spans[1:]:
+            if span.text.find('Set Bonus') != -1:
+                break
 
-    print(str(result))
+            result[clean(span.text)] = set_name
+
+    pprint.pprint(result, indent=4)
