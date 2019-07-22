@@ -198,7 +198,7 @@ class MXL(commands.Cog):
         await self._config.pastebin_api_key.set(key)
         await ctx.send('PasteBin API key set successfully.')
 
-    @config.command(name="pastebin_api_key")
+    @config.command(name="pastebin_user_key")
     async def pastebin_user_key(self, ctx, key: str = None):
         """Gets/sets the user key to be used when creating pastebins."""
 
