@@ -281,7 +281,7 @@ class MXL(commands.Cog):
 
         To set your template you must create a pastebin with it. In order for your template to be filled with the items that
         have been found on your characters when creating a character dump, you must use the following macros:
-        {su}, {ssu}, {sssu}, {sets}, {rings}, {amulets}, {jewels}, {quivers}, {mos}, {charms}, {trophies}, {shrines}, {rws}, {misc}
+        {su}, {ssu}, {sssu}, {sets}, {rws}, {crafted}, {rings}, {amulets}, {jewels}, {quivers}, {mos}, {rw_bases}, {shrine_bases}, {charms}, {charms}, {trophies}, {shrines}, {misc}
 
         Default template: https://pastebin.com/Hnf8hG5m
 
