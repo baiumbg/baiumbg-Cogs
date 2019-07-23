@@ -5,12 +5,14 @@ import random
 import requests
 import re
 import enum
+import urllib
 import flickrapi
 from bs4 import BeautifulSoup
 from .pastebin import PasteBin
 from .constants import SU_ITEMS, SSU_ITEMS, SSSU_ITEMS, SETS, AMULETS, RINGS, JEWELS, \
                        MOS, RUNEWORDS, IGNORED_ITEMS, SHRINE_VESSELS, WHITE_IGNORED_ITEMS, \
-                       VESSEL_TO_SHRINE, QUIVERS, CHARMS, TROPHIES, ORANGE_IGNORED_ITEMS
+                       VESSEL_TO_SHRINE, QUIVERS, CHARMS, TROPHIES, ORANGE_IGNORED_ITEMS, \
+                       DEFAULT_TRADE_POST_TEMPLATE
 from .dclasses import ItemDump, PostGenerationErrors
 
 class LoginError(enum.Enum):
@@ -32,6 +34,7 @@ class MXL(commands.Cog):
         self.armory_logout_endpoint = 'https://tsw.vn.cz/acc/logout.php' # GET
         self.armory_index_endpoint = 'https://tsw.vn.cz/acc/index.php'
         self.armory_character_endpoint = 'https://tsw.vn.cz/acc/char.php?name={}'
+        self.pastebin_raw_endpoint = 'https://pastebin.com/raw/{}'
         self.item_css = (data_manager.bundled_data_path(self) / 'item_style.css').as_posix()
         self.flickr_client = None
 
@@ -57,7 +60,8 @@ class MXL(commands.Cog):
 
         default_member_config = {
             'generate_crafted_images': False,
-            'crafted_as_base': False
+            'crafted_as_base': False,
+            'post_template': DEFAULT_TRADE_POST_TEMPLATE
         }
         self._config = Config.get_conf(self, identifier=134621854878007298)
         self._config.register_global(**default_config)
@@ -248,7 +252,8 @@ class MXL(commands.Cog):
             config_str = ''
             for key, value in user_config.items():
                 config_str += f'{key}: {str(value)}\n'
-            await ctx.send(f'Your current config:\n```py\n{config_str}```')
+            for page in pagify(config_str, page_length=1992):
+                await ctx.send(f'```css\n{page}```')
             return
 
     @uconfig.command(name="crafted_as_base")
@@ -264,10 +269,50 @@ class MXL(commands.Cog):
         Images are generated for every crafted item in the supplied characters' inventories when enabled.
 
         No effect if `crafted_as_base` is enabled.
-        Warning: Do not use with large amounts of crafted items - the command will most likely fail and will make the bot reconnect to Discord.
+        **Warning**: Do not use with large amounts of crafted items - the command will most likely fail and will make the bot reconnect to Discord.
         """
         await self._config.member(ctx.author).generate_crafted_images.set(enabled)
         await ctx.send(f'generate_crafted_images {"enabled" if enabled else "disabled"}.')
+
+    @uconfig.command(name="post_template", usage='[reset | pastebin link]')
+    async def post_template(self, ctx, pastebin: str = None):
+        """
+        Sets or gets the forum post template to be used when creating a character dump.
+
+        To set your template you must create a pastebin with it. In order for your template to be filled with the items that
+        have been found on your characters when creating a character dump, you must use the following macros:
+        {su}, {ssu}, {sssu}, {sets}, {rings}, {amulets}, {jewels}, {quivers}, {mos}, {charms}, {trophies}, {shrines}, {rws}, {misc}
+
+        Example template: <INSERT LINK>
+
+        You can reset to the default template using `[p]mxl uconfig post_template reset`
+        """
+        if pastebin is None:
+            current_template = await self._config.member(ctx.author).post_template()
+            for page in pagify(current_template, page_length=1992):
+                await ctx.send(f'```css\n{page}```')
+            return
+
+        if pastebin == 'reset':
+            await self._config.member(ctx.author).post_template.set(DEFAULT_TRADE_POST_TEMPLATE)
+            await ctx.send(f"Trade post template reset to default.")
+            return
+
+        url = urllib.parse.urlparse(pastebin)
+        key_regex = re.compile(r'^\/(raw\/)?([\d\w]+)$')
+        match = key_regex.match(url.path)
+        if not match or url.netloc != 'pastebin.com':
+            await ctx.send(f"Invalid PasteBin link!")
+            return
+
+        pastebin_key = match.group(2)
+        response = requests.get(self.pastebin_raw_endpoint.format(pastebin_key))
+        if response.status_code != 200:
+            await ctx.send(f"Couldn't fetch template from PasteBin! Maybe pastebin.com is down?")
+            return
+
+        await self._config.member(ctx.author).post_template.set(response.text)
+        await ctx.send(f"Template successfully set!")
 
     @mxl.command(name="pricecheck", aliases=["pc"])
     async def pricecheck(self, ctx, *, item: str):
@@ -455,7 +500,7 @@ class MXL(commands.Cog):
             await ctx.send('No items found.')
             return
 
-        post, cache_update, generation_error = items.to_trade_post(self.flickr_client, self.item_css, user_config, config['flickr_cache'])
+        post, cache_update, generation_error = items.to_trade_post(user_config['post_template'], self.flickr_client, self.item_css, user_config, config['flickr_cache'])
         if cache_update:
             current_cache = await self._config.flickr_cache()
             await self._config.flickr_cache.set({**cache_update, **current_cache})

@@ -1355,61 +1355,59 @@ WHITE_IGNORED_ITEMS = [
     'Mephisto\'s Soulstone'
 ]
 
-TRADE_POST_SETS_SECTION = '''[color=#00FF00][size=24]Sets[/size][/color]
+DEFAULT_TRADE_POST_TEMPLATE = '''[color=#FFFF00][size=26]Selling[/size][/color]
 [hr][/hr]
-{items}'''
+[color=#00FF00][size=24]Sets[/size][/color]
+[hr][/hr]
+{sets}
 
-TRADE_POST_SU_SECTION = '''[color=#804000][size=24]SU[/size][/color]
+[color=#804000][size=24]SU[/size][/color]
 [hr][/hr]
-{items}
-'''
+{su}
 
-TRADE_POST_SSU_SECTION = '''[color=#804000][size=24]SSU[/size][/color]
+[color=#804000][size=24]SSU[/size][/color]
 [hr][/hr]
-{items}
-'''
+{ssu}
 
-TRADE_POST_SSSU_SECTION = '''[color=#804000][size=24]SSSU[/size][/color]
+[color=#804000][size=24]SSSU[/size][/color]
 [hr][/hr]
-{items}
-'''
+{sssu}
 
-TRADE_POST_RUNEWORDS_SECTION = '''[color=#808080][size=24]Runewords[/size][/color]
+[color=#808080][size=24]Runewords[/size][/color]
 [hr][/hr]
-{items}
-'''
+{rws}
 
-TRADE_POST_RAQMOJ_SECTION = '''[color=#804000][size=24]Rings/Amulets/Quivers/MOs/Jewels[/size][/color]
+[color=#CD853F][size=24]Crafted[/size][/color]
 [hr][/hr]
-{items}
-'''
+{crafted}
 
-TRADE_POST_BASES_SECTION = '''[color=#808080][size=24]Bases[/size][/color]
+[color=#804000][size=24]Rings/Amulets/Quivers/MOs/Jewels[/size][/color]
 [hr][/hr]
-{items}
-'''
+{rings}
 
-TRADE_POST_CHARMS_SECTION = '''[color=#FF7F50][size=24]Charms[/size][/color]
-[hr][/hr]
-{items}
-'''
+{amulets}
 
-TRADE_POST_TROPHIES_SECTION = '''[color=#FFA500][size=24]Trophies[/size][/color]
-[hr][/hr]
-{items}
-'''
+{quivers}
 
-TRADE_POST_MISC_SECTION = '''[color=#FFFFFF][size=24]Misc[/size][/color]
-[hr][/hr]
-{items}
-'''
+{mos}
 
-TRADE_POST_CRAFTED_SECTION = '''[color=#CD853F][size=24]Crafted[/size][/color]
-[hr][/hr]
-{items}
-'''
+{jewels}
 
-TRADE_POST_TEMPLATE = '''[color=#FFFF00][size=26]Selling[/size][/color]
+[color=#808080][size=24]Bases[/size][/color]
 [hr][/hr]
-{items}
+{rw_bases}
+
+{shrine_bases}
+
+[color=#FF7F50][size=24]Charms[/size][/color]
+[hr][/hr]
+{charms}
+
+[color=#FFA500][size=24]Trophies[/size][/color]
+[hr][/hr]
+{trophies}
+
+[color=#FFFFFF][size=24]Misc[/size][/color]
+[hr][/hr]
+{misc}
 '''
