@@ -307,6 +307,10 @@ class MXL(commands.Cog):
 
         pastebin_key = match.group(2)
         response = requests.get(self.pastebin_raw_endpoint.format(pastebin_key))
+        if response.status_code == 404:
+            await ctx.send(f"Invalid PasteBin link!")
+            return
+
         if response.status_code != 200:
             await ctx.send(f"Couldn't fetch template from PasteBin! Maybe pastebin.com is down?")
             return
