@@ -191,7 +191,7 @@ class MXL(commands.Cog):
 
     @config.command(name="pastebin_api_key")
     async def pastebin_api_key(self, ctx, key: str = None):
-        """Gets/sets the API key to be used when creating pastebins."""
+        """Gets/sets the API key to be used when creating pastes on Pastebin."""
 
         if key is None:
             channel = ctx.author.dm_channel or await ctx.author.create_dm()
@@ -200,11 +200,11 @@ class MXL(commands.Cog):
             return
 
         await self._config.pastebin_api_key.set(key)
-        await ctx.send('PasteBin API key set successfully.')
+        await ctx.send('Pastebin API key set successfully.')
 
     @config.command(name="pastebin_user_key")
     async def pastebin_user_key(self, ctx, key: str = None):
-        """Gets/sets the user key to be used when creating pastebins."""
+        """Gets/sets the user key to be used when creating pastes on Pastebin."""
 
         if key is None:
             channel = ctx.author.dm_channel or await ctx.author.create_dm()
@@ -213,7 +213,7 @@ class MXL(commands.Cog):
             return
 
         await self._config.pastebin_user_key.set(key)
-        await ctx.send('PasteBin user key set successfully.')
+        await ctx.send('Pastebin user key set successfully.')
 
     @config.command(name="flickr_api_key")
     async def flickr_api_key(self, ctx, api_key: str = None):
@@ -274,13 +274,12 @@ class MXL(commands.Cog):
         await self._config.member(ctx.author).generate_crafted_images.set(enabled)
         await ctx.send(f'generate_crafted_images {"enabled" if enabled else "disabled"}.')
 
-    @uconfig.command(name="post_template", usage='[reset | pastebin link]')
+    @uconfig.command(name="post_template", usage='[reset | Pastebin link]')
     async def post_template(self, ctx, pastebin: str = None):
         """
         Sets or gets the forum post template to be used when creating a character dump.
 
-        To set your template you must create a pastebin with it. In order for your template to be filled with the items that
-        have been found on your characters when creating a character dump, you must use the following macros:
+        To set your template you must create a paste on Pastebin with it. In order for your template to be filled with the items that have been found on your characters when creating a character dump, you must use the following macros:
         {su}, {ssu}, {sssu}, {sets}, {rws}, {crafted}, {rings}, {amulets}, {jewels}, {quivers}, {mos}, {rw_bases}, {shrine_bases}, {charms}, {charms}, {trophies}, {shrines}, {misc}
 
         Default template: https://pastebin.com/Hnf8hG5m
@@ -302,17 +301,17 @@ class MXL(commands.Cog):
         key_regex = re.compile(r'^\/(raw\/)?([\d\w]+)$')
         match = key_regex.match(url.path)
         if not match or url.netloc != 'pastebin.com':
-            await ctx.send(f"Invalid PasteBin link!")
+            await ctx.send(f"Invalid Pastebin link!")
             return
 
         pastebin_key = match.group(2)
         response = requests.get(self.pastebin_raw_endpoint.format(pastebin_key))
         if response.status_code == 404:
-            await ctx.send(f"Invalid PasteBin link!")
+            await ctx.send(f"Invalid Pastebin link!")
             return
 
         if response.status_code != 200:
-            await ctx.send(f"Couldn't fetch template from PasteBin! Maybe pastebin.com is down?")
+            await ctx.send(f"Couldn't fetch template from Pastebin! Maybe pastebin.com is down?")
             return
 
         await self._config.member(ctx.author).post_template.set(response.text)
@@ -493,8 +492,12 @@ class MXL(commands.Cog):
                 character_response = requests.get(self.armory_character_endpoint.format(character), cookies=config['armory_cookies'])
                 dom = BeautifulSoup(character_response.text, 'html.parser')
 
-            if 'not allowed' in dom.h1.text:
-                await ctx.send(f'{character}\'s armory is private - skipping. Please log into the armory and make it publicly viewable to dump its items.')
+            if dom.div.div and 'not found' in dom.div.div.text:
+                await ctx.send(f"Character {character} does not exist! Skipping.")
+                continue
+
+            if dom.h1 and 'not allowed' in dom.h1.text:
+                await ctx.send(f'Character {character}\'s armory is private! Please log into the armory and make it publicly viewable to dump its items. Skipping.')
                 continue
 
             item_dump = dom.find_all(class_='item-wrapper')
@@ -522,7 +525,7 @@ class MXL(commands.Cog):
             await channel.send(f'Dump successful. Here you go: {pastebin_link}')
             return
 
-        await ctx.send('Couldn\'t create the trade post pastebin - 24h limit is probably reached. Check your DMs.')
+        await ctx.send('Couldn\'t create the trade post paste - 24h limit is probably reached. Check your DMs.')
         for page in pagify(post):
             await channel.send(embed=discord.Embed(description=page))
 
