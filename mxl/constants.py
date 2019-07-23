@@ -1409,5 +1409,7 @@ DEFAULT_TRADE_POST_TEMPLATE = '''[color=#FFFF00][size=26]Selling[/size][/color]
 
 [color=#FFFFFF][size=24]Misc[/size][/color]
 [hr][/hr]
+{shrines}
+
 {misc}
 '''

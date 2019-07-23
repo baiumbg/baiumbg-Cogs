@@ -240,5 +240,6 @@ class ItemDump:
             shrine_bases = shrine_bases_str,
             charms = charms_str,
             trophies = trophies_str,
+            shrines = shrines_str,
             misc = misc_str
         ), cache_update, None
