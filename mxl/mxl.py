@@ -283,7 +283,7 @@ class MXL(commands.Cog):
         have been found on your characters when creating a character dump, you must use the following macros:
         {su}, {ssu}, {sssu}, {sets}, {rings}, {amulets}, {jewels}, {quivers}, {mos}, {charms}, {trophies}, {shrines}, {rws}, {misc}
 
-        Example template: <INSERT LINK>
+        Default template: https://pastebin.com/Hnf8hG5m
 
         You can reset to the default template using `[p]mxl uconfig post_template reset`
         """
