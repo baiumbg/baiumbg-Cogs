@@ -651,6 +651,17 @@ class MXL(commands.Cog):
             if item_name in IGNORED_ITEMS:
                 continue
 
+            if item_name == 'Eye of Wisdom':
+                class_match = re.search('(Amazon|Assassin|Barbarian|Druid|Necromancer|Paladin|Sorceress)', item.text)
+                if not class_match:
+                    items.increment_set_item('Unknown', item_name, character, item.parent.parent)
+                    continue
+
+                class_name = class_match.group(1)
+                item_name = f'Eye of Wisdom ({class_name})'
+                items.increment_set_item(SETS[item_name], item_name, character, item.parent.parent)
+                continue
+
             if set_match:
                 set_name = set_match.group(1)
                 item_name = item_name.split('[')[0].strip()
