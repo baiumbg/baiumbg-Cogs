@@ -459,6 +459,7 @@ class MXL(commands.Cog):
         The characters must be publicly viewable - log into http://tsw.vn.cz/acc/ to configure visibility.
         """
 
+        await ctx.channel.trigger_typing()
         config = await self._config.all()
         user_config = await self._config.member(ctx.author).all()
         if not config['pastebin_api_key']:
@@ -522,7 +523,8 @@ class MXL(commands.Cog):
         pastebin_link = await self._create_pastebin(post, f'MXL trade post for characters: {", ".join(characters)}')
         channel = ctx.author.dm_channel or await ctx.author.create_dm()
         if pastebin_link:
-            await channel.send(f'Dump successful. Here you go: {pastebin_link}')
+            await ctx.channel.send(f'{ctx.author.mention} Dump successful. Check your DMs.')
+            await channel.send(f'Armory dump for characters {", ".join(characters)}: {pastebin_link}')
             return
 
         await ctx.send('Couldn\'t create the trade post paste - 24h limit is probably reached. Check your DMs.')
