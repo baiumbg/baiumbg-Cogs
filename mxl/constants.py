@@ -637,7 +637,15 @@ MOS = [
     'Zayl\'s Soul Orb',
     'Farnham\'s Lost Marble',
     'Eye of Malic',
-    'Apple of Discord'
+    'Apple of Discord',
+    'Elemental Ire',
+    'Empyrean Touch',
+    'Path of Brutality',
+    'Celestial Wind',
+    'Elemental Dominion',
+    'Sigil of Absolution',
+    'Breath of Thaumaturgy',
+    'Arcane Hunger'
 ]
 
 CHARMS = [
@@ -1338,27 +1346,41 @@ RUNEWORDS = [
 ]
 
 ORANGE_IGNORED_ITEMS = [
+    'Belladonna Extract',
+    'Cycle',
+    'Sunless Crystal Bird',
+    'Deity\'s Bow',
+    'Mystic Dye',
+    'Dark Summoning'
+]
+
+WHITE_IGNORED_ITEMS = [
+    'Ancient Book',
     'Emblem of Destruction',
     'Emblem of Hatred',
     'Emblem of Lies',
     'Emblem of Pain',
     'Emblem of Suffering',
     'Emblem of Terror',
-    'Mark of Infusion',
-    'Belladonna Extract',
-    'Ancient Book',
-    'Cycle',
     'Oil of Conjuration',
-    'Sunless Crystal Bird',
-    'Deity\'s Bow',
     'Oil of Enhancement',
     'Oil of Craft',
     'Oil of Renewal',
-    'Oil of Luck'
-]
-
-WHITE_IGNORED_ITEMS = [
-    'Mephisto\'s Soulstone'
+    'Oil of Luck',
+    'Oil of Disjunction',
+    'Mephisto\'s Soulstone',
+    'Dream Fragment (1)',
+    'Dream Fragment (2)',
+    'Dream Fragment (3)',
+    'Dream Fragment (4)',
+    'Dream Fragment (5)',
+    'Star Chart (1)',
+    'Star Chart (2)',
+    'Star Chart (3)',
+    'Star Chart (4)',
+    'Key',
+    'Mark of Infusion',
+    'Mystic Orb'
 ]
 
 DEFAULT_TRADE_POST_TEMPLATE = '''[color=#FFFF00][size=26]Selling[/size][/color]
