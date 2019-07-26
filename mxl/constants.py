@@ -346,8 +346,10 @@ SETS = {
     'Apeskin': 'Testament of the Apes',
     'Apeskull': 'Testament of the Apes',
     'Apprentice': "Oak's Teaching",
+    'Eye of Wisdom (Druid)': "Oak's Teaching",
     'Archangel Dark Angel': 'Satanic Mantra',
     'Arctic Shard': 'Wintertide',
+    'Eye of Wisdom (Sorceress)': 'Wintertide',
     'Avalanche': 'Mount Arreat',
     "Bear's Warding": 'Gathering of the Tribes',
     'Bilefroth Skin': 'Henchmen Trophies',
@@ -359,6 +361,7 @@ SETS = {
     "Celestia's Ribbon": "Celestia's Myth",
     "Celestia's Wings": "Celestia's Myth",
     'Charged Cloud': 'Thunderstorm',
+    'Eye of Wisdom (Amazon)': 'Thunderstorm',
     "Cinadide's Anvil": "Cinadide's Craft",
     "Cinadide's Bellows": "Cinadide's Craft",
     "Cinadide's Bender": "Cinadide's Craft",
@@ -366,6 +369,7 @@ SETS = {
     'Darkling': "Astrogha's Moon",
     'Dead Lens': 'Universal Law',
     'Death Magnet': 'Battle Devices',
+    'Eye of Wisdom (Assassin)': 'Battle Devices',
     'Destiny': 'Spirits of the Nephalem',
     'Doomcloud Spine': 'Henchmen Trophies',
     'Dyad': "Adria's Circle",
@@ -379,7 +383,6 @@ SETS = {
     'Emerald Flower': 'Rainbow Warrior',
     'Emerald Sky': 'Rainbow Warrior',
     'Eruption': 'Mount Arreat',
-    'Eye of Wisdom': 'Wintertide',
     'Fangskin Scales': 'Henchmen Trophies',
     'Femur of the Prophet': 'Celestial Orchard',
     'Fire': 'Pantheon',
@@ -400,6 +403,7 @@ SETS = {
     'Hypersurface': 'Universal Law',
     'Idol of Fortune': 'Trophy Hunter',
     'Imperial Guard': 'Guardian of the Sightless Eye',
+    'Eye of Wisdom (Barbarian)': 'Guardian of the Sightless Eye',
     "Imperius' Aura": "Imperius' Edict",
     "Imperius' Radiance": "Imperius' Edict",
     "Imperius' Sky Hammer": "Imperius' Edict",
@@ -443,6 +447,7 @@ SETS = {
     'Sacred Charge': 'Spirits of the Nephalem',
     'Sacred Circle': 'The Mysteries',
     'Sacrificial Mind': 'The Offering',
+    'Eye of Wisdom (Necromancer)': 'The Offering',
     "Scosglen's History": 'Last King of Scosglen',
     "Scosglen's Legends": 'Last King of Scosglen',
     "Scosglen's Myths": 'Last King of Scosglen',
@@ -463,6 +468,7 @@ SETS = {
     'The Protector': 'Spirits of the Nephalem',
     'The Trickster': 'Celestial Orchard',
     'The Witness': 'Armageddon',
+    'Eye of Wisdom (Paladin)': 'Armageddon',
     "Through Death's Veil": 'Satanic Mantra',
     'Tower Defense': 'The Towerlord',
     'Tower Denial': 'The Towerlord',
@@ -631,7 +637,15 @@ MOS = [
     'Zayl\'s Soul Orb',
     'Farnham\'s Lost Marble',
     'Eye of Malic',
-    'Apple of Discord'
+    'Apple of Discord',
+    'Elemental Ire',
+    'Empyrean Touch',
+    'Path of Brutality',
+    'Celestial Wind',
+    'Elemental Dominion',
+    'Sigil of Absolution',
+    'Breath of Thaumaturgy',
+    'Arcane Hunger'
 ]
 
 CHARMS = [
@@ -1332,27 +1346,41 @@ RUNEWORDS = [
 ]
 
 ORANGE_IGNORED_ITEMS = [
+    'Belladonna Extract',
+    'Cycle',
+    'Sunless Crystal Bird',
+    'Deity\'s Bow',
+    'Mystic Dye',
+    'Dark Summoning'
+]
+
+WHITE_IGNORED_ITEMS = [
+    'Ancient Book',
     'Emblem of Destruction',
     'Emblem of Hatred',
     'Emblem of Lies',
     'Emblem of Pain',
     'Emblem of Suffering',
     'Emblem of Terror',
-    'Mark of Infusion',
-    'Belladonna Extract',
-    'Ancient Book',
-    'Cycle',
     'Oil of Conjuration',
-    'Sunless Crystal Bird',
-    'Deity\'s Bow',
     'Oil of Enhancement',
     'Oil of Craft',
     'Oil of Renewal',
-    'Oil of Luck'
-]
-
-WHITE_IGNORED_ITEMS = [
-    'Mephisto\'s Soulstone'
+    'Oil of Luck',
+    'Oil of Disjunction',
+    'Mephisto\'s Soulstone',
+    'Dream Fragment (1)',
+    'Dream Fragment (2)',
+    'Dream Fragment (3)',
+    'Dream Fragment (4)',
+    'Dream Fragment (5)',
+    'Star Chart (1)',
+    'Star Chart (2)',
+    'Star Chart (3)',
+    'Star Chart (4)',
+    'Key',
+    'Mark of Infusion',
+    'Mystic Orb'
 ]
 
 DEFAULT_TRADE_POST_TEMPLATE = '''[color=#FFFF00][size=26]Selling[/size][/color]

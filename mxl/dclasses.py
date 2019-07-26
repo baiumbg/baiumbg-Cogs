@@ -218,12 +218,12 @@ class ItemDump:
 
         shrines_str = ''
         for item in sorted(self.shrines.values(), key=lambda k: k.name):
-            if (item.amount * 10) % 10 == 0:
-                item.amount = int(item.amount)
+            item.amount = round(item.amount, 1) if item.amount % 1 else int(item.amount)
             shrines_str += f'[color=#FAAA23]{item.name}[/color] x{item.amount}\n' if item.amount != 1 else f'[color=#FAAA23]{item.name}[/color]\n'
 
         misc_str = ''
         for item in sorted(self.other.values(), key=lambda k: k.name):
+            item.amount = round(item.amount, 1) if item.amount % 1 else int(item.amount)
             misc_str += f'{item.name} x{item.amount}\n' if item.amount != 1 else f'{item.name}\n'
 
         return post_template.format(
