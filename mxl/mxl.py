@@ -7,6 +7,7 @@ import re
 import enum
 import urllib
 import flickrapi
+import concurrent.futures
 from bs4 import BeautifulSoup
 from .pastebin import PasteBin
 from .constants import SU_ITEMS, SSU_ITEMS, SSSU_ITEMS, SETS, AMULETS, RINGS, JEWELS, \
@@ -37,6 +38,7 @@ class MXL(commands.Cog):
         self.pastebin_raw_endpoint = 'https://pastebin.com/raw/{}'
         self.item_css = (data_manager.bundled_data_path(self) / 'item_style.css').as_posix()
         self.flickr_client = None
+        self.thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=3, thread_name_prefix='mxl_')
 
         default_config = {
             'forum_username': '',
@@ -516,7 +518,7 @@ class MXL(commands.Cog):
             await ctx.send('No items found.')
             return
 
-        post, cache_update, generation_error = items.to_trade_post(user_config['post_template'], self.flickr_client, self.item_css, user_config, config['flickr_cache'])
+        post, cache_update, generation_error = await items.to_trade_post(user_config['post_template'], self.flickr_client, self.item_css, user_config, config['flickr_cache'], self.thread_pool)
         if cache_update:
             current_cache = await self._config.flickr_cache()
             await self._config.flickr_cache.set({**cache_update, **current_cache})

@@ -7,6 +7,8 @@ import random
 import flickrapi
 import hashlib
 import enum
+import asyncio
+import functools
 
 class PostGenerationErrors(enum.Enum):
     IMAGE_UPLOAD_FAILED = 1,
@@ -109,9 +111,10 @@ class ItemDump:
     def increment_other(self, item_name, character, html, amount = 1):
         self.other.setdefault(item_name, Item(name=item_name)).increment(character, html, amount)
 
-    def to_trade_post(self, post_template, flickr_client, css_file, user_config, flickr_cache):
+    async def to_trade_post(self, post_template, flickr_client, css_file, user_config, flickr_cache, thread_pool):
         sets_str = ''
         cache_update = {}
+        loop = asyncio.get_running_loop()
         for set_ in sorted(self.sets.values(), key=lambda k: k.name):
             sets_str += f'[u][color=#00FF00]{set_.name}[/color][/u]\n'
             for item in sorted(set_.items.values(), key=lambda k: k.name):
@@ -163,7 +166,7 @@ class ItemDump:
                         continue
 
                     image_file = os.path.join(tempfile.gettempdir(), ''.join(random.choice('0123456789ABCDEF') for i in range(12)) + '.png')
-                    imgkit.from_string(str(tag), image_file, css=css_file, options={'width': '0'})
+                    await loop.run_in_executor(thread_pool, functools.partial(imgkit.from_string, str(tag), image_file, css=css_file, options={'width': '0'}))
 
                     image_id = ''
                     image_link = ''
