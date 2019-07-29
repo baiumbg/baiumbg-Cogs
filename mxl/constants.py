@@ -1345,16 +1345,13 @@ RUNEWORDS = [
   'Curandera'
 ]
 
-ORANGE_IGNORED_ITEMS = [
+MISC_ITEMS = [
     'Belladonna Extract',
     'Cycle',
     'Sunless Crystal Bird',
     'Deity\'s Bow',
     'Mystic Dye',
-    'Dark Summoning'
-]
-
-WHITE_IGNORED_ITEMS = [
+    'Dark Summoning',
     'Ancient Book',
     'Emblem of Destruction',
     'Emblem of Hatred',
