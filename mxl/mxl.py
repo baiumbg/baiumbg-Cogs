@@ -2,7 +2,7 @@ from redbot.core import commands, checks, Config, data_manager
 from redbot.core.utils.chat_formatting import pagify
 import discord
 import random
-import requests
+import aiohttp
 import re
 import enum
 import urllib
@@ -88,12 +88,14 @@ class MXL(commands.Cog):
 
         If there are more than 5 active auctions, prints them in a DM instead.
         """
-        api_response = requests.get(self.auctions_endpoint)
-        if api_response.status_code != 200:
-            await ctx.send('Couldn\'t contact the MXL API. Try again later.')
-            return
 
-        embeds = self._get_auction_embeds(api_response.json()['auctions'])
+        async with aiohttp.request('GET', self.auctions_endpoint) as api_response:
+            if api_response.status != 200:
+                await ctx.send('Couldn\'t contact the MXL API. Try again later.')
+                return
+
+            embeds = self._get_auction_embeds((await api_response.json())['auctions'])
+
         if not embeds:
             await ctx.send('There are no active auctions at the moment.')
             return
@@ -112,12 +114,13 @@ class MXL(commands.Cog):
 
         If there are more than 5 results, prints them in a DM instead.
         """
-        api_response = requests.get(self.auctions_endpoint)
-        if api_response.status_code != 200:
-            await ctx.send('Couldn\'t contact the MXL API. Try again later.')
-            return
+        async with aiohttp.request('GET', self.auctions_endpoint) as api_response:
+            if api_response.status != 200:
+                await ctx.send('Couldn\'t contact the MXL API. Try again later.')
+                return
 
-        embeds = self._get_auction_embeds(api_response.json()['auctions'])
+            embeds = self._get_auction_embeds((await api_response.json())['auctions'])
+
         matching_auctions = [embed for embed in embeds if re.search(title, embed.title, re.IGNORECASE)]
         if not matching_auctions:
             await ctx.send('There are no active auctions that match that description at the moment.')
@@ -305,16 +308,17 @@ class MXL(commands.Cog):
             return
 
         pastebin_key = match.group(2)
-        response = requests.get(self.pastebin_raw_endpoint.format(pastebin_key))
-        if response.status_code == 404:
-            await ctx.send(f"Invalid Pastebin link!")
-            return
+        async with aiohttp.request('GET', self.pastebin_raw_endpoint.format(pastebin_key)) as response:
+            if response.status == 404:
+                await ctx.send(f"Invalid Pastebin link!")
+                return
 
-        if response.status_code != 200:
-            await ctx.send(f"Couldn't fetch template from Pastebin! Maybe pastebin.com is down?")
-            return
+            if response.status != 200:
+                await ctx.send(f"Couldn't fetch template from Pastebin! Maybe pastebin.com is down?")
+                return
 
-        await self._config.member(ctx.author).post_template.set(response.text)
+            await self._config.member(ctx.author).post_template.set(await response.text())
+
         await ctx.send(f"Template successfully set!")
 
     @mxl.command(name="pricecheck", aliases=["pc"])
@@ -339,8 +343,9 @@ class MXL(commands.Cog):
         def escape_underscore(text):
             return text.replace('_', '\\_')
 
-        pricecheck_response = requests.post(self.tradecenter_enpoint, data={'search': item, 'submit': ''}, cookies=config['forum_cookies'])
-        dom = BeautifulSoup(pricecheck_response.text, 'html.parser')
+        async with aiohttp.request('POST', self.tradecenter_enpoint, data={'search': item, 'submit': ''}, cookies=config['forum_cookies']) as pricecheck_response:
+            dom = BeautifulSoup(await pricecheck_response.text(), 'html.parser')
+
         if dom.find(not_logged_in_function):
             error, config = await self._forum_login()
             if error == LoginError.INCORRECT_USERNAME:
@@ -356,8 +361,9 @@ class MXL(commands.Cog):
                 await ctx.send('Unknown error during login.')
                 return
 
-            pricecheck_response = requests.post(self.tradecenter_enpoint, data={'search': item, 'submit': ''}, cookies=config['forum_cookies'])
-            dom = BeautifulSoup(pricecheck_response.text, 'html.parser')
+            async with aiohttp.request('POST', self.tradecenter_enpoint, data={'search': item, 'submit': ''}, cookies=config['forum_cookies']) as pricecheck_response:
+                dom = BeautifulSoup(await pricecheck_response.text(), 'html.parser')
+
             if dom.find(not_logged_in_function):
                 await ctx.send('Couldn\'t login to the forums. Please report this to the plugin author.')
                 return
@@ -404,8 +410,8 @@ class MXL(commands.Cog):
             await ctx.send('Not logged in.')
             return
 
-        logout_response = requests.get(self.forum_logout_endpoint.format(config['forum_cookies']['MedianXL_sid']), cookies=config['forum_cookies'])
-        dom = BeautifulSoup(logout_response.text, 'html.parser')
+        async with aiohttp.request('GET', self.forum_logout_endpoint.format(config['forum_cookies']['MedianXL_sid']), cookies=config['forum_cookies']) as logout_response:
+            dom = BeautifulSoup(await logout_response.text(), 'html.parser')
         if dom.find(title='Login'):
             config['forum_cookies'] = {
                 'MedianXL_u': '',
@@ -435,8 +441,9 @@ class MXL(commands.Cog):
             await ctx.send('Not logged in.')
             return
 
-        logout_response = requests.get(self.armory_logout_endpoint, cookies=config['armory_cookies'])
-        dom = BeautifulSoup(logout_response.text, 'html.parser')
+        async with aiohttp.request('GET', self.armory_logout_endpoint, cookies=config['armory_cookies']) as logout_response:
+            dom = BeautifulSoup(await logout_response.text(), 'html.parser')
+
         if not dom.find(action='login.php'):
             await ctx.send('Unknown error during armory logout.')
 
@@ -483,15 +490,16 @@ class MXL(commands.Cog):
 
         items = ItemDump()
         for character in characters:
-            character_response = requests.get(self.armory_character_endpoint.format(character), cookies=config['armory_cookies'])
-            dom = BeautifulSoup(character_response.text, 'html.parser')
+            async with aiohttp.request('GET', self.armory_character_endpoint.format(character), cookies=config['armory_cookies']) as character_response:
+                dom = BeautifulSoup(await character_response.text(), 'html.parser')
+
             if dom.find(action='login.php'):
                 error, config = await self._armory_login()
                 if error:
                     await ctx.send('Incorrect armory username/password or armory is not reachable.')
                     return
-                character_response = requests.get(self.armory_character_endpoint.format(character), cookies=config['armory_cookies'])
-                dom = BeautifulSoup(character_response.text, 'html.parser')
+                async with aiohttp.request('GET', self.armory_character_endpoint.format(character), cookies=config['armory_cookies']) as character_response:
+                    dom = BeautifulSoup(await character_response.text(), 'html.parser')
 
             if dom.div.div and 'not found' in dom.div.div.text:
                 await ctx.send(f"Character {character} does not exist! Skipping.")
@@ -595,15 +603,18 @@ class MXL(commands.Cog):
 
     async def _forum_login(self):
         config = await self._config.all()
-        session_id = requests.get(self.tradecenter_enpoint).cookies['MedianXL_sid']
-        login_response = requests.post(self.forum_login_endpoint, data={'username': config['forum_username'], 'password': config['forum_password'], 'autologin': 'on', 'login': 'Login', 'sid': session_id})
-        dom = BeautifulSoup(login_response.text, 'html.parser')
+        async with aiohttp.request('GET', self.tradecenter_enpoint) as response:
+            session_id = response.cookies['MedianXL_sid'].value
+
+        async with aiohttp.request('POST', self.forum_login_endpoint, data={'username': config['forum_username'], 'password': config['forum_password'], 'autologin': 'on', 'login': 'Login', 'sid': session_id}) as login_response:
+            dom = BeautifulSoup(await login_response.text(), 'html.parser')
+
         error = dom.find(class_='error')
         if error is None:
             config['forum_cookies'] = {
-                'MedianXL_sid': login_response.history[0].cookies['MedianXL_sid'],
-                'MedianXL_k': login_response.history[0].cookies['MedianXL_k'],
-                'MedianXL_u': login_response.history[0].cookies['MedianXL_u']
+                'MedianXL_sid': login_response.history[0].cookies['MedianXL_sid'].value,
+                'MedianXL_k': login_response.history[0].cookies['MedianXL_k'].value,
+                'MedianXL_u': login_response.history[0].cookies['MedianXL_u'].value
             }
             await self._config.set(config)
             return LoginError.NONE, config
@@ -621,9 +632,12 @@ class MXL(commands.Cog):
 
     async def _armory_login(self):
         config = await self._config.all()
-        session_id = requests.get(self.armory_index_endpoint).cookies['PHPSESSID']
-        login_response = requests.post(self.armory_login_endpoint, data={'user': config['armory_username'], 'pass': config['armory_password']}, cookies={'PHPSESSID': session_id})
-        dom = BeautifulSoup(login_response.text, 'html.parser')
+        async with aiohttp.request('GET', self.armory_index_endpoint) as response:
+            session_id = response.cookies['PHPSESSID'].value
+
+        async with aiohttp.request('POST', self.armory_login_endpoint, data={'user': config['armory_username'], 'pass': config['armory_password']}, cookies={'PHPSESSID': session_id}) as login_response:
+            dom = BeautifulSoup(await login_response.text(), 'html.parser')
+
         if not dom.contents:
             config['armory_cookies'] = {
                 'PHPSESSID': session_id
@@ -774,7 +788,8 @@ class MXL(commands.Cog):
         api_key = await self._config.pastebin_api_key()
         user_key = await self._config.pastebin_user_key()
         pb = PasteBin(api_key, user_key)
-        pb_link = pb.paste(text, name=title, private='1', expire='1D')
+        pb_link = await pb.paste(text, name=title, private='1', expire='1D')
+        print(pb_link)
         return None if 'Bad API request' in pb_link or 'Post limit' in pb_link else pb_link
 
     def _get_auction_embeds(self, raw_auctions):
