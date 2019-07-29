@@ -11,8 +11,8 @@ import concurrent.futures
 from bs4 import BeautifulSoup
 from .pastebin import PasteBin
 from .constants import SU_ITEMS, SSU_ITEMS, SSSU_ITEMS, SETS, AMULETS, RINGS, JEWELS, \
-                       MOS, RUNEWORDS, IGNORED_ITEMS, SHRINE_VESSELS, WHITE_IGNORED_ITEMS, \
-                       VESSEL_TO_SHRINE, QUIVERS, CHARMS, TROPHIES, ORANGE_IGNORED_ITEMS, \
+                       MOS, RUNEWORDS, IGNORED_ITEMS, SHRINE_VESSELS, MISC_ITEMS, \
+                       VESSEL_TO_SHRINE, QUIVERS, CHARMS, TROPHIES, \
                        DEFAULT_TRADE_POST_TEMPLATE
 from .dclasses import ItemDump, PostGenerationErrors
 
@@ -735,7 +735,7 @@ class MXL(commands.Cog):
                 items.increment_mo(item_name, character, item.parent.parent)
                 continue
 
-            if (item.span['class'][0] == 'color-white' or item.span['class'][0] == 'color-blue') and item_name not in WHITE_IGNORED_ITEMS:
+            if (item.span['class'][0] == 'color-white' or item.span['class'][0] == 'color-blue') and item_name not in MISC_ITEMS:
                 base_name = item_name + ' [eth]' if 'Ethereal' in item.text else ''.join(item_name.split('Superior '))
                 items.increment_rw_base(base_name, character, item.parent.parent)
                 continue
@@ -772,7 +772,7 @@ class MXL(commands.Cog):
                 items.increment_other('Arcane Crystal', character, item.parent.parent, amount)
                 continue
 
-            if item.span['class'][0] == 'color-orange' and item_name not in ORANGE_IGNORED_ITEMS and item_name not in TROPHIES:
+            if item.span['class'][0] == 'color-orange' and item_name not in MISC_ITEMS and item_name not in TROPHIES:
                 if user_config['crafted_as_base']:
                     items.increment_shrine_base(item_name, character, item.parent.parent)
                     continue
