@@ -13,6 +13,11 @@ import random
 from redbot.core import checks, commands, Config, bank
 from redbot.core.utils.chat_formatting import error, pagify, warning
 
+from .items import DEFAULT_BODY_ARMORS, DEFAULT_BOOTS, DEFAULT_GLOVES, \
+                  DEFAULT_HEALING_ITEMS, DEFAULT_HELMETS, DEFAULT_PANTS, \
+                  DEFAULT_SHOULDERS, DEFAULT_WEAPONS, ARMOR_PIECES, \
+                  ARMOR_PIECE_TO_BODY_PARTS
+
 __version__ = '1.6.0'
 
 
@@ -22,218 +27,33 @@ INITIAL_HP = 20
 TARGET_SELF = 'self'
 TARGET_OTHER = 'target'
 
-def indicatize(d):
-    result = {}
-    for k, v in d.items():
-        if k in VERB_IND_SUB:
-            k = VERB_IND_SUB[k]
-        else:
-            k += 's'
-        result[k] = v
-    return result
+def indicatize(w):
+    if w[-2:] == 'ch' or w[-2:] == 'sh' or w[-2:] == 'ss' or w[-1] == 'x' or w[-1] == 'z':
+        w += 'es'
+    elif w[-1] == 'y':
+        w = w[:-1] + 'ies'
+    else:
+        w += 's'
 
-
-# TEMPLATES BEGIN
-# {a} is attacker, {d} is defender/target, {o} is a randomly selected object,
-# {v} is the verb associated with that object, and {b} is a random body part.
-
-WEAPONS = {
-    'swing': {
-        'axe': 3,
-        'scimitar': 4,
-        'buzzsaw': 5,
-        'chainsaw': 6,
-        'broadsword': 7,
-        'katana': 4,
-        'falchion': 5
-    },
-    'fire': {
-        'raygun': 5,
-        'flamethrower': 6,
-        'crossbow': 3,
-        'railgun': 6,
-        'ballista': 6,
-        'catapult': 5,
-        'cannon': 4,
-        'mortar': 3
-    },
-    'stab': {
-        'naginata': 5,
-        'lance': 4
-    }
-}
-
-SINGLE_PROJECTILE = {
-    'fire': {
-        'a psionic projectile': 4,
-    },
-    'hurl': {
-        'pocket sand': 1,
-        'a spear': 6,
-        'a heavy rock': 3,
-    },
-    'toss': {
-        'a moltov cocktail': 4,
-        'a grenade': 5
-    }
-}
-
-FAMILIAR = {
-    'divebomb': {
-        'their owl companion': 3,
-    },
-    'charge': {
-        'their pet goat': 3,
-        'their pet unicorn': 4,
-    },
-    'constrict': {
-        'their thick anaconda': 4,
-    }
-}
-
-SUMMON = {
-    'charge': {
-        'a badass tiger': 5,
-        'a sharknado': 8,
-        'a starving komodo dragon': 5
-    },
-    'swarm': {
-        'all these muthafucking snakes': 5,
-    }
-}
-
-MELEE = {
-    'stab': {
-        'dagger': 5
-    },
-    'drive': {
-        'fist': 4,
-        'toe': 2
-    }
-}
-
-MARTIAL = {'roundhouse kick': 6,
-           'uppercut': 5,
-           'bitch-slap': 2,
-           'headbutt': 4}
-
-BODYPARTS = [
-    'head',
-    'throat',
-    'neck',
-    'solar plexus',
-    'ribcage',
-    'balls',
-    'spleen',
-    'kidney',
-    'leg',
-    'arm',
-    'jugular',
-    'abdomen',
-    'shin',
-    'knee',
-    'other knee'
-]
-
-VERB_IND_SUB = {'munch': 'munches', 'toss': 'tosses'}
-
-ATTACK = {"{a} {v} their {o} at {d}!": indicatize(WEAPONS),
-          "{a} {v} their {o} into {d}!": indicatize(MELEE),
-          "{a} {v} their {o} into {d}'s {b}!": indicatize(MELEE),
-          "{a} {v} {o} at {d}!": indicatize(SINGLE_PROJECTILE),
-          "{a} {v} {o} at {d}'s {b}!": indicatize(SINGLE_PROJECTILE),
-          "{a} {v} {o} into {d}'s {b}!": indicatize(SINGLE_PROJECTILE),
-          "{a} orders {o} to {v} {d}!": FAMILIAR,
-          "{a} summons {o} to {v} {d}!": SUMMON,
-          "{a} {v} {d}!": indicatize(MARTIAL),
-          "{d} is bowled over by {a}'s sudden bull rush!": 6,
-          "{a} tickles {d}, causing them to pass out from lack of breath": 2,
-          "{a} points at something in the distance, distracting {d} long enough to {v} them!": MARTIAL
-          }
-
-CRITICAL = {"Quicker than the eye can follow, {a} delivers a devastating blow with their {o} to {d}'s {b}.": WEAPONS,
-            "The sky darkens as {a} begins to channel their inner focus. The air crackles as they slowly raise their {o} above their head before nailing an unescapable blow directly to {d}'s {b}!": WEAPONS,
-            "{a} nails {d} in the {b} with their {o}! Critical hit!": WEAPONS,
-            "With frightening speed and accuracy, {a} devastates {d} with a tactical precision strike to the {b}. Critical hit!": WEAPONS
-            }
-
-HEALS = {
-    'inject': {
-        'morphine': 4,
-        'nanomachines': 5
-    },
-    'smoke': {
-        'a fat joint': 2,
-        'medicinal incense': 3,
-        'their hookah': 3
-    },
-    'munch': {
-        'on some': {
-            'cake': 5,
-            'cat food': 3,
-            'dog food': 4
-        },
-        'on a': {
-            'waffle': 4,
-            'turkey leg': 2
-        }
-    },
-    'drink': {
-        'some': {
-            'Ambrosia': 7,
-            'unicorn piss': 5,
-            'purple drank': 2,
-            'sizzurp': 3,
-            'goon wine': 2
-        },
-        'a': {
-            'generic hp potion': 5,
-            'refreshingly delicious can of 7-Up': 3,
-            'fresh mug of ale': 3
-        },
-        'an': {
-            'elixir': 5
-        }
-    }
-}
-
-HEAL = {"{a} decides to {v} {o} instead of attacking.": HEALS,
-        "{a} calls a timeout and {v} {o}.": indicatize(HEALS),
-        "{a} decides to meditate on their round.": 5}
-
-
-FUMBLE = {"{a} closes in on {d}, but suddenly remembers a funny joke and laughs instead.": 0,
-          "{a} moves in to attack {d}, but is disctracted by a shiny.": 0,
-          "{a} {v} their {o} at {d}, but has sweaty hands and loses their grip, hitting themself instead.": indicatize(WEAPONS),
-          "{a} {v} their {o}, but fumbles and drops it on their {b}!": indicatize(WEAPONS)
-          }
-
-BOT = {"{a} charges its laser aaaaaaaand... BZZZZZZT! {d} is now a smoking crater for daring to challenge the bot.": INITIAL_HP}
-
-HITS = ['deals', 'hits for']
-RECOVERS = ['recovers', 'gains', 'heals']
-
-# TEMPLATES END
-
-# Move category target and multiplier (negative is damage)
-MOVES = {
-    'CRITICAL': (CRITICAL, TARGET_OTHER, -2),
-    'ATTACK': (ATTACK, TARGET_OTHER, -1),
-    'FUMBLE': (FUMBLE, TARGET_SELF, -1),
-    'HEAL': (HEAL, TARGET_SELF, 1),
-    'BOT': (BOT, TARGET_OTHER, -64)
-}
-
-# Weights of distribution for biased selection of moves
-WEIGHTED_MOVES = {'CRITICAL': 0.05, 'ATTACK': 1, 'FUMBLE': 0.1, 'HEAL': 0.1}
+    return w
 
 
 class Player:
-    def __init__(self, cog, member, initial_hp=INITIAL_HP):
+    def __init__(self, cog, member, items, initial_hp=INITIAL_HP):
         self.hp = initial_hp
         self.member = member
         self.mention = member.mention
         self.cog = cog
+        self.weapon = items['weapon']
+        self.armor = {
+            'helmet': items['helmet'],
+            'body_armor': items['body_armor'],
+            'pants': items['pants'],
+            'shoulders': items['shoulders'],
+            'gloves': items['gloves'],
+            'boots': items['boots']
+        }
+        self.healing_item = items['healing_item']
 
     # Using object in string context gives (nick)name
     def __str__(self):
@@ -268,6 +88,25 @@ class Player:
         await self._set_stat('draws', num)
 
 
+# TEMPLATES BEGIN
+# {a} is attacker, {d} is defender/target, {o} is a randomly selected object,
+# {v} is the verb associated with that object, {p} is a preposition associated
+# with that verb, and {b} is a random body part.
+
+ATTACK = "{a} {v} their {o} {p} {d}'s {b}!"
+CRITICAL_ATTACK = "{a} {v} their {o} {p} {d}'s {b}! Critical hit!"
+MISS = "{a} attempts to {v} their {o} {p} {d}'s {b}, but they miss!"
+BOT = "{a} charges its laser aaaaaaaand... BZZZZZZT! {d} is now a smoking crater for daring to challenge the bot."
+
+HITS = ['deal', 'hit for']
+RECOVERS = ['recover', 'gain', 'heal']
+
+# TEMPLATES END
+
+# Weights of distribution for biased selection of moves
+WEIGHTED_MOVES = {'ATTACK': 1, 'HEAL': 0.1}
+
+
 class Duel(commands.Cog):
     def __init__(self):
         self.underway = set()
@@ -275,12 +114,33 @@ class Duel(commands.Cog):
         default_member_config = {
             'wins': 0,
             'losses': 0,
-            'draws': 0
+            'draws': 0,
+            'equipped': {
+                'helmet': DEFAULT_HELMETS[0],
+                'body_armor': DEFAULT_BODY_ARMORS[0],
+                'pants': DEFAULT_PANTS[0],
+                'shoulders': DEFAULT_SHOULDERS[0],
+                'gloves': DEFAULT_GLOVES[0],
+                'boots': DEFAULT_BOOTS[0],
+                'healing_item': DEFAULT_HEALING_ITEMS[0],
+                'weapon': DEFAULT_WEAPONS[0]
+            },
+            'inventory': []
         }
         default_guild_config = {
             'protected': [],
             'self_protect': False,
-            'edit_posts': False
+            'edit_posts': False,
+            'items': {
+                'helmet': DEFAULT_HELMETS,
+                'body_armor': DEFAULT_BODY_ARMORS,
+                'pants': DEFAULT_PANTS,
+                'shoulders': DEFAULT_SHOULDERS,
+                'gloves': DEFAULT_SHOULDERS,
+                'boots': DEFAULT_BOOTS,
+                'healing_item': DEFAULT_HEALING_ITEMS,
+                'weapon': DEFAULT_WEAPONS
+            }
         }
         self.config.register_member(**default_member_config)
         self.config.register_guild(**default_guild_config)
@@ -290,12 +150,6 @@ class Duel(commands.Cog):
 
     async def _get_stats(self, user):
         return await self.config.member(user.member).all()
-
-    def get_player(self, user: discord.Member):
-        return Player(self, user)
-
-    def get_all_players(self, server: discord.Guild):
-        return [self.get_player(m) for m in server.members]
 
     def format_display(self, server, id):
         if id.startswith('r'):
@@ -631,8 +485,10 @@ class Duel(commands.Cog):
             bucket._tokens += 1  # Sorry, Danny
             return
 
-        p1 = Player(self, author)
-        p2 = Player(self, user)
+        p1_items = await self.config.member(author).equipped()
+        p2_items = await self.config.member(user).equipped()
+        p1 = Player(self, author, p1_items)
+        p2 = Player(self, user, p2_items)
         self.underway.add(channel.id)
 
         try:
@@ -697,43 +553,55 @@ class Duel(commands.Cog):
         if not move_cat:
             move_cat = weighted_choice(WEIGHTED_MOVES)
 
-        # Break apart move info
-        moves, target, multiplier = MOVES[move_cat]
+        if move_cat == 'ATTACK':
+            move = ATTACK
+            target = defender
+            hp_delta = random.randint(attacker.weapon['low'], attacker.weapon['high'])
+            obj = attacker.weapon['name']
+            verb = indicatize(attacker.weapon['verb'])
+            preposition = attacker.weapon['preposition']
+            if attacker.weapon['hit_chance'] < random.random():
+                move = MISS
+                verb = attacker.weapon['verb']
+                multiplier = 0
+            elif attacker.weapon['crit_chance'] >= random.random():
+                move = CRITICAL_ATTACK
+                multiplier = -2
+            else:
+                multiplier = -1
+        elif move_cat == 'HEAL':
+            move = attacker.healing_item['template']
+            target = attacker
+            hp_delta = random.randint(attacker.healing_item['low'], attacker.healing_item['high'])
+            obj = attacker.healing_item['name']
+            verb = ''
+            preposition = ''
+            multiplier = 1
+        else:
+            move = BOT
+            target = defender
+            hp_delta = INITIAL_HP
+            obj = ''
+            verb = ''
+            preposition = ''
+            multiplier = -64
 
-        target = defender if target is TARGET_OTHER else attacker
-
-        move, obj, verb, hp_delta = self.generate_move(moves)
         hp_delta *= multiplier
-        bodypart = random.choice(BODYPARTS)
+        bodypart = random.choice(ARMOR_PIECE_TO_BODY_PARTS[random.choice(ARMOR_PIECES)])
 
-        msg = move.format(a=attacker, d=defender, o=obj, v=verb, b=bodypart)
+        msg = move.format(a=attacker, d=defender, o=obj, v=verb, b=bodypart, p=preposition)
         if hp_delta == 0:
             pass
         else:
             target.hp += hp_delta
             if hp_delta > 0:
                 s = random.choice(RECOVERS)
-                msg += ' It %s %d HP (%d)' % (s, abs(hp_delta), target.hp)
+                msg += ' They %s %d HP (%d)' % (s, abs(hp_delta), target.hp)
             elif hp_delta < 0:
                 s = random.choice(HITS)
-                msg += ' It %s %d damage (%d)' % (s, abs(hp_delta), target.hp)
+                msg += ' They %s %d damage (%d)' % (s, abs(hp_delta), target.hp)
 
         return msg
-
-    def generate_move(self, moves):
-        # Select move, action, object, etc
-        movelist = nested_random(moves)
-        hp_delta = movelist.pop()  # always last
-        # randomize damage/healing done by -/+ 33%
-        hp_delta = math.floor(((hp_delta * random.randint(66, 133)) / 100))
-        move = movelist.pop(0)  # always first
-        verb = movelist.pop(0) if movelist else None  # Optional
-        obj = movelist.pop() if movelist else None  # Optional
-
-        if movelist:
-            verb += ' ' + movelist.pop()  # Optional but present when obj is
-
-        return move, obj, verb, hp_delta
 
     async def _robust_edit(self, msg, content=None, embed=None):
         try:
@@ -754,36 +622,3 @@ def weighted_choice(choices):
             return c
 
         upto += w
-
-
-def nested_random(d):
-    k = weighted_choice(dict_weight(d))
-    result = [k]
-
-    if type(d[k]) is dict:
-        result.extend(nested_random(d[k]))
-    else:
-        result.append(d[k])
-
-    return result
-
-
-def dict_weight(d, top=True):
-    wd = {}
-    sw = 0
-
-    for k, v in d.items():
-        if isinstance(v, dict):
-            x, y = dict_weight(v, False)
-            wd[k] = y if top else x
-            w = y
-        else:
-            w = 1
-            wd[k] = w
-
-        sw += w
-
-    if top:
-        return wd
-    else:
-        return wd, sw
