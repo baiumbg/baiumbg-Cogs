@@ -16,7 +16,7 @@ from redbot.core.utils.chat_formatting import error, pagify, warning
 from .items import DEFAULT_BODY_ARMORS, DEFAULT_BOOTS, DEFAULT_GLOVES, \
                   DEFAULT_HEALING_ITEMS, DEFAULT_HELMETS, DEFAULT_PANTS, \
                   DEFAULT_SHOULDERS, DEFAULT_WEAPONS, ARMOR_PIECES, \
-                  ARMOR_PIECE_TO_BODY_PARTS
+                  ARMOR_PIECE_TO_BODY_PARTS, DEFAULT_EQUIPPED
 
 __version__ = '1.6.0'
 
@@ -625,11 +625,11 @@ class Duel(commands.Cog):
         currency = await bank.get_currency_name(ctx.guild)
         inventory = await self.config.member(ctx.author).inventory()
 
-        if await self.item_equipped_by_member(ctx.author, item_name) or await self.item_in_member_inventory(ctx.author, item_name):
+        if await self.item_equipped_by_member(ctx.author, item_name) or await self.item_in_member_inventory(ctx.author, item_name) or item_name in DEFAULT_EQUIPPED.values():
             await ctx.send('You already have that item in your inventory!')
             return
 
-        item = await self.get_item(ctx.guild, item_name)
+        _, item = await self.get_item(ctx.guild, item_name)
         if item == None:
             await ctx.send(f'Item {item_name} not found in shop!')
             return
@@ -655,9 +655,40 @@ class Duel(commands.Cog):
     async def _duelinv_list(self, ctx):
         inventory = await self.get_inventory(ctx.author)
         equipped = await self.get_equipped_full(ctx.author)
+        inventory_str = 'None' if not len(inventory) else ', '.join(inventory)
         msg = f"{ctx.author.display_name}'s equipped items:\n{EQUIPPED.format(w = equipped['weapon']['name'], h = equipped['helmet']['name'], a = equipped['body_armor']['name'], p = equipped['pants']['name'], g = equipped['gloves']['name'], b = equipped['boots']['name'], s = equipped['shoulders']['name'], heal = equipped['healing_item']['name'])}"
-        msg += f"{ctx.author.display_name}'s inventory:\n```{', '.join(inventory)}```"
+        msg += f"{ctx.author.display_name}'s inventory:\n```{inventory_str}```"
         await ctx.send(msg)
+
+
+    @_duelinv.command(name="equip")
+    async def _duelinv_equip(self, ctx, item_name):
+        inventory = await self.get_inventory(ctx.author)
+        equipped = await self.get_equipped_full(ctx.author)
+        slot, item = await self.get_item(ctx.guild, item_name)
+
+        if item == None:
+            await ctx.send("That item does not exist!")
+            return
+
+        if item_name == equipped[slot]['name']:
+            await ctx.send('That item is already equipped!')
+            return
+
+        if item_name not in inventory and item_name not in DEFAULT_EQUIPPED.values():
+            await ctx.send(f"You don't own a {item_name}!")
+            return
+
+        if equipped[slot]['name'] != DEFAULT_EQUIPPED[slot]:
+            inventory.append(equipped[slot]['name'])
+
+        if item_name != DEFAULT_EQUIPPED[slot]:
+            inventory.remove(item_name)
+
+        equipped[slot] = item
+        await self.config.member(ctx.author).equipped.set(equipped)
+        await self.config.member(ctx.author).inventory.set(inventory)
+        await ctx.send(f"{item_name} equipped!")
 
 
 # UTILS BEGIN
@@ -679,16 +710,16 @@ class Duel(commands.Cog):
 
     async def get_item(self, guild, item_name):
         items = await self.config.guild(guild).items()
-        for _, category_items in items.items():
+        for slot, category_items in items.items():
             for item in category_items:
                 if item['name'] == item_name:
-                    return item
+                    return slot, item
 
-        return None
+        return None, None
 
 
     async def item_in_member_inventory(self, member, item_name):
-        inventory = self.get_inventory(member)
+        inventory = await self.get_inventory(member)
         for item in inventory:
             if item == item_name:
                 return True
