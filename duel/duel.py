@@ -98,6 +98,8 @@ CRITICAL_ATTACK = "{a} {v} their {o} {p} {d}'s {b}! Critical hit!"
 MISS = "{a} attempts to {v} their {o} {p} {d}'s {b}, but they miss!"
 BOT = "{a} charges its laser aaaaaaaand... BZZZZZZT! {d} is now a smoking crater for daring to challenge the bot."
 
+EQUIPPED = "```http\nWeapon: {w}\nHelmet: {h}\nBody armor: {a}\nPants: {p}\nShoulders: {s}\nGloves: {g}\nBoots: {b}\nHealing item: {heal}```"
+
 HITS = ['deal', 'hit for']
 RECOVERS = ['recover', 'gain', 'heal']
 
@@ -623,7 +625,7 @@ class Duel(commands.Cog):
         currency = await bank.get_currency_name(ctx.guild)
         inventory = await self.config.member(ctx.author).inventory()
 
-        if await self.item_equipped_by_member(ctx.author, ctx.guild, item_name) or await self.item_in_member_inventory(ctx.author, ctx.guild, item_name):
+        if await self.item_equipped_by_member(ctx.author, item_name) or await self.item_in_member_inventory(ctx.author, item_name):
             await ctx.send('You already have that item in your inventory!')
             return
 
@@ -641,26 +643,61 @@ class Duel(commands.Cog):
         await self.config.member(ctx.author).inventory.set(sorted(inventory))
         await ctx.send(f'You successfully bought a {item_name}! Equip it using `{ctx.prefix}duelinv equip {item_name}`.')
 
-    async def item_in_member_inventory(self, member, guild, item_name):
-        inventory = await self.config.member(member).inventory()
-        for item in inventory:
-            if item == item_name:
-                return True
 
-        return False
+    @commands.guild_only()
+    @commands.group(name="duelinv", invoke_without_command=True)
+    async def _duelinv(self, ctx):
+        if ctx.invoked_subcommand is None:
+            await ctx.invoke(self._duelinv_list)
+
+
+    @_duelinv.command(name="list")
+    async def _duelinv_list(self, ctx):
+        inventory = await self.get_inventory(ctx.author)
+        equipped = await self.get_equipped_full(ctx.author)
+        msg = f"{ctx.author.display_name}'s equipped items:\n{EQUIPPED.format(w = equipped['weapon']['name'], h = equipped['helmet']['name'], a = equipped['body_armor']['name'], p = equipped['pants']['name'], g = equipped['gloves']['name'], b = equipped['boots']['name'], s = equipped['shoulders']['name'], heal = equipped['healing_item']['name'])}"
+        msg += f"{ctx.author.display_name}'s inventory:\n```{', '.join(inventory)}```"
+        await ctx.send(msg)
+
+
+# UTILS BEGIN
+
+    async def get_inventory(self, member):
+        inventory = await self.config.member(member).inventory()
+        return inventory
+
+
+    async def get_equipped(self, member):
+        equipped = await self.config.member(member).equipped()
+        return [i['name'] for i in equipped.values()]
+
+
+    async def get_equipped_full(self, member):
+        equipped = await self.config.member(member).equipped()
+        return equipped
+
 
     async def get_item(self, guild, item_name):
         items = await self.config.guild(guild).items()
-        for category, category_items in items.items():
+        for _, category_items in items.items():
             for item in category_items:
                 if item['name'] == item_name:
                     return item
 
         return None
 
-    async def item_equipped_by_member(self, member, guild, item_name):
-        equipped = [i['name'] for i in (await self.config.member(member).equipped()).values()]
-        print(str(equipped))
+
+    async def item_in_member_inventory(self, member, item_name):
+        inventory = self.get_inventory(member)
+        for item in inventory:
+            if item == item_name:
+                return True
+
+        return False
+
+
+    async def item_equipped_by_member(self, member, item_name):
+        equipped = await self.get_equipped(member)
         return item_name in equipped
 
 
@@ -783,6 +820,7 @@ class Duel(commands.Cog):
                 f"{HR_STATS['cost'].ljust(paddings['cost'])}\n"
                 f"{'-' * (paddings['name'] + paddings['armor'] + paddings['cost'])}")
 
+# UTILS END
 
 def weighted_choice(choices):
     total = sum(w for c, w in choices.items())
