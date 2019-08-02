@@ -132,16 +132,7 @@ class Duel(commands.Cog):
             'wins': 0,
             'losses': 0,
             'draws': 0,
-            'equipped': {
-                'helmet': DEFAULT_HELMETS[0],
-                'body_armor': DEFAULT_BODY_ARMORS[0],
-                'pants': DEFAULT_PANTS[0],
-                'shoulders': DEFAULT_SHOULDERS[0],
-                'gloves': DEFAULT_GLOVES[0],
-                'boots': DEFAULT_BOOTS[0],
-                'healing_item': DEFAULT_HEALING_ITEMS[0],
-                'weapon': DEFAULT_WEAPONS[0]
-            },
+            'equipped': DEFAULT_EQUIPPED,
             'inventory': []
         }
         default_guild_config = {
@@ -502,8 +493,8 @@ class Duel(commands.Cog):
             bucket._tokens += 1  # Sorry, Danny
             return
 
-        p1_items = await self.config.member(author).equipped()
-        p2_items = await self.config.member(user).equipped()
+        p1_items = await self.get_equipped_full(author, ctx.guild)
+        p2_items = await self.get_equipped_full(user, ctx.guild)
         p1 = Player(self, author, p1_items)
         p2 = Player(self, user, p2_items)
         self.underway.add(channel.id)
@@ -654,9 +645,9 @@ class Duel(commands.Cog):
     @_duelinv.command(name="list")
     async def _duelinv_list(self, ctx):
         inventory = await self.get_inventory(ctx.author)
-        equipped = await self.get_equipped_full(ctx.author)
+        equipped = await self.get_equipped_slots(ctx.author)
         inventory_str = 'None' if not len(inventory) else ', '.join(inventory)
-        msg = f"{ctx.author.display_name}'s equipped items:\n{EQUIPPED.format(w = equipped['weapon']['name'], h = equipped['helmet']['name'], a = equipped['body_armor']['name'], p = equipped['pants']['name'], g = equipped['gloves']['name'], b = equipped['boots']['name'], s = equipped['shoulders']['name'], heal = equipped['healing_item']['name'])}"
+        msg = f"{ctx.author.display_name}'s equipped items:\n{EQUIPPED.format(w = equipped['weapon'], h = equipped['helmet'], a = equipped['body_armor'], p = equipped['pants'], g = equipped['gloves'], b = equipped['boots'], s = equipped['shoulders'], heal = equipped['healing_item'])}"
         msg += f"{ctx.author.display_name}'s inventory:\n```{inventory_str}```"
         await ctx.send(msg)
 
@@ -664,14 +655,14 @@ class Duel(commands.Cog):
     @_duelinv.command(name="equip")
     async def _duelinv_equip(self, ctx, item_name):
         inventory = await self.get_inventory(ctx.author)
-        equipped = await self.get_equipped_full(ctx.author)
+        equipped = await self.get_equipped_slots(ctx.author)
         slot, item = await self.get_item(ctx.guild, item_name)
 
         if item == None:
             await ctx.send("That item does not exist!")
             return
 
-        if item_name == equipped[slot]['name']:
+        if item_name == equipped[slot]:
             await ctx.send('That item is already equipped!')
             return
 
@@ -679,13 +670,13 @@ class Duel(commands.Cog):
             await ctx.send(f"You don't own a {item_name}!")
             return
 
-        if equipped[slot]['name'] != DEFAULT_EQUIPPED[slot]:
-            inventory.append(equipped[slot]['name'])
+        if equipped[slot] != DEFAULT_EQUIPPED[slot]:
+            inventory.append(equipped[slot])
 
         if item_name != DEFAULT_EQUIPPED[slot]:
             inventory.remove(item_name)
 
-        equipped[slot] = item
+        equipped[slot] = item_name
         await self.config.member(ctx.author).equipped.set(equipped)
         await self.config.member(ctx.author).inventory.set(inventory)
         await ctx.send(f"{item_name} equipped!")
@@ -700,12 +691,21 @@ class Duel(commands.Cog):
 
     async def get_equipped(self, member):
         equipped = await self.config.member(member).equipped()
-        return [i['name'] for i in equipped.values()]
+        return [i for i in equipped.values()]
 
 
-    async def get_equipped_full(self, member):
+    async def get_equipped_slots(self, member):
         equipped = await self.config.member(member).equipped()
         return equipped
+
+
+    async def get_equipped_full(self, member, guild):
+        equipped = await self.config.member(member).equipped()
+        result = {}
+        for slot, item_name in equipped.items():
+            _, item = await self.get_item_ex(guild, item_name, slot)
+            result[slot] = item
+        return result
 
 
     async def get_item(self, guild, item_name):
@@ -714,6 +714,18 @@ class Duel(commands.Cog):
             for item in category_items:
                 if item['name'] == item_name:
                     return slot, item
+
+        return None, None
+
+
+    async def get_item_ex(self, guild, item_name, slot = None):
+        if slot == None:
+            return self.get_item(guild, item_name)
+
+        items = await self.config.guild(guild).items()
+        for item in items[slot]:
+            if item['name'] == item_name:
+                return slot, item
 
         return None, None
 
