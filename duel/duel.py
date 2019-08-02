@@ -101,6 +101,21 @@ BOT = "{a} charges its laser aaaaaaaand... BZZZZZZT! {d} is now a smoking crater
 HITS = ['deal', 'hit for']
 RECOVERS = ['recover', 'gain', 'heal']
 
+HR_STATS = {
+    'name': 'Item',
+    'damage': 'Damage',
+    'healing': 'Healing',
+    'armor': 'Armor',
+    'cost': 'Cost',
+    'crit_chance': 'Crit Chance',
+    'hit_chance': 'Hit Chance',
+    'low': 'Low',
+    'high': 'High',
+    'verb': 'Verb',
+    'preposition': 'Preposition',
+    'template': 'Template'
+}
+
 # TEMPLATES END
 
 # Weights of distribution for biased selection of moves
@@ -136,7 +151,7 @@ class Duel(commands.Cog):
                 'body_armor': DEFAULT_BODY_ARMORS,
                 'pants': DEFAULT_PANTS,
                 'shoulders': DEFAULT_SHOULDERS,
-                'gloves': DEFAULT_SHOULDERS,
+                'gloves': DEFAULT_GLOVES,
                 'boots': DEFAULT_BOOTS,
                 'healing_item': DEFAULT_HEALING_ITEMS,
                 'weapon': DEFAULT_WEAPONS
@@ -548,6 +563,62 @@ class Duel(commands.Cog):
         finally:
             self.underway.remove(channel.id)
 
+
+    @commands.guild_only()
+    @commands.group(name="duelshop", invoke_without_command=True)
+    async def _duelshop(self, ctx):
+        if ctx.invoked_subcommand is None:
+            await ctx.invoke(self._duelshop_list)
+
+
+    @_duelshop.command(name="list")
+    async def _duelshop_list(self, ctx, category: str = None):
+        items = await self.config.guild(ctx.guild).items()
+        msg = ''
+
+        def sort_cost(item):
+            return item['cost']
+
+        def get_paddings(items):
+            result = {}
+            for field in items[0].keys():
+                result[field] = len(HR_STATS[field]) + 1
+
+            for item in items:
+                for field in item.keys():
+                    result[field] = max(result[field], len(str(item[field])) + 1)
+
+            return result
+
+
+        if category != None:
+            if category not in items.keys():
+                await ctx.send(f"Valid item categories: {', '.join(items.keys())}")
+                return
+
+            items = self.to_shop_items(items[category], category)
+            paddings = get_paddings(items)
+            msg = self.generate_header(paddings, category) + '\n'
+            for item in sorted(items, key=sort_cost):
+                msg += self.to_shop_row(item, paddings, category) + '\n'
+
+            for page in pagify(msg, page_length=1993):
+                await ctx.send(f'```py\n{page}```')
+
+            return
+
+        msg = ''
+        for category in items.keys():
+            items[category] = self.to_shop_items(items[category], category)
+            paddings = get_paddings(items[category])
+            msg = self.generate_header(paddings, category) + '\n'
+            for item in sorted(items[category], key=sort_cost):
+                msg += self.to_shop_row(item, paddings, category) + '\n'
+
+            for page in pagify(msg, page_length=1993):
+                await ctx.send(f'```py\n{page}```')
+
+
     def generate_action(self, attacker, defender, move_cat=None):
         # Select move category
         if not move_cat:
@@ -610,6 +681,62 @@ class Duel(commands.Cog):
             await msg.channel.send(content=content, embed=embed)
         except Exception:
             raise
+
+    def to_shop_items(self, items, category):
+        result = []
+        if category == 'weapon':
+            for item in items:
+                item['damage'] = f"{item['low']}-{item['high']}"
+                result.append(item)
+
+            return result
+
+        if category == 'healing_item':
+            for item in items:
+                item['healing'] = f"{item['low']}-{item['high']}"
+                result.append(item)
+
+            return result
+
+        return items
+
+    def to_shop_row(self, item, paddings, category):
+        if category == 'weapon':
+            return (f"{str(item['name']).ljust(paddings['name'])}"
+                    f"{str(item['damage']).ljust(paddings['damage'])}"
+                    f"{(str(int(item['hit_chance'] * 100)) + '%').ljust(paddings['hit_chance'])}"
+                    f"{(str(int(item['crit_chance'] * 100)) + '%').ljust(paddings['crit_chance'])}"
+                    f"{str(item['cost']).ljust(paddings['cost'])}")
+
+        if category == 'healing_item':
+            return (f"{str(item['name']).ljust(paddings['name'])}"
+                    f"{str(item['healing']).ljust(paddings['healing'])}"
+                    f"{str(item['cost']).ljust(paddings['cost'])}")
+
+        return (f"{str(item['name']).ljust(paddings['name'])}"
+                f"{str(item['armor']).ljust(paddings['armor'])}"
+                f"{str(item['cost']).ljust(paddings['cost'])}"
+        )
+
+    def generate_header(self, paddings, category):
+        if category == 'weapon':
+            return (f"{HR_STATS['name'].ljust(paddings['name'])}"
+                    f"{HR_STATS['damage'].ljust(paddings['damage'])}"
+                    f"{HR_STATS['hit_chance'].ljust(paddings['hit_chance'])}"
+                    f"{HR_STATS['crit_chance'].ljust(paddings['crit_chance'])}"
+                    f"{HR_STATS['cost'].ljust(paddings['cost'])}\n"
+                    f"{'-' * (paddings['name'] + paddings['damage'] + paddings['hit_chance'] + paddings['crit_chance'] + paddings['cost'])}")
+
+        if category == 'healing_item':
+            return (f"{HR_STATS['name'].ljust(paddings['name'])}"
+                    f"{HR_STATS['healing'].ljust(paddings['healing'])}"
+                    f"{HR_STATS['cost'].ljust(paddings['cost'])}\n"
+                    f"{'-' * (paddings['name'] + paddings['healing'] + paddings['cost'])}")
+
+        return (f"{HR_STATS['name'].ljust(paddings['name'])}"
+                f"{HR_STATS['armor'].ljust(paddings['armor'])}"
+                f"{HR_STATS['cost'].ljust(paddings['cost'])}\n"
+                f"{'-' * (paddings['name'] + paddings['armor'] + paddings['cost'])}")
 
 
 def weighted_choice(choices):
