@@ -94,6 +94,7 @@ class Player:
 # with that verb, and {b} is a random body part.
 
 ATTACK = "{a} {v} their {o} {p} {d}'s {b}!"
+ATTACK_FAIL = "{a} attempts to {v} their {o} {p} {d}'s {b}, but they are completely protected by their {ap}"
 CRITICAL_ATTACK = "{a} {v} their {o} {p} {d}'s {b}! Critical hit!"
 MISS = "{a} attempts to {v} their {o} {p} {d}'s {b}, but they miss!"
 BOT = "{a} charges its laser aaaaaaaand... BZZZZZZT! {d} is now a smoking crater for daring to challenge the bot."
@@ -800,43 +801,37 @@ class Duel(commands.Cog):
         if not move_cat:
             move_cat = weighted_choice(WEIGHTED_MOVES)
 
+        armor_slot = random.choice(ARMOR_PIECES)
+        bodypart = random.choice(ARMOR_PIECE_TO_BODY_PARTS[armor_slot])
+        armor_piece_name = defender.armor[armor_slot]['name']
+        verb = indicatize(attacker.weapon['verb'])
+        preposition = ''
+        obj = attacker.weapon['name']
+        target = defender
         if move_cat == 'ATTACK':
             move = ATTACK
-            target = defender
-            hp_delta = random.randint(attacker.weapon['low'], attacker.weapon['high'])
-            obj = attacker.weapon['name']
-            verb = indicatize(attacker.weapon['verb'])
+            hp_delta = min(0, -random.randint(attacker.weapon['low'], attacker.weapon['high']) + defender.armor[armor_slot]['armor'])
             preposition = attacker.weapon['preposition']
-            if attacker.weapon['hit_chance'] < random.random():
+            if hp_delta == 0:
+                move = ATTACK_FAIL
+                verb = attacker.weapon['verb']
+            elif attacker.weapon['hit_chance'] < random.random():
                 move = MISS
                 verb = attacker.weapon['verb']
-                multiplier = 0
+                hp_delta = 0
             elif attacker.weapon['crit_chance'] >= random.random():
                 move = CRITICAL_ATTACK
-                multiplier = -2
-            else:
-                multiplier = -1
+                hp_delta = hp_delta * 2 - defender.armor[armor_slot]['armor']
         elif move_cat == 'HEAL':
             move = attacker.healing_item['template']
             target = attacker
             hp_delta = random.randint(attacker.healing_item['low'], attacker.healing_item['high'])
             obj = attacker.healing_item['name']
-            verb = ''
-            preposition = ''
-            multiplier = 1
         else:
             move = BOT
-            target = defender
-            hp_delta = INITIAL_HP
-            obj = ''
-            verb = ''
-            preposition = ''
-            multiplier = -64
+            hp_delta = -INITIAL_HP * 64
 
-        hp_delta *= multiplier
-        bodypart = random.choice(ARMOR_PIECE_TO_BODY_PARTS[random.choice(ARMOR_PIECES)])
-
-        msg = move.format(a=attacker, d=defender, o=obj, v=verb, b=bodypart, p=preposition)
+        msg = move.format(a=attacker, d=defender, o=obj, v=verb, b=bodypart, p=preposition, ap=armor_piece_name)
         if hp_delta == 0:
             pass
         else:
