@@ -634,6 +634,36 @@ class Duel(commands.Cog):
         await self.config.member(ctx.author).inventory.set(sorted(inventory))
         await ctx.send(f'You successfully bought a {item_name}! Equip it using `{ctx.prefix}duelinv equip {item_name}`.')
 
+    @_duelshop.command(name="sell")
+    async def _duelshop_sell(self, ctx, item_name):
+        slot, item = await self.get_item(ctx.guild, item_name)
+        inventory = await self.get_inventory(ctx.author)
+        equipped = await self.get_equipped_slots(ctx.author)
+        currency = await bank.get_currency_name(ctx.guild)
+
+        if item == None:
+            await ctx.send("That item does not exist!")
+            return
+
+        if item_name == DEFAULT_EQUIPPED[slot]:
+            await ctx.send('That item cannot be sold!')
+            return
+
+        if item_name not in inventory and equipped[slot] != item_name:
+            await ctx.send(f"You don't own a {item_name}!")
+            return
+
+        if equipped[slot] == item_name:
+            equipped[slot] = DEFAULT_EQUIPPED[slot]
+            await self.config.member(ctx.author).equipped.set(equipped)
+        elif item_name in inventory:
+            inventory.remove(item_name)
+            await self.config.member(ctx.author).inventory.set(inventory)
+
+        resell_value = int(item['cost'] / 2)
+        await bank.deposit_credits(ctx.author, resell_value)
+        await ctx.send(f'{item_name} sold for {resell_value} {currency}!')
+
 
     @commands.guild_only()
     @commands.group(name="duelinv", invoke_without_command=True)
