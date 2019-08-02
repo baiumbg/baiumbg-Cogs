@@ -682,6 +682,27 @@ class Duel(commands.Cog):
         await ctx.send(f"{item_name} equipped!")
 
 
+    @_duelinv.command(name="unequip")
+    async def _duelinv_unequip(self, ctx, slot):
+        if slot not in DEFAULT_EQUIPPED.keys():
+            await ctx.send(f"Invalid slot name! Valid slot names: {', '.join(DEFAULT_EQUIPPED.keys())}")
+            return
+
+        inventory = await self.get_inventory(ctx.author)
+        equipped = await self.get_equipped_slots(ctx.author)
+        item_name = equipped[slot]
+
+        if equipped[slot] == DEFAULT_EQUIPPED[slot]:
+            await ctx.send('Your currently equipped item in that slot cannot be unequipped!')
+            return
+
+        inventory.append(equipped[slot])
+        equipped[slot] = DEFAULT_EQUIPPED[slot]
+        await self.config.member(ctx.author).equipped.set(equipped)
+        await self.config.member(ctx.author).inventory.set(inventory)
+        await ctx.send(f"{item_name} unequipped!")
+
+
 # UTILS BEGIN
 
     async def get_inventory(self, member):
