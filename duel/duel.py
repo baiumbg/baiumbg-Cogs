@@ -618,6 +618,51 @@ class Duel(commands.Cog):
             for page in pagify(msg, page_length=1993):
                 await ctx.send(f'```py\n{page}```')
 
+    @_duelshop.command(name="buy")
+    async def _duelshop_buy(self, ctx, item_name):
+        currency = await bank.get_currency_name(ctx.guild)
+        inventory = await self.config.member(ctx.author).inventory()
+
+        if await self.item_equipped_by_member(ctx.author, ctx.guild, item_name) or await self.item_in_member_inventory(ctx.author, ctx.guild, item_name):
+            await ctx.send('You already have that item in your inventory!')
+            return
+
+        item = await self.get_item(ctx.guild, item_name)
+        if item == None:
+            await ctx.send(f'Item {item_name} not found in shop!')
+            return
+
+        if not bank.can_spend(ctx.author, item['cost']):
+            await ctx.send(f'You do not have enough {currency} to buy a {item_name}')
+            return
+
+        await bank.withdraw_credits(ctx.author, item['cost'])
+        inventory.append(item_name)
+        await self.config.member(ctx.author).inventory.set(sorted(inventory))
+        await ctx.send(f'You successfully bought a {item_name}! Equip it using `{ctx.prefix}duelinv equip {item_name}`.')
+
+    async def item_in_member_inventory(self, member, guild, item_name):
+        inventory = await self.config.member(member).inventory()
+        for item in inventory:
+            if item == item_name:
+                return True
+
+        return False
+
+    async def get_item(self, guild, item_name):
+        items = await self.config.guild(guild).items()
+        for category, category_items in items.items():
+            for item in category_items:
+                if item['name'] == item_name:
+                    return item
+
+        return None
+
+    async def item_equipped_by_member(self, member, guild, item_name):
+        equipped = [i['name'] for i in (await self.config.member(member).equipped()).values()]
+        print(str(equipped))
+        return item_name in equipped
+
 
     def generate_action(self, attacker, defender, move_cat=None):
         # Select move category
