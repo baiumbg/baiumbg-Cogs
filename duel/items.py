@@ -355,21 +355,21 @@ DEFAULT_HEALING_ITEMS = [
         'cost': 0,
         'low': 1,
         'high': 2,
-        'template': '{a} decides to take a bite out of his {o} instead of attacking.'
+        'template': '{a} decides to take a bite out of their {o} instead of attacking.'
     },
     {
         'name': 'morphine',
         'cost': 5,
         'low': 2,
         'high': 3,
-        'template': '{a} decides to inject himself with some of his {o} instead of attacking.'
+        'template': '{a} decides to inject himself with some of their {o} instead of attacking.'
     },
     {
         'name': 'cake',
         'cost': 5,
         'low': 1,
         'high': 4,
-        'template': '{a} decides to eat some of his {o} instead of attacking.'
+        'template': '{a} decides to eat some of their {o} instead of attacking.'
     },
     {
         'name': 'joint',
@@ -383,28 +383,28 @@ DEFAULT_HEALING_ITEMS = [
         'cost': 10,
         'low': 2,
         'high': 5,
-        'template': '{a} decides to inject himself with some of his {o} instead of attacking.'
+        'template': '{a} decides to inject himself with some of their {o} instead of attacking.'
     },
     {
         'name': 'unicorn piss',
         'cost': 15,
         'low': 3,
         'high': 5,
-        'template': '{a} decides to drink some of his {o} instead of attacking.'
+        'template': '{a} decides to drink some of their {o} instead of attacking.'
     },
     {
         'name': 'goon wine',
         'cost': 15,
         'low': 2,
         'high': 6,
-        'template': '{a} decides to drink some of his {o} instead of attacking.'
+        'template': '{a} decides to drink some of their {o} instead of attacking.'
     },
     {
         'name': 'ambrosia',
         'cost': 20,
         'low': 4,
         'high': 5,
-        'template': '{a} decides to drink some of his {o} instead of attacking.'
+        'template': '{a} decides to drink some of their {o} instead of attacking.'
     },
     {
         'name': 'generic hp potion',

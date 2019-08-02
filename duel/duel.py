@@ -94,7 +94,7 @@ class Player:
 # with that verb, and {b} is a random body part.
 
 ATTACK = "{a} {v} their {o} {p} {d}'s {b}!"
-ATTACK_FAIL = "{a} attempts to {v} their {o} {p} {d}'s {b}, but they are completely protected by their {ap}"
+ATTACK_PROTECTED = "{a} attempts to {v} their {o} {p} {d}'s {b}, but they are completely protected by their {ap}!"
 CRITICAL_ATTACK = "{a} {v} their {o} {p} {d}'s {b}! Critical hit!"
 MISS = "{a} attempts to {v} their {o} {p} {d}'s {b}, but they miss!"
 BOT = "{a} charges its laser aaaaaaaand... BZZZZZZT! {d} is now a smoking crater for daring to challenge the bot."
@@ -623,17 +623,18 @@ class Duel(commands.Cog):
 
         _, item = await self.get_item(ctx.guild, item_name)
         if item == None:
-            await ctx.send(f'Item {item_name} not found in shop!')
+            await ctx.send(f'Item **{item_name}** not found in shop!')
             return
 
         if not bank.can_spend(ctx.author, item['cost']):
-            await ctx.send(f'You do not have enough {currency} to buy a {item_name}')
+            await ctx.send(f'You do not have enough {currency} to buy a **{item_name}**!')
             return
 
         await bank.withdraw_credits(ctx.author, item['cost'])
         inventory.append(item_name)
         await self.config.member(ctx.author).inventory.set(sorted(inventory))
-        await ctx.send(f'You successfully bought a {item_name}! Equip it using `{ctx.prefix}duelinv equip {item_name}`.')
+        item_name_escaped = item_name if ' ' not in item_name else f'"{item_name}"'
+        await ctx.send(f'You successfully bought a **{item_name}**! Equip it using `{ctx.prefix}duelinv equip {item_name_escaped}`.')
 
     @_duelshop.command(name="sell")
     async def _duelshop_sell(self, ctx, item_name):
@@ -651,7 +652,7 @@ class Duel(commands.Cog):
             return
 
         if item_name not in inventory and equipped[slot] != item_name:
-            await ctx.send(f"You don't own a {item_name}!")
+            await ctx.send(f"You don't own a **{item_name}**!")
             return
 
         if equipped[slot] == item_name:
@@ -663,7 +664,7 @@ class Duel(commands.Cog):
 
         resell_value = int(item['cost'] / 2)
         await bank.deposit_credits(ctx.author, resell_value)
-        await ctx.send(f'{item_name} sold for {resell_value} {currency}!')
+        await ctx.send(f'**{item_name}** sold for {resell_value} {currency}!')
 
 
     @commands.guild_only()
@@ -698,7 +699,7 @@ class Duel(commands.Cog):
             return
 
         if item_name not in inventory and item_name not in DEFAULT_EQUIPPED.values():
-            await ctx.send(f"You don't own a {item_name}!")
+            await ctx.send(f"You don't own a **{item_name}**!")
             return
 
         if equipped[slot] != DEFAULT_EQUIPPED[slot]:
@@ -710,13 +711,13 @@ class Duel(commands.Cog):
         equipped[slot] = item_name
         await self.config.member(ctx.author).equipped.set(equipped)
         await self.config.member(ctx.author).inventory.set(inventory)
-        await ctx.send(f"{item_name} equipped!")
+        await ctx.send(f"**{item_name}** equipped!")
 
 
     @_duelinv.command(name="unequip")
     async def _duelinv_unequip(self, ctx, slot):
         if slot not in DEFAULT_EQUIPPED.keys():
-            await ctx.send(f"Invalid slot name! Valid slot names: {', '.join(DEFAULT_EQUIPPED.keys())}")
+            await ctx.send(f"Invalid slot name! Valid slot names:\n```{', '.join(DEFAULT_EQUIPPED.keys())}```")
             return
 
         inventory = await self.get_inventory(ctx.author)
@@ -731,7 +732,7 @@ class Duel(commands.Cog):
         equipped[slot] = DEFAULT_EQUIPPED[slot]
         await self.config.member(ctx.author).equipped.set(equipped)
         await self.config.member(ctx.author).inventory.set(inventory)
-        await ctx.send(f"{item_name} unequipped!")
+        await ctx.send(f"**{item_name}** unequipped!")
 
 
 # UTILS BEGIN
@@ -813,7 +814,7 @@ class Duel(commands.Cog):
             hp_delta = min(0, -random.randint(attacker.weapon['low'], attacker.weapon['high']) + defender.armor[armor_slot]['armor'])
             preposition = attacker.weapon['preposition']
             if hp_delta == 0:
-                move = ATTACK_FAIL
+                move = ATTACK_PROTECTED
                 verb = attacker.weapon['verb']
             elif attacker.weapon['hit_chance'] < random.random():
                 move = MISS
