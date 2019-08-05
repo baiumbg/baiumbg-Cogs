@@ -505,16 +505,20 @@ class Duel(commands.Cog):
 
             return
 
-        msg = ''
+        final_msg = ''
         for category in items.keys():
+            msg = ''
             items[category] = self.to_shop_items(items[category], category)
             paddings = get_paddings(items[category])
             msg = self.generate_header(paddings, category) + '\n'
             for item in sorted(items[category], key=sort_cost):
                 msg += self.to_shop_row(item, paddings, category) + '\n'
 
-            for page in pagify(msg, page_length=1993):
-                await ctx.send(f'```py\n{page}```')
+            final_msg += f"```py\n{msg}```"
+
+        for page in pagify(final_msg, shorten_by=20, delims=['```py']):
+            await ctx.send(page)
+
 
     @_duelshop.command(name="buy")
     async def _duelshop_buy(self, ctx, *, item_name):
