@@ -22,8 +22,6 @@ __version__ = '1.6.0'
 
 
 # Constants
-MAX_ROUNDS = 10
-INITIAL_HP = 20
 TARGET_SELF = 'self'
 TARGET_OTHER = 'target'
 
@@ -39,7 +37,7 @@ def indicatize(w):
 
 
 class Player:
-    def __init__(self, cog, member, items, initial_hp=INITIAL_HP):
+    def __init__(self, cog, member, items, initial_hp):
         self.hp = initial_hp
         self.member = member
         self.mention = member.mention
@@ -149,7 +147,9 @@ class Duel(commands.Cog):
                 'boots': DEFAULT_BOOTS,
                 'healing_item': DEFAULT_HEALING_ITEMS,
                 'weapon': DEFAULT_WEAPONS
-            }
+            },
+            'initial_hp': 20,
+            'max_rounds': 10
         }
         self.config.register_member(**default_member_config)
         self.config.register_guild(**default_guild_config)
@@ -244,51 +244,6 @@ class Duel(commands.Cog):
         else:
             await ctx.send("Something went wrong adding you to the protection list.")
 
-    @checks.admin_or_permissions(administrator=True)
-    @_protect.command(name="price")
-    async def _protect_price(self, ctx, param: str = None):
-        """
-        Enable, disable, or set the price of self-protection
-
-        Valid options: "disable", "free", or any number 0 or greater.
-        """
-        current = await self.config.guild(ctx.message.guild).self_protect()
-
-        if param:
-            param = param.lower().strip(' "`')
-
-            if param in ('disable', 'none'):
-                param = False
-            elif param in ('free', '0'):
-                param = True
-            elif param.isdecimal():
-                param = int(param)
-            else:
-                await ctx.send_help()
-                return
-
-        if param is None:
-            adj = 'currently'
-            param = current
-        elif param == current:
-            adj = 'already'
-        else:
-            adj = 'now'
-
-            await self.config.guild(ctx.message.guild).self_protect.set(param)
-
-        if param is False:
-            disp = 'disabled'
-        elif param is True:
-            disp = 'free'
-        elif type(param) is int:
-            disp = 'worth %i credits' % param
-        else:
-            raise RuntimeError('unhandled param value, please report this bug!')
-
-        msg = 'Self-protection is %s %s.' % (adj, disp)
-
-        await ctx.send(msg)
 
     @checks.mod_or_permissions(administrator=True)
     @_protect.command(name="user")
@@ -299,6 +254,7 @@ class Duel(commands.Cog):
         else:
             await ctx.send("%s is already in the protection list." % user.display_name)
 
+
     @checks.admin_or_permissions(administrator=True)
     @_protect.command(name="role")
     async def _protect_role(self, ctx, role: discord.Role):
@@ -307,6 +263,7 @@ class Duel(commands.Cog):
             await ctx.send("The %s role has been successfully added to the protection list." % role.name)
         else:
             await ctx.send("The %s role is already in the protection list." % role.name)
+
 
     @commands.guild_only()
     @commands.group(name="unprotect", invoke_without_command=True)
@@ -320,6 +277,7 @@ class Duel(commands.Cog):
 
         await ctx.send_help()
 
+
     @checks.mod_or_permissions(administrator=True)
     @_unprotect.command(name="user")
     async def _unprotect_user(self, ctx, user: discord.Member):
@@ -328,6 +286,7 @@ class Duel(commands.Cog):
             await ctx.send("%s has been successfully removed from the protection list." % user.display_name)
         else:
             await ctx.send("%s is not in the protection list." % user.display_name)
+
 
     @checks.admin_or_permissions(administrator=True)
     @_unprotect.command(name="role")
@@ -338,6 +297,7 @@ class Duel(commands.Cog):
         else:
             await ctx.send("The %s role is not in the protection list." % role.name)
 
+
     @_unprotect.command(name="me")
     async def _unprotect_self(self, ctx):
         """Removes you from the duel protection list"""
@@ -345,6 +305,7 @@ class Duel(commands.Cog):
             await ctx.send("You have been removed from the protection list.")
         else:
             await ctx.send("You aren't in the protection list.")
+
 
     @commands.guild_only()
     @commands.command(name="protected", aliases=['protection'])
@@ -447,25 +408,6 @@ class Duel(commands.Cog):
         await self.config.clear_all_members(ctx.guild)
         await ctx.send('Duel records cleared.')
 
-    @checks.admin_or_permissions(administrator=True)
-    @_duels.command(name="editmode")
-    async def _duels_postmode(self, ctx, on_off: bool = None):
-        "Edits messages in-place instead of posting each move seperately."
-        current = await self.config.guild(ctx.guild).edit_posts()
-
-        if on_off is None:
-            adj = 'enabled' if current else 'disabled'
-            await ctx.send('In-place editing is currently %s.' % adj)
-            return
-
-        adj = 'enabled' if on_off else 'disabled'
-        if on_off == current:
-            await ctx.send('In-place editing already %s.' % adj)
-            return
-
-        await self.config.guild(ctx.guild).edit_posts.set(on_off)
-        await ctx.send('In-place editing %s.' % adj)
-
     @commands.guild_only()
     @commands.command(name="duel")
     @commands.cooldown(2, 60, commands.BucketType.user)
@@ -496,8 +438,8 @@ class Duel(commands.Cog):
 
         p1_items = await self.get_equipped_full(author, ctx.guild)
         p2_items = await self.get_equipped_full(user, ctx.guild)
-        p1 = Player(self, author, p1_items)
-        p2 = Player(self, user, p2_items)
+        p1 = Player(self, author, p1_items, guild_config['initial_hp'])
+        p2 = Player(self, user, p2_items, guild_config['initial_hp'])
         self.underway.add(channel.id)
 
         try:
@@ -506,7 +448,7 @@ class Duel(commands.Cog):
             msg = ["%s challenges %s to a duel!" % (p1, p2)]
             msg.append("\nBy a coin toss, %s will go first." % order[0][0])
             msg_object = await ctx.send('\n'.join(msg))
-            for i in range(MAX_ROUNDS):
+            for i in range(guild_config['max_rounds']):
                 if p1.hp <= 0 or p2.hp <= 0:
                     break
                 for attacker, defender in order:
@@ -514,9 +456,9 @@ class Duel(commands.Cog):
                         break
 
                     if attacker.member == ctx.me:
-                        move_msg = self.generate_action(attacker, defender, 'BOT')
+                        move_msg = self.generate_action(attacker, defender, guild_config['initial_hp'], 'BOT')
                     else:
-                        move_msg = self.generate_action(attacker, defender)
+                        move_msg = self.generate_action(attacker, defender, guild_config['initial_hp'])
 
                     if guild_config['edit_posts']:
                         new_msg = '\n'.join(msg + [move_msg])
@@ -613,7 +555,7 @@ class Duel(commands.Cog):
                 await ctx.send(f'```py\n{page}```')
 
     @_duelshop.command(name="buy")
-    async def _duelshop_buy(self, ctx, item_name):
+    async def _duelshop_buy(self, ctx, item_name: str):
         currency = await bank.get_currency_name(ctx.guild)
         inventory = await self.config.member(ctx.author).inventory()
 
@@ -637,7 +579,7 @@ class Duel(commands.Cog):
         await ctx.send(f'You successfully bought a **{item_name}**! Equip it using `{ctx.prefix}duelinv equip {item_name_escaped}`.')
 
     @_duelshop.command(name="sell")
-    async def _duelshop_sell(self, ctx, item_name):
+    async def _duelshop_sell(self, ctx, item_name: str):
         slot, item = await self.get_item(ctx.guild, item_name)
         inventory = await self.get_inventory(ctx.author)
         equipped = await self.get_equipped_slots(ctx.author)
@@ -685,7 +627,7 @@ class Duel(commands.Cog):
 
 
     @_duelinv.command(name="equip")
-    async def _duelinv_equip(self, ctx, item_name):
+    async def _duelinv_equip(self, ctx, item_name: str):
         inventory = await self.get_inventory(ctx.author)
         equipped = await self.get_equipped_slots(ctx.author)
         slot, item = await self.get_item(ctx.guild, item_name)
@@ -733,6 +675,86 @@ class Duel(commands.Cog):
         await self.config.member(ctx.author).equipped.set(equipped)
         await self.config.member(ctx.author).inventory.set(inventory)
         await ctx.send(f"**{item_name}** unequipped!")
+
+
+    @commands.guild_only()
+    @checks.admin_or_permissions(administrator=True)
+    @commands.group(name="duelset", invoke_without_command=True)
+    async def _duelset(self, ctx):
+        if ctx.invoked_subcommand == None:
+            guild_config = await self.config.guild(ctx.guild).all()
+            del guild_config['items']
+            del guild_config['protected']
+            msg = ''
+            for k, v in guild_config:
+                msg += f"{k}: {v}\n"
+
+            for page in pagify(msg, page_length=1988):
+                await ctx.send(f"```http\n{page}```")
+            return
+
+
+    @_duelset.command(name="initial_hp")
+    async def _duelset_initial_hp(self, ctx, initial_hp: int = None):
+        guild_config = await self.config.guild(ctx.guild).all()
+        if initial_hp == None:
+            await ctx.send(f"```http\ninitial_hp: {guild_config['initial_hp']}```")
+            return
+
+        guild_config['initial_hp'] = initial_hp
+        await self.config.guild(ctx.guild).set(guild_config)
+        await ctx.send(f"```initial_hp``` set to ```{initial_hp}```")
+
+    @_duelset.command(name="max_rounds")
+    async def _duelset_max_rounds(self, ctx, max_rounds: int = None):
+        guild_config = await self.config.guild(ctx.guild).all()
+        if max_rounds == None:
+            await ctx.send(f"```http\nmax_rounds: {guild_config['max_rounds']}```")
+            return
+
+        guild_config['max_rounds'] = max_rounds
+        await self.config.guild(ctx.guild).set(guild_config)
+        await ctx.send(f"```max_rounds``` set to ```{max_rounds}```")
+
+    @_duelset.command(name="edit_posts")
+    async def _duelset_edit_posts(self, ctx, edit_posts: bool = None):
+        "Edits messages in-place instead of posting each move seperately."
+        guild_config = await self.config.guild(ctx.guild).all()
+        if edit_posts == None:
+            await ctx.send(f"```http\nedit_posts: {guild_config['edit_posts']}```")
+            return
+
+        guild_config['edit_posts'] = edit_posts
+        await self.config.guild(ctx.guild).set(guild_config)
+        await ctx.send(f"```edit_posts``` set to ```{edit_posts}```")
+
+
+    @_duelset.command(name="price")
+    async def _duelset_self_protect(self, ctx, self_protect: str = None):
+        """
+        Enable, disable, or set the price of self-protection
+
+        Valid options: "disable", "free", or any number 0 or greater.
+        """
+        guild_config = await self.config.guild(ctx.guild).all()
+
+        if self_protect == None:
+            await ctx.send(f"```http\nself_protect: {guild_config['self_protect']}```")
+            return
+
+        self_protect = self_protect.lower().strip(' "`')
+
+        if self_protect in ('disable', 'none'):
+            self_protect = False
+        elif self_protect in ('free', '0'):
+            self_protect = True
+        elif self_protect.isdecimal():
+            self_protect = int(self_protect)
+        else:
+            await ctx.send_help()
+            return
+
+        await ctx.send(f"```self_protect``` set to ```{self_protect}```")
 
 
 # UTILS BEGIN
@@ -797,7 +819,7 @@ class Duel(commands.Cog):
         return item_name in equipped
 
 
-    def generate_action(self, attacker, defender, move_cat=None):
+    def generate_action(self, attacker, defender, initial_hp, move_cat=None):
         # Select move category
         if not move_cat:
             move_cat = weighted_choice(WEIGHTED_MOVES)
@@ -830,7 +852,7 @@ class Duel(commands.Cog):
             obj = attacker.healing_item['name']
         else:
             move = BOT
-            hp_delta = -INITIAL_HP * 64
+            hp_delta = -initial_hp * 64
 
         msg = move.format(a=attacker, d=defender, o=obj, v=verb, b=bodypart, p=preposition, ap=armor_piece_name)
         if hp_delta == 0:
