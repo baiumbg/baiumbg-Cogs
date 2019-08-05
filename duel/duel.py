@@ -151,7 +151,8 @@ class Duel(commands.Cog):
                 'weapon': DEFAULT_WEAPONS
             },
             'initial_hp': 20,
-            'max_rounds': 10
+            'max_rounds': 10,
+            'currency_per_win': 10
         }
         self.config.register_member(**default_member_config)
         self.config.register_guild(**default_guild_config)
@@ -308,6 +309,10 @@ class Duel(commands.Cog):
     @commands.guild_only()
     @commands.group(name="duels", invoke_without_command=True)
     async def _duels(self, ctx):
+        """
+        Duel leaderboards
+        """
+
         if ctx.invoked_subcommand is None:
             await ctx.invoke(self._duels_list)
 
@@ -407,6 +412,7 @@ class Duel(commands.Cog):
         server = ctx.guild
         channel = ctx.channel
         guild_config = await self.config.guild(server).all()
+        currency = await bank.get_currency_name(ctx.guild)
 
         abort = True
 
@@ -469,7 +475,8 @@ class Duel(commands.Cog):
                 loser_losses = await loser.get_losses()
                 await victor.set_wins(victor_wins + 1)
                 await loser.set_losses(loser_losses + 1)
-                msg = 'After {0} rounds, {1.mention} wins with {1.hp} HP!'.format(i + 1, victor)
+                await bank.deposit_credits(victor.member, guild_config['currency_per_win'])
+                msg = f"After {i + 1} rounds, {victor.mention} wins with {victor.hp} HP! They have been awarded with {guild_config['currency_per_win']} {currency}!"
                 msg += '\nStats: '
 
                 for p, end in ((victor, '; '), (loser, '.')):
@@ -801,6 +808,22 @@ class Duel(commands.Cog):
         guild_config['self_protect'] = self_protect
         await self.config.guild(ctx.guild).set(guild_config)
         await ctx.send(f"`self_protect` set to `{self_protect}`")
+
+
+    @_duelset.command(name="currency_per_win")
+    async def _duelset_currency_per_win(self, ctx, currency_per_win: int = None):
+        """
+        Change the amount of currency that is awarded to the winner after every duel
+        """
+
+        guild_config = await self.config.guild(ctx.guild).all()
+        if currency_per_win == None:
+            await ctx.send(f"```http\ncurrency_per_win: {guild_config['currency_per_win']}```")
+            return
+
+        guild_config['currency_per_win'] = currency_per_win
+        await self.config.guild(ctx.guild).set(guild_config)
+        await ctx.send(f"`currency_per_win` set to `{currency_per_win}`")
 
 
 # UTILS BEGIN
