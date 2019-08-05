@@ -13,37 +13,37 @@ DEFAULT_WEAPONS = [
         'name': 'axe',
         'cost': 5,
         'low': 2,
-        'high': 4,
-        'crit_chance': 0.05,
-        'hit_chance': 0.9,
+        'high': 5,
+        'crit_chance': 0.08,
+        'hit_chance': 0.91,
         'verb': 'swing',
         'preposition': 'into'
     },
     {
         'name': 'scimitar',
-        'cost': 6,
+        'cost': 5,
         'low': 3,
         'high': 5,
         'crit_chance': 0.05,
-        'hit_chance': 0.9,
+        'hit_chance': 0.82,
         'verb': 'swing',
         'preposition': 'into'
     },
     {
         'name': 'buzzsaw',
-        'cost': 7,
-        'low': 4,
+        'cost': 5,
+        'low': 2,
         'high': 6,
-        'crit_chance': 0.05,
-        'hit_chance': 0.9,
+        'crit_chance': 0.04,
+        'hit_chance': 0.82,
         'verb': 'swing',
         'preposition': 'into'
     },
     {
         'name': 'chainsaw',
         'cost': 10,
-        'low': 5,
-        'high': 7,
+        'low': 4,
+        'high': 6,
         'crit_chance': 0.05,
         'hit_chance': 0.9,
         'verb': 'swing',
@@ -54,8 +54,8 @@ DEFAULT_WEAPONS = [
         'cost': 15,
         'low': 6,
         'high': 8,
-        'crit_chance': 0.05,
-        'hit_chance': 0.95,
+        'crit_chance': 0.04,
+        'hit_chance': 0.65,
         'verb': 'swing',
         'preposition': 'into'
     },
@@ -65,7 +65,7 @@ DEFAULT_WEAPONS = [
         'low': 4,
         'high': 6,
         'crit_chance': 0.15,
-        'hit_chance': 0.9,
+        'hit_chance': 0.82,
         'verb': 'swing',
         'preposition': 'into'
     },
@@ -73,8 +73,8 @@ DEFAULT_WEAPONS = [
         'name': 'falchion',
         'cost': 15,
         'low': 4,
-        'high': 6,
-        'crit_chance': 0.10,
+        'high': 5,
+        'crit_chance': 0.05,
         'hit_chance': 1,
         'verb': 'swing',
         'preposition': 'into'
@@ -82,9 +82,9 @@ DEFAULT_WEAPONS = [
     {
         'name': 'raygun',
         'cost': 10,
-        'low': 4,
+        'low': 2,
         'high': 6,
-        'crit_chance': 0.05,
+        'crit_chance': 0.18,
         'hit_chance': 1,
         'verb': 'fire',
         'preposition': 'at'
@@ -92,7 +92,7 @@ DEFAULT_WEAPONS = [
     {
         'name': 'flamethrower',
         'cost': 10,
-        'low': 5,
+        'low': 2,
         'high': 7,
         'crit_chance': 0,
         'hit_chance': 1,
@@ -104,7 +104,7 @@ DEFAULT_WEAPONS = [
         'cost': 10,
         'low': 3,
         'high': 5,
-        'crit_chance': 0.1,
+        'crit_chance': 0.18,
         'hit_chance': 1,
         'verb': 'fire',
         'preposition': 'at'
@@ -114,7 +114,7 @@ DEFAULT_WEAPONS = [
         'cost': 15,
         'low': 5,
         'high': 7,
-        'crit_chance': 0.05,
+        'crit_chance': 0,
         'hit_chance': 1,
         'verb': 'fire',
         'preposition': 'at'
@@ -125,7 +125,7 @@ DEFAULT_WEAPONS = [
         'low': 5,
         'high': 7,
         'crit_chance': 0.1,
-        'hit_chance': 0.95,
+        'hit_chance': 0.91,
         'verb': 'fire',
         'preposition': 'at'
     },
@@ -133,8 +133,8 @@ DEFAULT_WEAPONS = [
         'name': 'catapult',
         'cost': 15,
         'low': 4,
-        'high': 6,
-        'crit_chance': 0.15,
+        'high': 7,
+        'crit_chance': 0.21,
         'hit_chance': 0.9,
         'verb': 'fire',
         'preposition': 'at'
@@ -143,8 +143,8 @@ DEFAULT_WEAPONS = [
         'name': 'cannon',
         'cost': 15,
         'low': 3,
-        'high': 5,
-        'crit_chance': 0.25,
+        'high': 6,
+        'crit_chance': 0.4,
         'hit_chance': 0.95,
         'verb': 'fire',
         'preposition': 'at'
@@ -153,8 +153,8 @@ DEFAULT_WEAPONS = [
         'name': 'mortar',
         'cost': 15,
         'low': 2,
-        'high': 4,
-        'crit_chance': 0.5,
+        'high': 5,
+        'crit_chance': 0.73,
         'hit_chance': 1,
         'verb': 'fire',
         'preposition': 'at'
@@ -165,7 +165,7 @@ DEFAULT_WEAPONS = [
         'low': 4,
         'high': 6,
         'crit_chance': 0.5,
-        'hit_chance': 0.7,
+        'hit_chance': 0.8,
         'verb': 'drive',
         'preposition': 'through'
     },
@@ -173,9 +173,9 @@ DEFAULT_WEAPONS = [
         'name': 'lance',
         'cost': 15,
         'low': 3,
-        'high': 5,
+        'high': 6,
         'crit_chance': 0.6,
-        'hit_chance': 0.8,
+        'hit_chance': 0.84,
         'verb': 'drive',
         'preposition': 'through'
     }
@@ -201,11 +201,6 @@ DEFAULT_HELMETS = [
         'name': 'iron cap',
         'cost': 15,
         'armor': 3
-    },
-    {
-        'name': 'steel cap',
-        'cost': 20,
-        'armor': 4
     }
 ]
 
@@ -229,11 +224,6 @@ DEFAULT_BODY_ARMORS = [
         'name': 'iron breastplate',
         'cost': 15,
         'armor': 3
-    },
-    {
-        'name': 'steel breastplate',
-        'cost': 20,
-        'armor': 4
     }
 ]
 
@@ -257,11 +247,6 @@ DEFAULT_GLOVES = [
         'name': 'iron gauntlets',
         'cost': 15,
         'armor': 3
-    },
-    {
-        'name': 'steel gauntlets',
-        'cost': 20,
-        'armor': 4
     }
 ]
 
@@ -285,11 +270,6 @@ DEFAULT_BOOTS = [
         'name': 'iron greaves',
         'cost': 15,
         'armor': 3
-    },
-    {
-        'name': 'steel greaves',
-        'cost': 20,
-        'armor': 4
     }
 ]
 
@@ -313,11 +293,6 @@ DEFAULT_PANTS = [
         'name': 'iron tassets',
         'cost': 15,
         'armor': 3
-    },
-    {
-        'name': 'steel faulds',
-        'cost': 20,
-        'armor': 4
     }
 ]
 
@@ -341,11 +316,6 @@ DEFAULT_SHOULDERS = [
         'name': 'iron pauldrons',
         'cost': 15,
         'armor': 3
-    },
-    {
-        'name': 'steel pauldrons',
-        'cost': 20,
-        'armor': 4
     }
 ]
 
@@ -353,36 +323,36 @@ DEFAULT_HEALING_ITEMS = [
     {
         'name': 'apple',
         'cost': 0,
-        'low': 1,
-        'high': 2,
+        'low': 2,
+        'high': 3,
         'template': '{a} decides to take a bite out of their {o} instead of attacking.'
     },
     {
         'name': 'morphine',
         'cost': 5,
-        'low': 2,
-        'high': 3,
+        'low': 3,
+        'high': 4,
         'template': '{a} decides to inject himself with some of their {o} instead of attacking.'
     },
     {
         'name': 'cake',
         'cost': 5,
-        'low': 1,
-        'high': 4,
+        'low': 2,
+        'high': 5,
         'template': '{a} decides to eat some of their {o} instead of attacking.'
     },
     {
         'name': 'joint',
         'cost': 10,
-        'low': 3,
-        'high': 4,
+        'low': 1,
+        'high': 5,
         'template': '{a} decides to smoke a fat {o} instead of attacking.'
     },
     {
         'name': 'nanites',
         'cost': 10,
-        'low': 2,
-        'high': 5,
+        'low': 3,
+        'high': 4,
         'template': '{a} decides to inject himself with some of their {o} instead of attacking.'
     },
     {
@@ -398,27 +368,6 @@ DEFAULT_HEALING_ITEMS = [
         'low': 2,
         'high': 6,
         'template': '{a} decides to drink some of their {o} instead of attacking.'
-    },
-    {
-        'name': 'ambrosia',
-        'cost': 20,
-        'low': 4,
-        'high': 5,
-        'template': '{a} decides to drink some of their {o} instead of attacking.'
-    },
-    {
-        'name': 'generic hp potion',
-        'cost': 20,
-        'low': 3,
-        'high': 6,
-        'template': '{a} decides to drink a {o} instead of attacking.'
-    },
-    {
-        'name': 'purple drank',
-        'cost': 20,
-        'low': -2,
-        'high': 11,
-        'template': '{a} decides to drink a {o} instead of attacking.'
     }
 ]
 
