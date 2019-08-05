@@ -11,7 +11,7 @@ DEFAULT_WEAPONS = [
     },
     {
         'name': 'axe',
-        'cost': 5,
+        'cost': 100,
         'low': 2,
         'high': 5,
         'crit_chance': 0.08,
@@ -21,7 +21,7 @@ DEFAULT_WEAPONS = [
     },
     {
         'name': 'scimitar',
-        'cost': 5,
+        'cost': 100,
         'low': 3,
         'high': 5,
         'crit_chance': 0.05,
@@ -31,7 +31,7 @@ DEFAULT_WEAPONS = [
     },
     {
         'name': 'buzzsaw',
-        'cost': 5,
+        'cost': 100,
         'low': 2,
         'high': 6,
         'crit_chance': 0.04,
@@ -41,7 +41,7 @@ DEFAULT_WEAPONS = [
     },
     {
         'name': 'chainsaw',
-        'cost': 10,
+        'cost': 200,
         'low': 4,
         'high': 6,
         'crit_chance': 0.05,
@@ -51,7 +51,7 @@ DEFAULT_WEAPONS = [
     },
     {
         'name': 'broadsword',
-        'cost': 15,
+        'cost': 300,
         'low': 6,
         'high': 8,
         'crit_chance': 0.04,
@@ -61,7 +61,7 @@ DEFAULT_WEAPONS = [
     },
     {
         'name': 'katana',
-        'cost': 15,
+        'cost': 300,
         'low': 4,
         'high': 6,
         'crit_chance': 0.15,
@@ -71,7 +71,7 @@ DEFAULT_WEAPONS = [
     },
     {
         'name': 'falchion',
-        'cost': 15,
+        'cost': 300,
         'low': 4,
         'high': 5,
         'crit_chance': 0.05,
@@ -81,7 +81,7 @@ DEFAULT_WEAPONS = [
     },
     {
         'name': 'raygun',
-        'cost': 10,
+        'cost': 200,
         'low': 2,
         'high': 6,
         'crit_chance': 0.18,
@@ -91,7 +91,7 @@ DEFAULT_WEAPONS = [
     },
     {
         'name': 'flamethrower',
-        'cost': 10,
+        'cost': 200,
         'low': 2,
         'high': 7,
         'crit_chance': 0,
@@ -101,7 +101,7 @@ DEFAULT_WEAPONS = [
     },
     {
         'name': 'crossbow',
-        'cost': 10,
+        'cost': 200,
         'low': 3,
         'high': 5,
         'crit_chance': 0.18,
@@ -111,7 +111,7 @@ DEFAULT_WEAPONS = [
     },
     {
         'name': 'railgun',
-        'cost': 15,
+        'cost': 300,
         'low': 5,
         'high': 7,
         'crit_chance': 0,
@@ -121,7 +121,7 @@ DEFAULT_WEAPONS = [
     },
     {
         'name': 'ballista',
-        'cost': 15,
+        'cost': 300,
         'low': 5,
         'high': 7,
         'crit_chance': 0.1,
@@ -131,7 +131,7 @@ DEFAULT_WEAPONS = [
     },
     {
         'name': 'catapult',
-        'cost': 15,
+        'cost': 300,
         'low': 4,
         'high': 7,
         'crit_chance': 0.21,
@@ -141,7 +141,7 @@ DEFAULT_WEAPONS = [
     },
     {
         'name': 'cannon',
-        'cost': 15,
+        'cost': 300,
         'low': 3,
         'high': 6,
         'crit_chance': 0.4,
@@ -151,7 +151,7 @@ DEFAULT_WEAPONS = [
     },
     {
         'name': 'mortar',
-        'cost': 15,
+        'cost': 300,
         'low': 2,
         'high': 5,
         'crit_chance': 0.73,
@@ -161,7 +161,7 @@ DEFAULT_WEAPONS = [
     },
     {
         'name': 'naginata',
-        'cost': 15,
+        'cost': 300,
         'low': 4,
         'high': 6,
         'crit_chance': 0.5,
@@ -171,7 +171,7 @@ DEFAULT_WEAPONS = [
     },
     {
         'name': 'lance',
-        'cost': 15,
+        'cost': 300,
         'low': 3,
         'high': 6,
         'crit_chance': 0.6,
@@ -189,17 +189,17 @@ DEFAULT_HELMETS = [
     },
     {
         'name': 'leather cap',
-        'cost': 5,
+        'cost': 20,
         'armor': 1
     },
     {
         'name': 'wooden cap',
-        'cost': 10,
+        'cost': 40,
         'armor': 2
     },
     {
         'name': 'iron cap',
-        'cost': 15,
+        'cost': 60,
         'armor': 3
     }
 ]
@@ -212,17 +212,17 @@ DEFAULT_BODY_ARMORS = [
     },
     {
         'name': 'leather vest',
-        'cost': 5,
+        'cost': 20,
         'armor': 1
     },
     {
         'name': 'wooden armor',
-        'cost': 10,
+        'cost': 40,
         'armor': 2
     },
     {
         'name': 'iron breastplate',
-        'cost': 15,
+        'cost': 60,
         'armor': 3
     }
 ]
@@ -235,17 +235,17 @@ DEFAULT_GLOVES = [
     },
     {
         'name': 'leather gloves',
-        'cost': 5,
+        'cost': 20,
         'armor': 1
     },
     {
         'name': 'wooden gloves',
-        'cost': 10,
+        'cost': 40,
         'armor': 2
     },
     {
         'name': 'iron gauntlets',
-        'cost': 15,
+        'cost': 60,
         'armor': 3
     }
 ]
@@ -258,17 +258,17 @@ DEFAULT_BOOTS = [
     },
     {
         'name': 'leather boots',
-        'cost': 5,
+        'cost': 20,
         'armor': 1
     },
     {
         'name': 'wooden boots',
-        'cost': 10,
+        'cost': 40,
         'armor': 2
     },
     {
         'name': 'iron greaves',
-        'cost': 15,
+        'cost': 60,
         'armor': 3
     }
 ]
@@ -281,17 +281,17 @@ DEFAULT_PANTS = [
     },
     {
         'name': 'leather leggings',
-        'cost': 5,
+        'cost': 20,
         'armor': 1
     },
     {
         'name': 'wooden pants',
-        'cost': 10,
+        'cost': 40,
         'armor': 2
     },
     {
         'name': 'iron tassets',
-        'cost': 15,
+        'cost': 60,
         'armor': 3
     }
 ]
@@ -304,17 +304,17 @@ DEFAULT_SHOULDERS = [
     },
     {
         'name': 'leather shoulderpads',
-        'cost': 5,
+        'cost': 20,
         'armor': 1
     },
     {
         'name': 'wooden shoulderpads',
-        'cost': 10,
+        'cost': 40,
         'armor': 2
     },
     {
         'name': 'iron pauldrons',
-        'cost': 15,
+        'cost': 60,
         'armor': 3
     }
 ]
@@ -329,42 +329,42 @@ DEFAULT_HEALING_ITEMS = [
     },
     {
         'name': 'morphine',
-        'cost': 5,
+        'cost': 100,
         'low': 3,
         'high': 4,
         'template': '{a} decides to inject himself with some of their {o} instead of attacking.'
     },
     {
         'name': 'cake',
-        'cost': 5,
+        'cost': 100,
         'low': 2,
         'high': 5,
         'template': '{a} decides to eat some of their {o} instead of attacking.'
     },
     {
         'name': 'joint',
-        'cost': 10,
+        'cost': 200,
         'low': 1,
         'high': 5,
         'template': '{a} decides to smoke a fat {o} instead of attacking.'
     },
     {
         'name': 'nanites',
-        'cost': 10,
+        'cost': 200,
         'low': 3,
         'high': 4,
         'template': '{a} decides to inject himself with some of their {o} instead of attacking.'
     },
     {
         'name': 'unicorn piss',
-        'cost': 15,
+        'cost': 200,
         'low': 3,
         'high': 5,
         'template': '{a} decides to drink some of their {o} instead of attacking.'
     },
     {
         'name': 'goon wine',
-        'cost': 15,
+        'cost': 200,
         'low': 2,
         'high': 6,
         'template': '{a} decides to drink some of their {o} instead of attacking.'
