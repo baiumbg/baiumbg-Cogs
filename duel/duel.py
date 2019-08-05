@@ -18,7 +18,7 @@ from .items import DEFAULT_BODY_ARMORS, DEFAULT_BOOTS, DEFAULT_GLOVES, \
                   DEFAULT_SHOULDERS, DEFAULT_WEAPONS, ARMOR_PIECES, \
                   ARMOR_PIECE_TO_BODY_PARTS, DEFAULT_EQUIPPED
 
-__version__ = '1.6.0'
+__version__ = '2.0.0'
 
 
 # Constants

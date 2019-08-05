@@ -344,29 +344,29 @@ DEFAULT_HEALING_ITEMS = [
     {
         'name': 'joint',
         'cost': 200,
-        'low': 1,
-        'high': 5,
+        'low': 4,
+        'high': 6,
         'template': '{a} decides to smoke a fat {o} instead of attacking.'
     },
     {
         'name': 'nanites',
         'cost': 200,
         'low': 3,
-        'high': 4,
+        'high': 7,
         'template': '{a} decides to inject himself with some of their {o} instead of attacking.'
     },
     {
         'name': 'unicorn piss',
-        'cost': 200,
-        'low': 3,
-        'high': 5,
+        'cost': 300,
+        'low': 6,
+        'high': 8,
         'template': '{a} decides to drink some of their {o} instead of attacking.'
     },
     {
         'name': 'goon wine',
-        'cost': 200,
-        'low': 2,
-        'high': 6,
+        'cost': 300,
+        'low': 5,
+        'high': 9,
         'template': '{a} decides to drink some of their {o} instead of attacking.'
     }
 ]
