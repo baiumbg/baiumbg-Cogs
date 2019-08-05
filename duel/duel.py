@@ -176,6 +176,7 @@ class Duel(commands.Cog):
         """
         Adds you to the duel protection list
         """
+
         server = ctx.message.guild
         self_protect = await self.config.guild(server).self_protect()
         author = ctx.message.author
@@ -206,7 +207,10 @@ class Duel(commands.Cog):
     @checks.mod_or_permissions(administrator=True)
     @_protect.command(name="user")
     async def _protect_user(self, ctx, user: discord.Member):
-        """Adds a member to the protection list"""
+        """
+        Adds a member to the protection list
+        """
+
         if await self.protect_common(user, True):
             await ctx.send("%s has been successfully added to the protection list." % user.display_name)
         else:
@@ -216,7 +220,10 @@ class Duel(commands.Cog):
     @checks.admin_or_permissions(administrator=True)
     @_protect.command(name="role")
     async def _protect_role(self, ctx, role: discord.Role):
-        """Adds a role to the protection list"""
+        """
+        Adds a role to the protection list
+        """
+
         if await self.protect_common(role, True):
             await ctx.send("The %s role has been successfully added to the protection list." % role.name)
         else:
@@ -229,6 +236,7 @@ class Duel(commands.Cog):
         """
         Manage the protection list (removes items)
         """
+
         if ctx.invoked_subcommand is None and user is not None:
             await ctx.invoke(self._unprotect_user, user)
             return
@@ -239,7 +247,10 @@ class Duel(commands.Cog):
     @checks.mod_or_permissions(administrator=True)
     @_unprotect.command(name="user")
     async def _unprotect_user(self, ctx, user: discord.Member):
-        """Removes a member from the duel protection list"""
+        """
+        Removes a member from the duel protection list
+        """
+
         if await self.protect_common(user, False):
             await ctx.send("%s has been successfully removed from the protection list." % user.display_name)
         else:
@@ -249,7 +260,10 @@ class Duel(commands.Cog):
     @checks.admin_or_permissions(administrator=True)
     @_unprotect.command(name="role")
     async def _unprotect_role(self, ctx, role: discord.Role):
-        """Removes a role from the duel protection list"""
+        """
+        Removes a role from the duel protection list
+        """
+
         if await self.protect_common(role, False):
             await ctx.send("The %s role has been successfully removed from the protection list." % role.name)
         else:
@@ -258,7 +272,10 @@ class Duel(commands.Cog):
 
     @_unprotect.command(name="me")
     async def _unprotect_self(self, ctx):
-        """Removes you from the duel protection list"""
+        """
+        Removes you from the duel protection list
+        """
+
         if await self.protect_common(ctx.message.author, False):
             await ctx.send("You have been removed from the protection list.")
         else:
@@ -268,7 +285,10 @@ class Duel(commands.Cog):
     @commands.guild_only()
     @commands.command(name="protected", aliases=['protection'])
     async def _protection(self, ctx):
-        """Displays the duel protection list"""
+        """
+        Displays the duel protection list
+        """
+
         server = ctx.message.guild
         duelists = await self.config.guild(server).all()
         member_list = duelists["protected"]
@@ -295,7 +315,10 @@ class Duel(commands.Cog):
     @_duels.command(name="list")
     @commands.cooldown(2, 60, discord.ext.commands.BucketType.user)
     async def _duels_list(self, ctx, top: int = 10):
-        """Shows the duel leaderboard, defaults to top 10"""
+        """
+        Shows the duel leaderboard, defaults to top 10
+        """
+
         server = ctx.message.guild
         member_configs = await self.config.all_members(server)
 
@@ -364,7 +387,9 @@ class Duel(commands.Cog):
     @checks.admin_or_permissions(administrator=True)
     @_duels.command(name="reset")
     async def _duels_reset(self, ctx):
-        "Clears duel scores without resetting protection or editmode."
+        """
+        Clears duel scores and equipment without resetting protection or editmode
+        """
 
         await self.config.clear_all_members(ctx.guild)
         await ctx.send('Duel records cleared.')
@@ -374,7 +399,10 @@ class Duel(commands.Cog):
     @commands.command(name="duel")
     @commands.cooldown(2, 60, commands.BucketType.user)
     async def _duel(self, ctx, user: discord.Member):
-        """Duel another player"""
+        """
+        Duel another player
+        """
+
         author = ctx.author
         server = ctx.guild
         channel = ctx.channel
@@ -465,12 +493,20 @@ class Duel(commands.Cog):
     @commands.guild_only()
     @commands.group(name="duelshop", invoke_without_command=True)
     async def _duelshop(self, ctx):
+        """
+        Item purchasing/selling
+        """
+
         if ctx.invoked_subcommand is None:
             await ctx.invoke(self._duelshop_list)
 
 
     @_duelshop.command(name="list")
     async def _duelshop_list(self, ctx, category: str = None):
+        """
+        Shows all items (if no category was provided) currently in the shop
+        """
+
         items = await self.config.guild(ctx.guild).items()
         msg = ''
 
@@ -522,6 +558,10 @@ class Duel(commands.Cog):
 
     @_duelshop.command(name="buy")
     async def _duelshop_buy(self, ctx, *, item_name):
+        """
+        Purchases an item and adds it to your inventory
+        """
+
         currency = await bank.get_currency_name(ctx.guild)
         inventory = await self.config.member(ctx.author).inventory()
 
@@ -546,6 +586,10 @@ class Duel(commands.Cog):
 
     @_duelshop.command(name="sell")
     async def _duelshop_sell(self, ctx, *, item_name):
+        """
+        Sells an item from your inventory for half its purchase cost (unequips it, if it was equipped prior to selling)
+        """
+
         slot, item = await self.get_item(ctx.guild, item_name)
         inventory = await self.get_inventory(ctx.author)
         equipped = await self.get_equipped_slots(ctx.author)
@@ -578,12 +622,20 @@ class Duel(commands.Cog):
     @commands.guild_only()
     @commands.group(name="duelinv", invoke_without_command=True)
     async def _duelinv(self, ctx):
+        """
+        Inventory management
+        """
+
         if ctx.invoked_subcommand is None:
             await ctx.invoke(self._duelinv_list)
 
 
     @_duelinv.command(name="list")
     async def _duelinv_list(self, ctx):
+        """
+        Shows your equipped items and your inventory
+        """
+
         inventory = await self.get_inventory(ctx.author)
         equipped = await self.get_equipped_slots(ctx.author)
         inventory_str = 'None' if not len(inventory) else ', '.join(inventory)
@@ -594,6 +646,10 @@ class Duel(commands.Cog):
 
     @_duelinv.command(name="equip")
     async def _duelinv_equip(self, ctx, *, item_name):
+        """
+        Equips an item from your inventory
+        """
+
         inventory = await self.get_inventory(ctx.author)
         equipped = await self.get_equipped_slots(ctx.author)
         slot, item = await self.get_item(ctx.guild, item_name)
@@ -624,6 +680,10 @@ class Duel(commands.Cog):
 
     @_duelinv.command(name="unequip")
     async def _duelinv_unequip(self, ctx, slot):
+        """
+        Unequips a slot and places the item in that slot in your inventory
+        """
+
         if slot not in DEFAULT_EQUIPPED.keys():
             await ctx.send(f"Invalid slot name! Valid slot names:\n```{', '.join(DEFAULT_EQUIPPED.keys())}```")
             return
@@ -647,6 +707,10 @@ class Duel(commands.Cog):
     @checks.admin_or_permissions(administrator=True)
     @commands.group(name="duelset", invoke_without_command=True)
     async def _duelset(self, ctx):
+        """
+        Manage cog settings
+        """
+
         if ctx.invoked_subcommand == None:
             guild_config = await self.config.guild(ctx.guild).all()
             del guild_config['items']
@@ -662,6 +726,10 @@ class Duel(commands.Cog):
 
     @_duelset.command(name="initial_hp")
     async def _duelset_initial_hp(self, ctx, initial_hp: int = None):
+        """
+        Change the HP players start with at the beginning of every duel
+        """
+
         guild_config = await self.config.guild(ctx.guild).all()
         if initial_hp == None:
             await ctx.send(f"```http\ninitial_hp: {guild_config['initial_hp']}```")
@@ -674,6 +742,10 @@ class Duel(commands.Cog):
 
     @_duelset.command(name="max_rounds")
     async def _duelset_max_rounds(self, ctx, max_rounds: int = None):
+        """
+        Change the maximum number of rounds before a duel is interrupted and a winner is announced
+        """
+
         guild_config = await self.config.guild(ctx.guild).all()
         if max_rounds == None:
             await ctx.send(f"```http\nmax_rounds: {guild_config['max_rounds']}```")
@@ -686,7 +758,10 @@ class Duel(commands.Cog):
 
     @_duelset.command(name="edit_posts")
     async def _duelset_edit_posts(self, ctx, edit_posts: bool = None):
-        "Edits messages in-place instead of posting each move seperately."
+        """
+        Edit messages in-place instead of posting each move seperately
+        """
+
         guild_config = await self.config.guild(ctx.guild).all()
         if edit_posts == None:
             await ctx.send(f"```http\nedit_posts: {guild_config['edit_posts']}```")
@@ -702,8 +777,9 @@ class Duel(commands.Cog):
         """
         Enable, disable, or set the price of self-protection
 
-        Valid options: "disable", "off", "false", "free", or any number 0 or greater.
+        Valid options: "disable", "off", "false", "no", "free", or any number 0 or greater.
         """
+
         guild_config = await self.config.guild(ctx.guild).all()
 
         if self_protect == None:
