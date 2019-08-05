@@ -128,9 +128,11 @@ class Duel(commands.Cog):
         self.underway = set()
         self.config = Config.get_conf(self, identifier=134621854878007297)
         default_member_config = {
-            'wins': 0,
-            'losses': 0,
-            'draws': 0,
+            'stats': {
+                'wins': 0,
+                'losses': 0,
+                'draws': 0
+            },
             'equipped': DEFAULT_EQUIPPED,
             'inventory': []
         }
@@ -154,51 +156,6 @@ class Duel(commands.Cog):
         self.config.register_member(**default_member_config)
         self.config.register_guild(**default_guild_config)
 
-    async def _set_stats(self, user, stats):
-        await self.config.member(user.member).set(stats)
-
-    async def _get_stats(self, user):
-        return await self.config.member(user.member).all()
-
-    def format_display(self, server, id):
-        if id.startswith('r'):
-            role = discord.utils.get(server.roles, id=int(id[1:]))
-
-            if role:
-                return '@%s' % role.name
-            else:
-                return 'deleted role #%s' % id
-        else:
-            member = server.get_member(int(id))
-
-            if member:
-                return member.display_name
-            else:
-                return 'missing member #%s' % id
-
-    async def is_protected(self, member: discord.Member, member_only=False) -> bool:
-        protected = set(await self.config.guild(member.guild).protected())
-        roles = set() if member_only else set('r' + str(r.id) for r in member.roles)
-        return str(member.id) in protected or bool(protected & roles)
-
-    async def protect_common(self, obj, protect=True):
-        if not isinstance(obj, (discord.Member, discord.Role)):
-            raise TypeError('Can only pass member or role objects.')
-
-        server = obj.guild
-        id = ('r' if type(obj) is discord.Role else '') + str(obj.id)
-
-        protected = await self.config.guild(server).protected()
-
-        if protect == (id in protected):
-            return False
-        elif protect:
-            protected.append(id)
-        else:
-            protected.remove(id)
-
-        await self.config.guild(server).protected.set(protected)
-        return True
 
     @commands.guild_only()
     @commands.group(name="protect", invoke_without_command=True)
@@ -212,6 +169,7 @@ class Duel(commands.Cog):
             return
 
         await ctx.send_help()
+
 
     @_protect.command(name="me")
     async def _protect_self(self, ctx):
@@ -326,39 +284,41 @@ class Duel(commands.Cog):
         else:
             await ctx.send("The list is currently empty, add users or roles with `%sprotect` first." % ctx.prefix)
 
+
     @commands.guild_only()
     @commands.group(name="duels", invoke_without_command=True)
     async def _duels(self, ctx):
         if ctx.invoked_subcommand is None:
             await ctx.invoke(self._duels_list)
 
+
     @_duels.command(name="list")
     @commands.cooldown(2, 60, discord.ext.commands.BucketType.user)
     async def _duels_list(self, ctx, top: int = 10):
         """Shows the duel leaderboard, defaults to top 10"""
         server = ctx.message.guild
-        all_stats = await self.config.all_members(server)
+        member_configs = await self.config.all_members(server)
 
         if top < 1:
             top = 10
 
         def sort_wins(kv):
             _, v = kv
-            return v['wins'] - v['losses']
+            return v['stats']['wins'] - v['stats']['losses']
 
         def stat_filter(kv):
-            _, stats = kv
+            _, config = kv
 
-            if type(stats) is not dict:
+            if type(config['stats']) is not dict:
                 return False
 
-            if stats['wins'] == 0 and stats['losses'] == 0 and stats['draws'] == 0:
+            if config['stats']['wins'] == 0 and config['stats']['losses'] == 0 and config['stats']['draws'] == 0:
                 return False
 
             return True
 
         # filter out extra data, TODO: store protected list seperately
-        duel_stats = filter(stat_filter, all_stats.items())
+        duel_stats = filter(stat_filter, member_configs.items())
         duels_sorted = sorted(duel_stats, key=sort_wins, reverse=True)
 
         if not duels_sorted:
@@ -384,12 +344,12 @@ class Duel(commands.Cog):
 
         highscore += '\n'
 
-        for uid, stats in topten:
+        for uid, config in topten:
             highscore += str(place).ljust(len(str(top)) + 1)  # pad to digits in longest number
             highscore += names[uid].ljust(max_name_len + 4)
 
             for stat in ['wins', 'losses', 'draws']:
-                val = stats[stat]
+                val = config['stats'][stat]
                 highscore += '{}'.format(val).ljust(8)
 
             highscore += "\n"
@@ -400,6 +360,7 @@ class Duel(commands.Cog):
         else:
             await ctx.send("The leaderboard is too big to be displayed. Try with a lower <top> parameter.")
 
+
     @checks.admin_or_permissions(administrator=True)
     @_duels.command(name="reset")
     async def _duels_reset(self, ctx):
@@ -407,6 +368,7 @@ class Duel(commands.Cog):
 
         await self.config.clear_all_members(ctx.guild)
         await ctx.send('Duel records cleared.')
+
 
     @commands.guild_only()
     @commands.command(name="duel")
@@ -555,7 +517,7 @@ class Duel(commands.Cog):
                 await ctx.send(f'```py\n{page}```')
 
     @_duelshop.command(name="buy")
-    async def _duelshop_buy(self, ctx, item_name: str):
+    async def _duelshop_buy(self, ctx, *, item_name):
         currency = await bank.get_currency_name(ctx.guild)
         inventory = await self.config.member(ctx.author).inventory()
 
@@ -579,7 +541,7 @@ class Duel(commands.Cog):
         await ctx.send(f'You successfully bought a **{item_name}**! Equip it using `{ctx.prefix}duelinv equip {item_name_escaped}`.')
 
     @_duelshop.command(name="sell")
-    async def _duelshop_sell(self, ctx, item_name: str):
+    async def _duelshop_sell(self, ctx, *, item_name):
         slot, item = await self.get_item(ctx.guild, item_name)
         inventory = await self.get_inventory(ctx.author)
         equipped = await self.get_equipped_slots(ctx.author)
@@ -627,7 +589,7 @@ class Duel(commands.Cog):
 
 
     @_duelinv.command(name="equip")
-    async def _duelinv_equip(self, ctx, item_name: str):
+    async def _duelinv_equip(self, ctx, *, item_name):
         inventory = await self.get_inventory(ctx.author)
         equipped = await self.get_equipped_slots(ctx.author)
         slot, item = await self.get_item(ctx.guild, item_name)
@@ -686,7 +648,7 @@ class Duel(commands.Cog):
             del guild_config['items']
             del guild_config['protected']
             msg = ''
-            for k, v in guild_config:
+            for k, v in guild_config.items():
                 msg += f"{k}: {v}\n"
 
             for page in pagify(msg, page_length=1988):
@@ -703,7 +665,8 @@ class Duel(commands.Cog):
 
         guild_config['initial_hp'] = initial_hp
         await self.config.guild(ctx.guild).set(guild_config)
-        await ctx.send(f"```initial_hp``` set to ```{initial_hp}```")
+        await ctx.send(f"`initial_hp` set to `{initial_hp}`")
+
 
     @_duelset.command(name="max_rounds")
     async def _duelset_max_rounds(self, ctx, max_rounds: int = None):
@@ -714,7 +677,8 @@ class Duel(commands.Cog):
 
         guild_config['max_rounds'] = max_rounds
         await self.config.guild(ctx.guild).set(guild_config)
-        await ctx.send(f"```max_rounds``` set to ```{max_rounds}```")
+        await ctx.send(f"`max_rounds` set to `{max_rounds}`")
+
 
     @_duelset.command(name="edit_posts")
     async def _duelset_edit_posts(self, ctx, edit_posts: bool = None):
@@ -726,15 +690,15 @@ class Duel(commands.Cog):
 
         guild_config['edit_posts'] = edit_posts
         await self.config.guild(ctx.guild).set(guild_config)
-        await ctx.send(f"```edit_posts``` set to ```{edit_posts}```")
+        await ctx.send(f"`edit_posts` set to `{edit_posts}`")
 
 
-    @_duelset.command(name="price")
+    @_duelset.command(name="self_protect")
     async def _duelset_self_protect(self, ctx, self_protect: str = None):
         """
         Enable, disable, or set the price of self-protection
 
-        Valid options: "disable", "free", or any number 0 or greater.
+        Valid options: "disable", "off", "false", "free", or any number 0 or greater.
         """
         guild_config = await self.config.guild(ctx.guild).all()
 
@@ -744,7 +708,7 @@ class Duel(commands.Cog):
 
         self_protect = self_protect.lower().strip(' "`')
 
-        if self_protect in ('disable', 'none'):
+        if self_protect in ('disable', 'no', 'n', 'false', 'f', 'off'):
             self_protect = False
         elif self_protect in ('free', '0'):
             self_protect = True
@@ -754,10 +718,63 @@ class Duel(commands.Cog):
             await ctx.send_help()
             return
 
-        await ctx.send(f"```self_protect``` set to ```{self_protect}```")
+        guild_config['self_protect'] = self_protect
+        await self.config.guild(ctx.guild).set(guild_config)
+        await ctx.send(f"`self_protect` set to `{self_protect}`")
 
 
 # UTILS BEGIN
+
+    def format_display(self, server, id):
+        if id.startswith('r'):
+            role = discord.utils.get(server.roles, id=int(id[1:]))
+
+            if role:
+                return '@%s' % role.name
+            else:
+                return 'deleted role #%s' % id
+        else:
+            member = server.get_member(int(id))
+
+            if member:
+                return member.display_name
+            else:
+                return 'missing member #%s' % id
+
+
+    async def is_protected(self, member: discord.Member, member_only=False) -> bool:
+        protected = set(await self.config.guild(member.guild).protected())
+        roles = set() if member_only else set('r' + str(r.id) for r in member.roles)
+        return str(member.id) in protected or bool(protected & roles)
+
+
+    async def protect_common(self, obj, protect=True):
+        if not isinstance(obj, (discord.Member, discord.Role)):
+            raise TypeError('Can only pass member or role objects.')
+
+        server = obj.guild
+        id = ('r' if type(obj) is discord.Role else '') + str(obj.id)
+
+        protected = await self.config.guild(server).protected()
+
+        if protect == (id in protected):
+            return False
+        elif protect:
+            protected.append(id)
+        else:
+            protected.remove(id)
+
+        await self.config.guild(server).protected.set(protected)
+        return True
+
+
+    async def _set_stats(self, user, stats):
+        await self.config.member(user.member).stats.set(stats)
+
+
+    async def _get_stats(self, user):
+        return await self.config.member(user.member).stats()
+
 
     async def get_inventory(self, member):
         inventory = await self.config.member(member).inventory()
@@ -868,6 +885,7 @@ class Duel(commands.Cog):
 
         return msg
 
+
     async def _robust_edit(self, msg, content=None, embed=None):
         try:
             await msg.edit(content=content, embed=embed)
@@ -875,6 +893,7 @@ class Duel(commands.Cog):
             await msg.channel.send(content=content, embed=embed)
         except Exception:
             raise
+
 
     def to_shop_items(self, items, category):
         result = []
@@ -894,6 +913,7 @@ class Duel(commands.Cog):
 
         return items
 
+
     def to_shop_row(self, item, paddings, category):
         if category == 'weapon':
             return (f"{str(item['name']).ljust(paddings['name'])}"
@@ -911,6 +931,7 @@ class Duel(commands.Cog):
                 f"{str(item['armor']).ljust(paddings['armor'])}"
                 f"{str(item['cost']).ljust(paddings['cost'])}"
         )
+
 
     def generate_header(self, paddings, category):
         if category == 'weapon':
