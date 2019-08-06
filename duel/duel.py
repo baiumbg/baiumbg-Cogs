@@ -18,7 +18,7 @@ from redbot.core.utils.chat_formatting import error, pagify, warning
 from .items import DEFAULT_BODY_ARMORS, DEFAULT_BOOTS, DEFAULT_GLOVES, \
                   DEFAULT_HEALING_ITEMS, DEFAULT_HELMETS, DEFAULT_PANTS, \
                   DEFAULT_SHOULDERS, DEFAULT_WEAPONS, ARMOR_PIECES, \
-                  ARMOR_PIECE_TO_BODY_PARTS, DEFAULT_EQUIPPED
+                  ARMOR_PIECE_TO_BODY_PARTS, DEFAULT_EQUIPPED, DEFAULT_ITEMS
 
 __version__ = '2.0.0'
 
@@ -179,16 +179,7 @@ class Duel(commands.Cog):
             'protected': [],
             'self_protect': False,
             'edit_posts': False,
-            'items': {
-                'helmet': DEFAULT_HELMETS,
-                'body_armor': DEFAULT_BODY_ARMORS,
-                'pants': DEFAULT_PANTS,
-                'shoulders': DEFAULT_SHOULDERS,
-                'gloves': DEFAULT_GLOVES,
-                'boots': DEFAULT_BOOTS,
-                'healing_item': DEFAULT_HEALING_ITEMS,
-                'weapon': DEFAULT_WEAPONS
-            },
+            'items': DEFAULT_ITEMS,
             'initial_hp': 20,
             'max_rounds': 10,
             'currency_per_win': 10
@@ -923,7 +914,13 @@ class Duel(commands.Cog):
 
         items = self.edit_item(items, item_name, field, value)
         await self.config.guild(ctx.guild).items.set(items)
-        await ctx.send(f"`{field}` of `{item_name}` set to `{value}``")
+        await ctx.send(f"`{field}` of `{item_name}` set to `{value}`.")
+
+
+    @_duelitems.command(name="reset")
+    async def _duelitems_reset(self, ctx):
+        await self.config.guild(ctx.guild).items.set(DEFAULT_ITEMS)
+        await ctx.send('Items reset to default!')
 
 
 # UTILS BEGIN
