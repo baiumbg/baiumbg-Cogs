@@ -9,6 +9,7 @@ from functools import partial
 import math
 import os
 import random
+import tabulate
 
 from redbot.core import checks, commands, Config, bank
 from redbot.core.utils.chat_formatting import error, pagify, warning
@@ -357,34 +358,19 @@ class Duel(commands.Cog):
             top = len(duels_sorted)
 
         topten = duels_sorted[:top]
-        highscore = ""
         place = 1
         members = {uid: server.get_member(uid) for uid, _ in topten}  # only look up once each
         names = {uid: m.display_name for uid, m in members.items()}
-        max_name_len = max([len(n) for n in names.values()])
-
-        # header
-        highscore += '#'.ljust(len(str(top)) + 1)  # pad to digits in longest number
-        highscore += 'Name'.ljust(max_name_len + 4)
-
-        for stat in ['wins', 'losses', 'draws']:
-            highscore += stat.ljust(8)
-
-        highscore += '\n'
-
+        header = ['#', 'Name', 'wins', 'losses', 'draws']
+        table_rows = []
+        msg = ''
         for uid, config in topten:
-            highscore += str(place).ljust(len(str(top)) + 1)  # pad to digits in longest number
-            highscore += names[uid].ljust(max_name_len + 4)
-
-            for stat in ['wins', 'losses', 'draws']:
-                val = config['stats'][stat]
-                highscore += '{}'.format(val).ljust(8)
-
-            highscore += "\n"
+            table_rows.append([place, names[uid], config['stats']['wins'], config['stats']['losses'], config['stats']['draws']])
             place += 1
 
-        if len(highscore) < 1985:
-            await ctx.send("```py\n" + highscore + "```")
+        msg = f'```py\n{tabulate.tabulate(table_rows, headers=header, tablefmt="fancy_grid")}```'
+        if len(msg) < 1985:
+            await ctx.send(msg)
         else:
             await ctx.send("The leaderboard is too big to be displayed. Try with a lower <top> parameter.")
 
@@ -520,46 +506,42 @@ class Duel(commands.Cog):
         def sort_cost(item):
             return item['cost']
 
-        def get_paddings(items):
-            result = {}
-            for field in items[0].keys():
-                result[field] = len(HR_STATS[field]) + 1
-
-            for item in items:
-                for field in item.keys():
-                    result[field] = max(result[field], len(str(item[field])) + 1)
-
-            return result
-
-
         if category != None:
             if category not in items.keys():
                 await ctx.send(f"Valid item categories: {', '.join(items.keys())}")
                 return
 
+            final_msg = ''
             items = self.to_shop_items(items[category], category)
-            paddings = get_paddings(items)
-            msg = self.generate_header(paddings, category) + '\n'
+            table_rows = []
             for item in sorted(items, key=sort_cost):
-                msg += self.to_shop_row(item, paddings, category) + '\n'
+                table_rows.append(self.to_shop_row(item, category))
+                if len(table_rows) == 10:
+                    final_msg += f'```py\n{tabulate.tabulate(table_rows, headers = self.generate_header(category), tablefmt="fancy_grid")}```'
+                    table_rows = []
 
-            for page in pagify(msg, page_length=1993):
-                await ctx.send(f'```py\n{page}```')
+            if len(table_rows) != 0:
+                final_msg += f'```py\n{tabulate.tabulate(table_rows, headers = self.generate_header(category), tablefmt="fancy_grid")}```'
+
+            for page in pagify(final_msg, delims=['```py'], page_length=1992):
+                await ctx.send(page)
 
             return
 
         final_msg = ''
         for category in items.keys():
-            msg = ''
             items[category] = self.to_shop_items(items[category], category)
-            paddings = get_paddings(items[category])
-            msg = self.generate_header(paddings, category) + '\n'
+            table_rows = []
             for item in sorted(items[category], key=sort_cost):
-                msg += self.to_shop_row(item, paddings, category) + '\n'
+                table_rows.append(self.to_shop_row(item, category))
+                if len(table_rows) == 10:
+                    final_msg += f'```py\n{tabulate.tabulate(table_rows, headers = self.generate_header(category), tablefmt="fancy_grid")}```'
+                    table_rows = []
 
-            final_msg += f"```py\n{msg}```"
+            if len(table_rows) != 0:
+                final_msg += f'```py\n{tabulate.tabulate(table_rows, headers = self.generate_header(category), tablefmt="fancy_grid")}```'
 
-        for page in pagify(final_msg, shorten_by=20, delims=['```py']):
+        for page in pagify(final_msg, delims=['```py'], page_length=1992):
             await ctx.send(page)
 
 
@@ -1017,44 +999,24 @@ class Duel(commands.Cog):
         return items
 
 
-    def to_shop_row(self, item, paddings, category):
+    def to_shop_row(self, item, category):
         if category == 'weapon':
-            return (f"{str(item['name']).ljust(paddings['name'])}"
-                    f"{str(item['damage']).ljust(paddings['damage'])}"
-                    f"{(str(int(item['hit_chance'] * 100)) + '%').ljust(paddings['hit_chance'])}"
-                    f"{(str(int(item['crit_chance'] * 100)) + '%').ljust(paddings['crit_chance'])}"
-                    f"{str(item['cost']).ljust(paddings['cost'])}")
+            return [item['name'], item['damage'], str(int(item['hit_chance'] * 100)) + '%', str(int(item['crit_chance'] * 100)) + '%', item['cost']]
 
         if category == 'healing_item':
-            return (f"{str(item['name']).ljust(paddings['name'])}"
-                    f"{str(item['healing']).ljust(paddings['healing'])}"
-                    f"{str(item['cost']).ljust(paddings['cost'])}")
+            return [item['name'], item['healing'], item['cost']]
 
-        return (f"{str(item['name']).ljust(paddings['name'])}"
-                f"{str(item['armor']).ljust(paddings['armor'])}"
-                f"{str(item['cost']).ljust(paddings['cost'])}"
-        )
+        return [item['name'], item['armor'], item['cost']]
 
 
-    def generate_header(self, paddings, category):
+    def generate_header(self, category):
         if category == 'weapon':
-            return (f"{HR_STATS['name'].ljust(paddings['name'])}"
-                    f"{HR_STATS['damage'].ljust(paddings['damage'])}"
-                    f"{HR_STATS['hit_chance'].ljust(paddings['hit_chance'])}"
-                    f"{HR_STATS['crit_chance'].ljust(paddings['crit_chance'])}"
-                    f"{HR_STATS['cost'].ljust(paddings['cost'])}\n"
-                    f"{'-' * (paddings['name'] + paddings['damage'] + paddings['hit_chance'] + paddings['crit_chance'] + paddings['cost'])}")
+            return [HR_STATS['name'], HR_STATS['damage'], HR_STATS['hit_chance'], HR_STATS['crit_chance'], HR_STATS['cost']]
 
         if category == 'healing_item':
-            return (f"{HR_STATS['name'].ljust(paddings['name'])}"
-                    f"{HR_STATS['healing'].ljust(paddings['healing'])}"
-                    f"{HR_STATS['cost'].ljust(paddings['cost'])}\n"
-                    f"{'-' * (paddings['name'] + paddings['healing'] + paddings['cost'])}")
+            return [HR_STATS['name'], HR_STATS['healing'], HR_STATS['cost']]
 
-        return (f"{HR_STATS['name'].ljust(paddings['name'])}"
-                f"{HR_STATS['armor'].ljust(paddings['armor'])}"
-                f"{HR_STATS['cost'].ljust(paddings['cost'])}\n"
-                f"{'-' * (paddings['name'] + paddings['armor'] + paddings['cost'])}")
+        return [HR_STATS['name'], HR_STATS['armor'], HR_STATS['cost']]
 
 # UTILS END
 
