@@ -911,6 +911,9 @@ class Duel(commands.Cog):
         except ValueError:
             await ctx.send(f"Invalid value format! Type {ctx.prefix}duelitems edit for more information on item field formats.")
             return
+        except KeyError:
+            await ctx.send(f"Invalid field name! Check {ctx.prefix}duelitems edit for more information on item field names.")
+            return
 
         items = self.edit_item(items, item_name, field, value)
         await self.config.guild(ctx.guild).items.set(items)
@@ -1029,7 +1032,7 @@ class Duel(commands.Cog):
             for item in category_items:
                 if item['name'] == item_name:
                     item[field] = value
-                result[slot] += item
+                result[slot] += [item]
 
         return result
 
