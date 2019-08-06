@@ -10,6 +10,7 @@ import math
 import os
 import random
 import tabulate
+import re
 
 from redbot.core import checks, commands, Config, bank
 from redbot.core.utils.chat_formatting import error, pagify, warning
@@ -62,6 +63,21 @@ MAX_ROWS_PER_CATEGORY_EX = {
     'helmet': 15,
     'healing_item': 5
 }
+
+ITEM_FIELD_TYPES = {
+    'low': int,
+    'high': int,
+    'crit_chance': float,
+    'hit_chance': float,
+    'name': str,
+    'template': str,
+    'verb': str,
+    'preposition': str,
+    'cost': int,
+    'armor': int
+}
+
+EDIT_ITEM_REGEX = re.compile(r'^([\w\s]+),([\w]+),([^,]+)$')
 
 def indicatize(w):
     if w[-2:] == 'ch' or w[-2:] == 'sh' or w[-2:] == 'ss' or w[-1] == 'x' or w[-1] == 'z':
@@ -884,6 +900,32 @@ class Duel(commands.Cog):
 
         return
 
+
+    @_duelitems.command(name="edit")
+    async def _duelitems_edit(self, ctx, edit):
+        match = re.match(EDIT_ITEM_REGEX, edit)
+        if not match:
+            await ctx.send(f"Invalid edit format! Type {ctx.prefix}duelitems edit for more information on the format of this command.")
+
+        items = await self.config.guild(ctx.guild).items()
+        item_name, field, value = (match.group(1), match.group(2), match.group(3))
+
+        _, item = await self.get_item(ctx.guild, item_name)
+        if item == None:
+            await ctx.send(f'Item `{item_name}` does not exist!')
+            return
+
+        try:
+            value = ITEM_FIELD_TYPES[field](value)
+        except ValueError:
+            await ctx.send(f"Invalid value format! Type {ctx.prefix}duelitems edit for more information on item field formats.")
+            return
+
+        items = self.edit_item(items, item_name, field, value)
+        await self.config.guild(ctx.guild).items.set(items)
+        await ctx.send(f"`{field}` of `{item_name}` set to `{value}``")
+
+
 # UTILS BEGIN
 
     def format_display(self, server, id):
@@ -981,6 +1023,18 @@ class Duel(commands.Cog):
                 return slot, item
 
         return None, None
+
+
+    def edit_item(self, items, item_name, field, value):
+        result = {}
+        for slot, category_items in items.items():
+            result[slot] = []
+            for item in category_items:
+                if item['name'] == item_name:
+                    item[field] = value
+                result[slot] += item
+
+        return result
 
 
     async def item_in_member_inventory(self, member, item_name):
