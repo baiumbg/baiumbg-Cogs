@@ -26,6 +26,43 @@ __version__ = '2.0.0'
 TARGET_SELF = 'self'
 TARGET_OTHER = 'target'
 
+HR_STATS = {
+    'name': 'Item',
+    'damage': 'Damage',
+    'healing': 'Healing',
+    'armor': 'Armor',
+    'cost': 'Cost',
+    'crit_chance': 'Crit Chance',
+    'hit_chance': 'Hit Chance',
+    'low': 'Low',
+    'high': 'High',
+    'verb': 'Verb',
+    'preposition': 'Preposition',
+    'template': 'Template'
+}
+
+MAX_ROWS_PER_CATEGORY = {
+    'weapon': 12,
+    'body_armor': 15,
+    'gloves': 15,
+    'boots': 15,
+    'shoulders': 15,
+    'pants': 15,
+    'helmet': 15,
+    'healing_item': 15
+}
+
+MAX_ROWS_PER_CATEGORY_EX = {
+    'weapon': 8,
+    'body_armor': 15,
+    'gloves': 15,
+    'boots': 15,
+    'shoulders': 15,
+    'pants': 15,
+    'helmet': 15,
+    'healing_item': 5
+}
+
 def indicatize(w):
     if w[-2:] == 'ch' or w[-2:] == 'sh' or w[-2:] == 'ss' or w[-1] == 'x' or w[-1] == 'z':
         w += 'es'
@@ -102,21 +139,6 @@ EQUIPPED = "```http\nWeapon: {w}\nHelmet: {h}\nBody armor: {a}\nPants: {p}\nShou
 
 HITS = ['deal', 'hit for']
 RECOVERS = ['recover', 'gain', 'heal']
-
-HR_STATS = {
-    'name': 'Item',
-    'damage': 'Damage',
-    'healing': 'Healing',
-    'armor': 'Armor',
-    'cost': 'Cost',
-    'crit_chance': 'Crit Chance',
-    'hit_chance': 'Hit Chance',
-    'low': 'Low',
-    'high': 'High',
-    'verb': 'Verb',
-    'preposition': 'Preposition',
-    'template': 'Template'
-}
 
 # TEMPLATES END
 
@@ -485,13 +507,16 @@ class Duel(commands.Cog):
 
     @commands.guild_only()
     @commands.group(name="duelshop", invoke_without_command=True)
-    async def _duelshop(self, ctx):
+    async def _duelshop(self, ctx, category: str = None):
         """
         Item purchasing/selling
         """
 
         if ctx.invoked_subcommand is None:
-            await ctx.invoke(self._duelshop_list)
+            await ctx.invoke(self._duelshop_list, category)
+            return
+
+        await ctx.send_help()
 
 
     @_duelshop.command(name="list")
@@ -501,7 +526,6 @@ class Duel(commands.Cog):
         """
 
         items = await self.config.guild(ctx.guild).items()
-        msg = ''
 
         def sort_cost(item):
             return item['cost']
@@ -516,7 +540,7 @@ class Duel(commands.Cog):
             table_rows = []
             for item in sorted(items, key=sort_cost):
                 table_rows.append(self.to_shop_row(item, category))
-                if len(table_rows) == 10:
+                if len(table_rows) == MAX_ROWS_PER_CATEGORY[category]:
                     final_msg += f'```py\n{tabulate.tabulate(table_rows, headers = self.generate_header(category), tablefmt="fancy_grid")}```'
                     table_rows = []
 
@@ -534,7 +558,7 @@ class Duel(commands.Cog):
             table_rows = []
             for item in sorted(items[category], key=sort_cost):
                 table_rows.append(self.to_shop_row(item, category))
-                if len(table_rows) == 10:
+                if len(table_rows) == MAX_ROWS_PER_CATEGORY[category]:
                     final_msg += f'```py\n{tabulate.tabulate(table_rows, headers = self.generate_header(category), tablefmt="fancy_grid")}```'
                     table_rows = []
 
@@ -808,6 +832,57 @@ class Duel(commands.Cog):
         await self.config.guild(ctx.guild).set(guild_config)
         await ctx.send(f"`currency_per_win` set to `{currency_per_win}`")
 
+
+    @commands.guild_only()
+    @checks.admin_or_permissions(administrator=True)
+    @commands.group(name="duelitems", invoke_without_command=True)
+    async def _duelitems(self, ctx, category: str = None):
+        if ctx.invoked_subcommand == None:
+            await ctx.invoke(self._duelitems_list, category)
+            return
+
+        await ctx.send_help()
+
+    @_duelitems.command(name="list")
+    async def _duelitems_list(self, ctx, category: str = None):
+        items = await self.config.guild(ctx.guild).items()
+        if category != None:
+            if category not in items.keys():
+                await ctx.send(f"Valid item categories: {', '.join(items.keys())}")
+                return
+
+            final_msg = ''
+            table_rows = []
+            for item in items[category]:
+                table_rows.append(item.values())
+                if len(table_rows) == MAX_ROWS_PER_CATEGORY_EX[category]:
+                    final_msg += f'```py\n{tabulate.tabulate(table_rows, headers = items[category][0].keys(), tablefmt="fancy_grid")}```'
+                    table_rows = []
+
+            if len(table_rows) != 0:
+                final_msg += f'```py\n{tabulate.tabulate(table_rows, headers = items[category][0].keys(), tablefmt="fancy_grid")}```'
+
+            for page in pagify(final_msg, delims=['```py'], page_length=1992):
+                await ctx.send(page)
+
+            return
+
+        final_msg = ''
+        for category in items.keys():
+            table_rows = []
+            for item in items[category]:
+                table_rows.append(item.values())
+                if len(table_rows) == MAX_ROWS_PER_CATEGORY_EX[category]:
+                    final_msg += f'```py\n{tabulate.tabulate(table_rows, headers = items[category][0].keys(), tablefmt="fancy_grid")}```'
+                    table_rows = []
+
+            if len(table_rows) != 0:
+                final_msg += f'```py\n{tabulate.tabulate(table_rows, headers = items[category][0].keys(), tablefmt="fancy_grid")}```'
+
+        for page in pagify(final_msg, delims=['```py'], page_length=1992):
+            await ctx.send(page)
+
+        return
 
 # UTILS BEGIN
 
