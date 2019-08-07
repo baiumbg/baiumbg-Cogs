@@ -1065,8 +1065,7 @@ class Duel(commands.Cog):
             await ctx.send(f"Invalid field name! Check `{ctx.prefix}help duelitems edit` for more information on item field names.")
             return
 
-        items = self.edit_item(items, item_name, field, value)
-        await self.config.guild(ctx.guild).items.set(items)
+        await self.edit_item(ctx.guild, item_name, field, value)
         await ctx.send(f"`{field}` of `{item_name}` set to `{value}`.")
 
 
@@ -1175,16 +1174,49 @@ class Duel(commands.Cog):
         return None, None
 
 
-    def edit_item(self, items, item_name, field, value):
-        result = {}
+    async def edit_item(self, guild, item_name, field, value):
+        items = await self.config.guild(guild).items()
+        configs = await self.config.all_members(guild)
+        editted = False
         for slot, category_items in items.items():
-            result[slot] = []
             for item in category_items:
                 if item['name'] == item_name:
                     item[field] = value
-                result[slot] += [item]
+                    editted = True
+                    break
+            if editted:
+                break
 
-        return result
+        if editted:
+            await self.config.guild(guild).items.set(items)
+
+        if field != 'name':
+            return
+
+        for user_id, config in configs.items():
+            equipped = {}
+            update = False
+            for slot, slot_item in config['equipped'].items():
+                if slot_item == item_name:
+                    slot_item = value
+                    update = True
+                equipped[slot] = slot_item
+
+            if update:
+                member = guild.get_member(user_id)
+                await self.config.member(member).equipped.set(equipped)
+
+            inventory = []
+            update = False
+            for inventory_item in config['inventory']:
+                if inventory_item == item_name:
+                    inventory_item = value
+                    update = True
+                inventory.append(inventory_item)
+
+            if update:
+                member = guild.get_member(user_id)
+                await self.config.member(member).inventory.set(inventory)
 
 
     async def item_in_member_inventory(self, member, item_name):
