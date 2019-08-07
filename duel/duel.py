@@ -78,6 +78,18 @@ ITEM_FIELD_TYPES = {
 }
 
 EDIT_ITEM_REGEX = re.compile(r'^([\w\s]+),([\w]+),([^,]+)$')
+ADD_SLOT_REGEXES = {
+    # name,cost,low,high,crit_chance,hit_chance,verb,preposition
+    'weapon': re.compile(r'^([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)$'),
+    # name,cost,armor
+    'helmet': re.compile(r'^([^,]+),([^,]+),([^,]+)$'),
+    'gloves': re.compile(r'^([^,]+),([^,]+),([^,]+)$'),
+    'boots': re.compile(r'^([^,]+),([^,]+),([^,]+)$'),
+    'shoulders': re.compile(r'^([^,]+),([^,]+),([^,]+)$'),
+    'body_armor': re.compile(r'^([^,]+),([^,]+),([^,]+)$'),
+    # name,cost,low,high,template
+    'healing_item': re.compile(r'^([^,]+),([^,]+),([^,]+),([^,]+),(.+)$')
+}
 
 def indicatize(w):
     if w[-2:] == 'ch' or w[-2:] == 'sh' or w[-2:] == 'ss' or w[-1] == 'x' or w[-1] == 'z':
@@ -602,8 +614,7 @@ class Duel(commands.Cog):
 
         inventory.append(item_name)
         await self.config.member(ctx.author).inventory.set(sorted(inventory))
-        item_name_escaped = item_name if ' ' not in item_name else f'"{item_name}"'
-        await ctx.send(f'You successfully bought a **{item_name}**! Equip it using `{ctx.prefix}duelinv equip {item_name_escaped}`.')
+        await ctx.send(f'You successfully bought a **{item_name}**! Equip it using `{ctx.prefix}duelinv equip {item_name}`.')
 
     @_duelshop.command(name="sell")
     async def _duelshop_sell(self, ctx, *, item_name):
@@ -892,14 +903,153 @@ class Duel(commands.Cog):
         return
 
 
-    @_duelitems.command(name="edit")
-    async def _duelitems_edit(self, ctx, edit):
-        match = re.match(EDIT_ITEM_REGEX, edit)
+    @_duelitems.command(name="add")
+    async def _duelitems_add(self, ctx, slot: str, *, item):
+        if slot not in DEFAULT_ITEMS.keys():
+            await ctx.send(f"Invalid slot name! Valid slot names: {', '.join(DEFAULT_ITEMS.keys())}")
+            return
+
+        match = re.match(ADD_SLOT_REGEXES[slot], item)
         if not match:
-            await ctx.send(f"Invalid edit format! Type {ctx.prefix}duelitems edit for more information on the format of this command.")
+            await ctx.send(f"Invalid item format! Type `{ctx.prefix}help duelitems add` for more information on the format of this command.")
+            return
 
         items = await self.config.guild(ctx.guild).items()
-        item_name, field, value = (match.group(1), match.group(2), match.group(3))
+        item_name, cost = match.group(1, 2)
+
+        try:
+            cost = int(cost)
+        except ValueError:
+            await ctx.send(f"`cost` must be an integer!")
+            return
+
+        if cost < 0:
+            cost = 0
+
+        _, item = await self.get_item(ctx.guild, item_name)
+
+        if item != None:
+            await ctx.send(f'Item **{item_name}** already exists! Use `{ctx.prefix}duelitems edit` if you want to modify it.')
+            return
+
+        if slot == 'weapon':
+            low, high, crit_chance, hit_chance, verb, preposition = match.group(3, 4, 5, 6, 7, 8)
+
+            try:
+                low = int(low)
+            except ValueError:
+                await ctx.send(f"`low` must be an integer!")
+                return
+
+            if low < 0:
+                low = 0
+
+            try:
+                high = int(high)
+            except ValueError:
+                await ctx.send(f"`high` must be an integer!")
+                return
+
+            if high < 0:
+                high = 0
+
+            try:
+                crit_chance = float(crit_chance)
+            except ValueError:
+                await ctx.send(f"`crit_chance` must be a floating-point number!")
+                return
+
+            if crit_chance > 1:
+                crit_chance = 1.0
+            elif crit_chance < 0:
+                crit_chance = 0.0
+
+            try:
+                hit_chance = float(hit_chance)
+            except ValueError:
+                await ctx.send(f"`hit_chance` must be an floating-point number!")
+
+            if hit_chance > 1:
+                hit_chance = 1.0
+            elif hit_chance < 0:
+                hit_chance = 0.0
+
+            if low > high:
+                low, high = high, low
+
+            item = {
+                'name': item_name,
+                'cost': cost,
+                'low': low,
+                'high': high,
+                'crit_chance': crit_chance,
+                'hit_chance': hit_chance,
+                'verb': verb,
+                'preposition': preposition
+            }
+
+        elif slot == 'healing_item':
+            low, high, template = match.group(3, 4, 5)
+
+            if low > high:
+                low, high = high, low
+
+            try:
+                low = int(low)
+            except ValueError:
+                await ctx.send(f"`low` must be an integer!")
+                return
+
+            if low < 0:
+                low = 0
+
+            try:
+                high = int(high)
+            except ValueError:
+                await ctx.send(f"`high` must be an integer!")
+                return
+
+            if high < 0:
+                high = 0
+
+            item = {
+                'name': item_name,
+                'cost': cost,
+                'low': low,
+                'high': high,
+                'template': template
+            }
+
+        else:
+            armor = match.group(3)
+
+            try:
+                armor = int(armor)
+            except ValueError:
+                await ctx.send(f"`armor` must be an integer!")
+                return
+
+            if armor < 0:
+                armor = 0
+
+            item = {
+                'name': item_name,
+                'cost': cost,
+                'armor': armor
+            }
+
+        items[slot].append(item)
+        await self.config.guild(ctx.guild).items.set(items)
+        await ctx.send(f"**{item_name}** successfully added to this server's items!")
+
+    @_duelitems.command(name="edit")
+    async def _duelitems_edit(self, ctx, *, edit):
+        match = re.match(EDIT_ITEM_REGEX, edit)
+        if not match:
+            await ctx.send(f"Invalid edit format! Type `{ctx.prefix}duelitems edit` for more information on the format of this command.")
+
+        items = await self.config.guild(ctx.guild).items()
+        item_name, field, value = match.group(1, 2, 3)
 
         _, item = await self.get_item(ctx.guild, item_name)
         if item == None:
@@ -909,10 +1059,10 @@ class Duel(commands.Cog):
         try:
             value = ITEM_FIELD_TYPES[field](value)
         except ValueError:
-            await ctx.send(f"Invalid value format! Type {ctx.prefix}duelitems edit for more information on item field formats.")
+            await ctx.send(f"Invalid value format! Type `{ctx.prefix}help duelitems edit` for more information on item field formats.")
             return
         except KeyError:
-            await ctx.send(f"Invalid field name! Check {ctx.prefix}duelitems edit for more information on item field names.")
+            await ctx.send(f"Invalid field name! Check `{ctx.prefix}help duelitems edit` for more information on item field names.")
             return
 
         items = self.edit_item(items, item_name, field, value)
