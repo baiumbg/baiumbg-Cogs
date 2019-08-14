@@ -52,20 +52,20 @@ DEFAULT_WEAPONS = [
     {
         'name': 'broadsword',
         'cost': 300,
-        'low': 6,
-        'high': 8,
+        'low': 8,
+        'high': 10,
         'crit_chance': 0.04,
-        'hit_chance': 0.65,
+        'hit_chance': 0.64,
         'verb': 'swing',
         'preposition': 'into'
     },
     {
         'name': 'katana',
         'cost': 300,
-        'low': 4,
-        'high': 6,
+        'low': 5,
+        'high': 7,
         'crit_chance': 0.15,
-        'hit_chance': 0.82,
+        'hit_chance': 0.87,
         'verb': 'swing',
         'preposition': 'into'
     },
@@ -73,8 +73,8 @@ DEFAULT_WEAPONS = [
         'name': 'falchion',
         'cost': 300,
         'low': 4,
-        'high': 5,
-        'crit_chance': 0.05,
+        'high': 7,
+        'crit_chance': 0.09,
         'hit_chance': 1,
         'verb': 'swing',
         'preposition': 'into'

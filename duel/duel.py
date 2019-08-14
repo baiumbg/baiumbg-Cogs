@@ -563,11 +563,12 @@ class Duel(commands.Cog):
             await ctx.send(f'Item **{item_name}** not found in shop!')
             return
 
-        if not bank.can_spend(ctx.author, item['cost']):
+        try:
+            await bank.withdraw_credits(ctx.author, item['cost'])
+        except ValueError:
             await ctx.send(f'You do not have enough {currency} to buy a **{item_name}**!')
             return
 
-        await bank.withdraw_credits(ctx.author, item['cost'])
         inventory.append(item_name)
         await self.config.member(ctx.author).inventory.set(sorted(inventory))
         item_name_escaped = item_name if ' ' not in item_name else f'"{item_name}"'
