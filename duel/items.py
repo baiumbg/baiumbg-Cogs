@@ -434,6 +434,17 @@ ARMOR_PIECE_TO_BODY_PARTS = {
     ]
 }
 
+DEFAULT_ITEMS = {
+    'helmet': DEFAULT_HELMETS,
+    'body_armor': DEFAULT_BODY_ARMORS,
+    'pants': DEFAULT_PANTS,
+    'shoulders': DEFAULT_SHOULDERS,
+    'gloves': DEFAULT_GLOVES,
+    'boots': DEFAULT_BOOTS,
+    'healing_item': DEFAULT_HEALING_ITEMS,
+    'weapon': DEFAULT_WEAPONS
+}
+
 DEFAULT_EQUIPPED = {
     'helmet': DEFAULT_HELMETS[0]['name'],
     'body_armor': DEFAULT_BODY_ARMORS[0]['name'],

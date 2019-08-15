@@ -10,6 +10,7 @@ import math
 import os
 import random
 import tabulate
+import re
 
 from redbot.core import checks, commands, Config, bank
 from redbot.core.utils.chat_formatting import error, pagify, warning
@@ -17,7 +18,7 @@ from redbot.core.utils.chat_formatting import error, pagify, warning
 from .items import DEFAULT_BODY_ARMORS, DEFAULT_BOOTS, DEFAULT_GLOVES, \
                   DEFAULT_HEALING_ITEMS, DEFAULT_HELMETS, DEFAULT_PANTS, \
                   DEFAULT_SHOULDERS, DEFAULT_WEAPONS, ARMOR_PIECES, \
-                  ARMOR_PIECE_TO_BODY_PARTS, DEFAULT_EQUIPPED
+                  ARMOR_PIECE_TO_BODY_PARTS, DEFAULT_EQUIPPED, DEFAULT_ITEMS
 
 __version__ = '2.0.0'
 
@@ -25,6 +26,70 @@ __version__ = '2.0.0'
 # Constants
 TARGET_SELF = 'self'
 TARGET_OTHER = 'target'
+
+HR_STATS = {
+    'name': 'Item',
+    'damage': 'Damage',
+    'healing': 'Healing',
+    'armor': 'Armor',
+    'cost': 'Cost',
+    'crit_chance': 'Crit Chance',
+    'hit_chance': 'Hit Chance',
+    'low': 'Low',
+    'high': 'High',
+    'verb': 'Verb',
+    'preposition': 'Preposition',
+    'template': 'Template'
+}
+
+MAX_ROWS_PER_CATEGORY = {
+    'weapon': 12,
+    'body_armor': 15,
+    'gloves': 15,
+    'boots': 15,
+    'shoulders': 15,
+    'pants': 15,
+    'helmet': 15,
+    'healing_item': 15
+}
+
+MAX_ROWS_PER_CATEGORY_EX = {
+    'weapon': 8,
+    'body_armor': 15,
+    'gloves': 15,
+    'boots': 15,
+    'shoulders': 15,
+    'pants': 15,
+    'helmet': 15,
+    'healing_item': 5
+}
+
+ITEM_FIELD_TYPES = {
+    'low': int,
+    'high': int,
+    'crit_chance': float,
+    'hit_chance': float,
+    'name': str,
+    'template': str,
+    'verb': str,
+    'preposition': str,
+    'cost': int,
+    'armor': int
+}
+
+EDIT_ITEM_REGEX = re.compile(r'^([^,]+),([^,]+),([^,]+)$')
+ADD_SLOT_REGEXES = {
+    # name,cost,low,high,crit_chance,hit_chance,verb,preposition
+    'weapon': re.compile(r'^([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)$'),
+    # name,cost,armor
+    'helmet': re.compile(r'^([^,]+),([^,]+),([^,]+)$'),
+    'gloves': re.compile(r'^([^,]+),([^,]+),([^,]+)$'),
+    'boots': re.compile(r'^([^,]+),([^,]+),([^,]+)$'),
+    'shoulders': re.compile(r'^([^,]+),([^,]+),([^,]+)$'),
+    'body_armor': re.compile(r'^([^,]+),([^,]+),([^,]+)$'),
+    # name,cost,low,high,template
+    'healing_item': re.compile(r'^([^,]+),([^,]+),([^,]+),([^,]+),(.+)$')
+}
 
 def indicatize(w):
     if w[-2:] == 'ch' or w[-2:] == 'sh' or w[-2:] == 'ss' or w[-1] == 'x' or w[-1] == 'z':
@@ -103,21 +168,6 @@ EQUIPPED = "```http\nWeapon: {w}\nHelmet: {h}\nBody armor: {a}\nPants: {p}\nShou
 HITS = ['deal', 'hit for']
 RECOVERS = ['recover', 'gain', 'heal']
 
-HR_STATS = {
-    'name': 'Item',
-    'damage': 'Damage',
-    'healing': 'Healing',
-    'armor': 'Armor',
-    'cost': 'Cost',
-    'crit_chance': 'Crit Chance',
-    'hit_chance': 'Hit Chance',
-    'low': 'Low',
-    'high': 'High',
-    'verb': 'Verb',
-    'preposition': 'Preposition',
-    'template': 'Template'
-}
-
 # TEMPLATES END
 
 # Weights of distribution for biased selection of moves
@@ -141,16 +191,7 @@ class Duel(commands.Cog):
             'protected': [],
             'self_protect': False,
             'edit_posts': False,
-            'items': {
-                'helmet': DEFAULT_HELMETS,
-                'body_armor': DEFAULT_BODY_ARMORS,
-                'pants': DEFAULT_PANTS,
-                'shoulders': DEFAULT_SHOULDERS,
-                'gloves': DEFAULT_GLOVES,
-                'boots': DEFAULT_BOOTS,
-                'healing_item': DEFAULT_HEALING_ITEMS,
-                'weapon': DEFAULT_WEAPONS
-            },
+            'items': DEFAULT_ITEMS,
             'initial_hp': 20,
             'max_rounds': 10,
             'currency_per_win': 10
@@ -485,13 +526,16 @@ class Duel(commands.Cog):
 
     @commands.guild_only()
     @commands.group(name="duelshop", invoke_without_command=True)
-    async def _duelshop(self, ctx):
+    async def _duelshop(self, ctx, category: str = None):
         """
         Item purchasing/selling
         """
 
         if ctx.invoked_subcommand is None:
-            await ctx.invoke(self._duelshop_list)
+            await ctx.invoke(self._duelshop_list, category)
+            return
+
+        await ctx.send_help()
 
 
     @_duelshop.command(name="list")
@@ -501,7 +545,6 @@ class Duel(commands.Cog):
         """
 
         items = await self.config.guild(ctx.guild).items()
-        msg = ''
 
         def sort_cost(item):
             return item['cost']
@@ -516,7 +559,7 @@ class Duel(commands.Cog):
             table_rows = []
             for item in sorted(items, key=sort_cost):
                 table_rows.append(self.to_shop_row(item, category))
-                if len(table_rows) == 10:
+                if len(table_rows) == MAX_ROWS_PER_CATEGORY[category]:
                     final_msg += f'```py\n{tabulate.tabulate(table_rows, headers = self.generate_header(category), tablefmt="fancy_grid")}```'
                     table_rows = []
 
@@ -534,7 +577,7 @@ class Duel(commands.Cog):
             table_rows = []
             for item in sorted(items[category], key=sort_cost):
                 table_rows.append(self.to_shop_row(item, category))
-                if len(table_rows) == 10:
+                if len(table_rows) == MAX_ROWS_PER_CATEGORY[category]:
                     final_msg += f'```py\n{tabulate.tabulate(table_rows, headers = self.generate_header(category), tablefmt="fancy_grid")}```'
                     table_rows = []
 
@@ -571,8 +614,7 @@ class Duel(commands.Cog):
 
         inventory.append(item_name)
         await self.config.member(ctx.author).inventory.set(sorted(inventory))
-        item_name_escaped = item_name if ' ' not in item_name else f'"{item_name}"'
-        await ctx.send(f'You successfully bought a **{item_name}**! Equip it using `{ctx.prefix}duelinv equip {item_name_escaped}`.')
+        await ctx.send(f'You successfully bought a **{item_name}**! Equip it using `{ctx.prefix}duelinv equip {item_name}`.')
 
     @_duelshop.command(name="sell")
     async def _duelshop_sell(self, ctx, *, item_name):
@@ -809,6 +851,322 @@ class Duel(commands.Cog):
         await ctx.send(f"`currency_per_win` set to `{currency_per_win}`")
 
 
+    @commands.guild_only()
+    @checks.admin_or_permissions(administrator=True)
+    @commands.group(name="duelitems", invoke_without_command=True)
+    async def _duelitems(self, ctx, category: str = None):
+        """
+        Edit/add/delete duel items
+        """
+
+        if ctx.invoked_subcommand == None:
+            await ctx.invoke(self._duelitems_list, category)
+            return
+
+        await ctx.send_help()
+
+    @_duelitems.command(name="list")
+    async def _duelitems_list(self, ctx, category: str = None):
+        """
+        Lists all items for in a given category, or all if no category is given.
+
+        Valid categories: `helmet`, `body_armor`, `pants`, `shoulders`, `gloves`, `boots`, `healing_item`, `weapon`
+        """
+
+        items = await self.config.guild(ctx.guild).items()
+        if category != None:
+            if category not in items.keys():
+                await ctx.send(f"Valid item categories: {', '.join(items.keys())}")
+                return
+
+            final_msg = ''
+            table_rows = []
+            for item in items[category]:
+                table_rows.append(item.values())
+                if len(table_rows) == MAX_ROWS_PER_CATEGORY_EX[category]:
+                    final_msg += f'```py\n{tabulate.tabulate(table_rows, headers = items[category][0].keys(), tablefmt="fancy_grid")}```'
+                    table_rows = []
+
+            if len(table_rows) != 0:
+                final_msg += f'```py\n{tabulate.tabulate(table_rows, headers = items[category][0].keys(), tablefmt="fancy_grid")}```'
+
+            for page in pagify(final_msg, delims=['```py'], page_length=1992):
+                await ctx.send(page)
+
+            return
+
+        final_msg = ''
+        for category in items.keys():
+            table_rows = []
+            for item in items[category]:
+                table_rows.append(item.values())
+                if len(table_rows) == MAX_ROWS_PER_CATEGORY_EX[category]:
+                    final_msg += f'```py\n{tabulate.tabulate(table_rows, headers = items[category][0].keys(), tablefmt="fancy_grid")}```'
+                    table_rows = []
+
+            if len(table_rows) != 0:
+                final_msg += f'```py\n{tabulate.tabulate(table_rows, headers = items[category][0].keys(), tablefmt="fancy_grid")}```'
+
+        for page in pagify(final_msg, delims=['```py'], page_length=1992):
+            await ctx.send(page)
+
+        return
+
+
+    @_duelitems.command(name="add")
+    async def _duelitems_add(self, ctx, slot: str, *, item):
+        """
+        Add an item to this servers list of items
+
+        Valid slots: `helmet`, `body_armor`, `pants`, `shoulders`, `gloves`, `boots`, `healing_item`, `weapon`
+
+        Item formats:
+         - helmet, body_armor, pants, shoulders, gloves, boots - `name,cost,armor`
+
+           Example: `[p]duelitems add body_armor diamond breastplate,1000,8`
+
+         - weapon - `name,cost,minimum damage,maximum damage,critical chance,hit chance,verb,preposition`
+
+           Example: `[p]duelitems add weapon dick gun,1000,10,15,0.2,0.9,fire,at`
+
+         - healing_item - `name,cost,minimum healing,maximum healing,template`
+
+           Template macros: {a} - attacker, {d} - defender, {o} - item name
+
+           Example: `[p]duelitems add healing_item vampire teeth,1000,8,14,{a} gets hungry and decides to take a bite out of {d}'s neck using his {o}!`
+        """
+
+        if slot not in DEFAULT_ITEMS.keys():
+            await ctx.send(f"Invalid slot name! Valid slot names: {', '.join(DEFAULT_ITEMS.keys())}")
+            return
+
+        match = re.match(ADD_SLOT_REGEXES[slot], item)
+        if not match:
+            await ctx.send(f"Invalid item format! Type `{ctx.prefix}help duelitems add` for more information on the format of this command.")
+            return
+
+        items = await self.config.guild(ctx.guild).items()
+        item_name, cost = match.group(1, 2)
+
+        try:
+            cost = int(cost)
+        except ValueError:
+            await ctx.send(f"`cost` must be an integer!")
+            return
+
+        if cost < 0:
+            cost = 0
+
+        _, item = await self.get_item(ctx.guild, item_name)
+
+        if item != None:
+            await ctx.send(f'Item **{item_name}** already exists! Use `{ctx.prefix}duelitems edit` if you want to modify it.')
+            return
+
+        if slot == 'weapon':
+            low, high, crit_chance, hit_chance, verb, preposition = match.group(3, 4, 5, 6, 7, 8)
+
+            try:
+                low = int(low)
+            except ValueError:
+                await ctx.send(f"`low` must be an integer!")
+                return
+
+            if low < 0:
+                low = 0
+
+            try:
+                high = int(high)
+            except ValueError:
+                await ctx.send(f"`high` must be an integer!")
+                return
+
+            if high < 0:
+                high = 0
+
+            try:
+                crit_chance = float(crit_chance)
+            except ValueError:
+                await ctx.send(f"`crit_chance` must be a floating-point number!")
+                return
+
+            if crit_chance > 1:
+                crit_chance = 1.0
+            elif crit_chance < 0:
+                crit_chance = 0.0
+
+            try:
+                hit_chance = float(hit_chance)
+            except ValueError:
+                await ctx.send(f"`hit_chance` must be an floating-point number!")
+
+            if hit_chance > 1:
+                hit_chance = 1.0
+            elif hit_chance < 0:
+                hit_chance = 0.0
+
+            if low > high:
+                low, high = high, low
+
+            item = {
+                'name': item_name,
+                'cost': cost,
+                'low': low,
+                'high': high,
+                'crit_chance': crit_chance,
+                'hit_chance': hit_chance,
+                'verb': verb,
+                'preposition': preposition
+            }
+
+        elif slot == 'healing_item':
+            low, high, template = match.group(3, 4, 5)
+
+            if low > high:
+                low, high = high, low
+
+            try:
+                low = int(low)
+            except ValueError:
+                await ctx.send(f"`low` must be an integer!")
+                return
+
+            if low < 0:
+                low = 0
+
+            try:
+                high = int(high)
+            except ValueError:
+                await ctx.send(f"`high` must be an integer!")
+                return
+
+            if high < 0:
+                high = 0
+
+            item = {
+                'name': item_name,
+                'cost': cost,
+                'low': low,
+                'high': high,
+                'template': template
+            }
+
+        else:
+            armor = match.group(3)
+
+            try:
+                armor = int(armor)
+            except ValueError:
+                await ctx.send(f"`armor` must be an integer!")
+                return
+
+            if armor < 0:
+                armor = 0
+
+            item = {
+                'name': item_name,
+                'cost': cost,
+                'armor': armor
+            }
+
+        items[slot].append(item)
+        await self.config.guild(ctx.guild).items.set(items)
+        await ctx.send(f"**{item_name}** successfully added to this server's items!")
+
+    @_duelitems.command(name="edit")
+    async def _duelitems_edit(self, ctx, *, edit):
+        """
+        Edit a property of an item
+
+        Edit format: `item name,property,new value`
+
+        `helmet`, `body_armor`, `shoulders`, `boots`, `gloves`, `pants` properties:
+         * `name` - string
+         * `cost` - integer number
+         * `armor` - integer number
+
+        `weapon` properties:
+         * `name` - string
+         * `cost` - integer number
+         * `low` - integer number
+         * `high` - integer number
+         * `crit_chance` - floating point number between 0.0 and 1.0
+         * `hit_chance` - floating point number between 0.0 and 1.0
+         * `verb` - string
+         * `preposition` - string
+
+        `healing_item` properites:
+         * `name` - string
+         * `cost` - integer number
+         * `low` - integer number
+         * `high` - integer number
+         * `template` - string. Refer to `[p]duelitems add` for more information on healing item templates.
+
+        Examples:
+        `[p]duelitems edit iron cap,cost,200`
+        `[p]duelitems edit axe,name,huge axe`
+        `[p]duelitems edit nanites,high,10`
+        """
+
+        match = re.match(EDIT_ITEM_REGEX, edit)
+        if not match:
+            await ctx.send(f"Invalid edit format! Type `{ctx.prefix}duelitems edit` for more information on the format of this command.")
+
+        item_name, field, value = match.group(1, 2, 3)
+
+        if item_name in DEFAULT_EQUIPPED.values():
+            await ctx.send(f'Item `{item_name}` cannot be editted!')
+            return
+
+        _, item = await self.get_item(ctx.guild, item_name)
+        if item == None:
+            await ctx.send(f'Item `{item_name}` does not exist!')
+            return
+
+        try:
+            value = ITEM_FIELD_TYPES[field](value)
+        except ValueError:
+            await ctx.send(f"Invalid value format! Type `{ctx.prefix}help duelitems edit` for more information on item field formats.")
+            return
+        except KeyError:
+            await ctx.send(f"Invalid field name! Check `{ctx.prefix}help duelitems edit` for more information on item field names.")
+            return
+
+        await self.edit_item(ctx.guild, item_name, field, value)
+        await ctx.send(f"`{field}` of `{item_name}` set to `{value}`.")
+
+
+    @_duelitems.command(name="delete")
+    async def _duelitems_delete(self, ctx, *, item_name):
+        """
+        Deletes an item and refunds all players that own that item for its full cost.
+        """
+
+        _, item = await self.get_item(ctx.guild, item_name)
+        if item == None:
+            await ctx.send(f'Item `{item_name}` does not exist!')
+            return
+
+        if item['name'] in DEFAULT_EQUIPPED.values():
+            await ctx.send(f'Item `{item_name}` cannot be deleted!')
+            return
+
+        for member in ctx.guild.members:
+            await self.refund_item(member, item)
+
+        await self.delete_item(ctx.guild, item_name)
+        await ctx.send(f'Item `{item_name}` deleted!')
+
+    @_duelitems.command(name="reset")
+    async def _duelitems_reset(self, ctx):
+        """
+        Resets this servers items to the default list of items.
+        """
+
+        await self.config.guild(ctx.guild).items.set(DEFAULT_ITEMS)
+        await ctx.send('Items reset to default!')
+
+
 # UTILS BEGIN
 
     def format_display(self, server, id):
@@ -906,6 +1264,78 @@ class Duel(commands.Cog):
                 return slot, item
 
         return None, None
+
+
+    async def edit_item(self, guild, item_name, field, value):
+        items = await self.config.guild(guild).items()
+        configs = await self.config.all_members(guild)
+        editted = False
+        for slot, category_items in items.items():
+            for item in category_items:
+                if item['name'] == item_name:
+                    item[field] = value
+                    editted = True
+                    break
+            if editted:
+                break
+
+        if editted:
+            await self.config.guild(guild).items.set(items)
+
+        if field != 'name':
+            return
+
+        for user_id, config in configs.items():
+            equipped = {}
+            update = False
+            for slot, slot_item in config['equipped'].items():
+                if slot_item == item_name:
+                    slot_item = value
+                    update = True
+                equipped[slot] = slot_item
+
+            if update:
+                member = guild.get_member(user_id)
+                await self.config.member(member).equipped.set(equipped)
+
+            inventory = []
+            update = False
+            for inventory_item in config['inventory']:
+                if inventory_item == item_name:
+                    inventory_item = value
+                    update = True
+                inventory.append(inventory_item)
+
+            if update:
+                member = guild.get_member(user_id)
+                await self.config.member(member).inventory.set(inventory)
+
+
+    async def delete_item(self, guild, item_name):
+        items = await self.config.guild(guild).items()
+        result = dict.fromkeys(items, [])
+        for slot, slot_items in items.items():
+            result[slot] = [i for i in slot_items if i['name'] != item_name]
+
+        await self.config.guild(guild).items.set(result)
+
+
+    async def refund_item(self, member, item):
+        member_config = await self.config.member(member).all()
+        count = 0
+        for slot, item_name in member_config['equipped'].items():
+            if item_name == item['name']:
+                member_config['equipped'][slot] = DEFAULT_EQUIPPED[slot]
+                count += 1
+                break
+
+        while item['name'] in member_config['inventory']:
+            member_config['inventory'].remove(item['name'])
+            count += 1
+
+        if count > 0:
+            await self.config.member(member).set(member_config)
+            await bank.deposit_credits(member, item['cost'] * count)
 
 
     async def item_in_member_inventory(self, member, item_name):
