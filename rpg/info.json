@@ -1,0 +1,8 @@
+{
+    "author" : "baiumbg",
+    "name" : "RPG",
+    "short" : "RPG implementation with adventuring and PVP duels.",
+    "description" : "Equipment, stats, levels, monsters, adventuring, PVP, you name it.",
+    "requirements" : ["tabulate"],
+    "tags" : ["duel", "fun", "fight", "combat", "rpg", "adventure", "pvp"]
+}
