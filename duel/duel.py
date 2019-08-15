@@ -77,7 +77,7 @@ ITEM_FIELD_TYPES = {
     'armor': int
 }
 
-EDIT_ITEM_REGEX = re.compile(r'^([\w\s]+),([\w]+),([^,]+)$')
+EDIT_ITEM_REGEX = re.compile(r'^([^,]+),([^,]+),([^,]+)$')
 ADD_SLOT_REGEXES = {
     # name,cost,low,high,crit_chance,hit_chance,verb,preposition
     'weapon': re.compile(r'^([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)$'),
@@ -855,6 +855,10 @@ class Duel(commands.Cog):
     @checks.admin_or_permissions(administrator=True)
     @commands.group(name="duelitems", invoke_without_command=True)
     async def _duelitems(self, ctx, category: str = None):
+        """
+        Edit/add/delete duel items
+        """
+
         if ctx.invoked_subcommand == None:
             await ctx.invoke(self._duelitems_list, category)
             return
@@ -863,6 +867,12 @@ class Duel(commands.Cog):
 
     @_duelitems.command(name="list")
     async def _duelitems_list(self, ctx, category: str = None):
+        """
+        Lists all items for in a given category, or all if no category is given.
+
+        Valid categories: `helmet`, `body_armor`, `pants`, `shoulders`, `gloves`, `boots`, `healing_item`, `weapon`
+        """
+
         items = await self.config.guild(ctx.guild).items()
         if category != None:
             if category not in items.keys():
@@ -905,6 +915,27 @@ class Duel(commands.Cog):
 
     @_duelitems.command(name="add")
     async def _duelitems_add(self, ctx, slot: str, *, item):
+        """
+        Add an item to this servers list of items
+
+        Valid slots: `helmet`, `body_armor`, `pants`, `shoulders`, `gloves`, `boots`, `healing_item`, `weapon`
+
+        Item formats:
+         - helmet, body_armor, pants, shoulders, gloves, boots - `name,cost,armor`
+
+           Example: `[p]duelitems add body_armor diamond breastplate,1000,8`
+
+         - weapon - `name,cost,minimum damage,maximum damage,critical chance,hit chance,verb,preposition`
+
+           Example: `[p]duelitems add weapon dick gun,1000,10,15,0.2,0.9,fire,at`
+
+         - healing_item - `name,cost,minimum healing,maximum healing,template`
+
+           Template macros: {a} - attacker, {d} - defender, {o} - item name
+
+           Example: `[p]duelitems add healing_item vampire teeth,1000,8,14,{a} gets hungry and decides to take a bite out of {d}'s neck using his {o}!`
+        """
+
         if slot not in DEFAULT_ITEMS.keys():
             await ctx.send(f"Invalid slot name! Valid slot names: {', '.join(DEFAULT_ITEMS.keys())}")
             return
@@ -1044,6 +1075,39 @@ class Duel(commands.Cog):
 
     @_duelitems.command(name="edit")
     async def _duelitems_edit(self, ctx, *, edit):
+        """
+        Edit a property of an item
+
+        Edit format: `item name,property,new value`
+
+        `helmet`, `body_armor`, `shoulders`, `boots`, `gloves`, `pants` properties:
+         * `name` - string
+         * `cost` - integer number
+         * `armor` - integer number
+
+        `weapon` properties:
+         * `name` - string
+         * `cost` - integer number
+         * `low` - integer number
+         * `high` - integer number
+         * `crit_chance` - floating point number between 0.0 and 1.0
+         * `hit_chance` - floating point number between 0.0 and 1.0
+         * `verb` - string
+         * `preposition` - string
+
+        `healing_item` properites:
+         * `name` - string
+         * `cost` - integer number
+         * `low` - integer number
+         * `high` - integer number
+         * `template` - string. Refer to `[p]duelitems add` for more information on healing item templates.
+
+        Examples:
+        `[p]duelitems edit iron cap,cost,200`
+        `[p]duelitems edit axe,name,huge axe`
+        `[p]duelitems edit nanites,high,10`
+        """
+
         match = re.match(EDIT_ITEM_REGEX, edit)
         if not match:
             await ctx.send(f"Invalid edit format! Type `{ctx.prefix}duelitems edit` for more information on the format of this command.")
@@ -1074,6 +1138,10 @@ class Duel(commands.Cog):
 
     @_duelitems.command(name="delete")
     async def _duelitems_delete(self, ctx, *, item_name):
+        """
+        Deletes an item and refunds all players that own that item for its full cost.
+        """
+
         _, item = await self.get_item(ctx.guild, item_name)
         if item == None:
             await ctx.send(f'Item `{item_name}` does not exist!')
@@ -1091,6 +1159,10 @@ class Duel(commands.Cog):
 
     @_duelitems.command(name="reset")
     async def _duelitems_reset(self, ctx):
+        """
+        Resets this servers items to the default list of items.
+        """
+
         await self.config.guild(ctx.guild).items.set(DEFAULT_ITEMS)
         await ctx.send('Items reset to default!')
 
