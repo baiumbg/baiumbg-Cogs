@@ -1048,8 +1048,11 @@ class Duel(commands.Cog):
         if not match:
             await ctx.send(f"Invalid edit format! Type `{ctx.prefix}duelitems edit` for more information on the format of this command.")
 
-        items = await self.config.guild(ctx.guild).items()
         item_name, field, value = match.group(1, 2, 3)
+
+        if item_name in DEFAULT_EQUIPPED.values():
+            await ctx.send(f'Item `{item_name}` cannot be editted!')
+            return
 
         _, item = await self.get_item(ctx.guild, item_name)
         if item == None:
@@ -1068,6 +1071,23 @@ class Duel(commands.Cog):
         await self.edit_item(ctx.guild, item_name, field, value)
         await ctx.send(f"`{field}` of `{item_name}` set to `{value}`.")
 
+
+    @_duelitems.command(name="delete")
+    async def _duelitems_delete(self, ctx, *, item_name):
+        _, item = await self.get_item(ctx.guild, item_name)
+        if item == None:
+            await ctx.send(f'Item `{item_name}` does not exist!')
+            return
+
+        if item['name'] in DEFAULT_EQUIPPED.values():
+            await ctx.send(f'Item `{item_name}` cannot be deleted!')
+            return
+
+        for member in ctx.guild.members:
+            await self.refund_item(member, item)
+
+        await self.delete_item(ctx.guild, item_name)
+        await ctx.send(f'Item `{item_name}` deleted!')
 
     @_duelitems.command(name="reset")
     async def _duelitems_reset(self, ctx):
@@ -1217,6 +1237,33 @@ class Duel(commands.Cog):
             if update:
                 member = guild.get_member(user_id)
                 await self.config.member(member).inventory.set(inventory)
+
+
+    async def delete_item(self, guild, item_name):
+        items = await self.config.guild(guild).items()
+        result = dict.fromkeys(items, [])
+        for slot, slot_items in items.items():
+            result[slot] = [i for i in slot_items if i['name'] != item_name]
+
+        await self.config.guild(guild).items.set(result)
+
+
+    async def refund_item(self, member, item):
+        member_config = await self.config.member(member).all()
+        count = 0
+        for slot, item_name in member_config['equipped'].items():
+            if item_name == item['name']:
+                member_config['equipped'][slot] = DEFAULT_EQUIPPED[slot]
+                count += 1
+                break
+
+        while item['name'] in member_config['inventory']:
+            member_config['inventory'].remove(item['name'])
+            count += 1
+
+        if count > 0:
+            await self.config.member(member).set(member_config)
+            await bank.deposit_credits(member, item['cost'] * count)
 
 
     async def item_in_member_inventory(self, member, item_name):
