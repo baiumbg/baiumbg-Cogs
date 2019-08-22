@@ -77,6 +77,19 @@ ITEM_FIELD_TYPES = {
     'armor': int
 }
 
+EXPERIENCE_PER_LEVEL = {
+    1: 100,
+    2: 200,
+    3: 350,
+    4: 500,
+    5: 700,
+    6: 900,
+    7: 1150,
+    8: 1400,
+    9: 1700,
+    10: 2000
+}
+
 EDIT_ITEM_REGEX = re.compile(r'^([^,]+),([^,]+),([^,]+)$')
 ADD_SLOT_REGEXES = {
     # name,cost,low,high,crit_chance,hit_chance,verb,preposition
@@ -185,7 +198,9 @@ class RPG(commands.Cog):
                 'draws': 0
             },
             'equipped': DEFAULT_EQUIPPED,
-            'inventory': []
+            'inventory': [],
+            'level': 1,
+            'experience': 0
         }
         default_guild_config = {
             'protected': [],
@@ -748,7 +763,7 @@ class RPG(commands.Cog):
     @_rpgset.command(name="initial_hp")
     async def _rpgset_initial_hp(self, ctx, initial_hp: int = None):
         """
-        Change the HP players start with at the beginning of every duel
+        Change the HP players start with at the beginning of every battle
         """
 
         guild_config = await self.config.guild(ctx.guild).all()
@@ -780,7 +795,7 @@ class RPG(commands.Cog):
     @_rpgset.command(name="edit_posts")
     async def _rpgset_edit_posts(self, ctx, edit_posts: bool = None):
         """
-        Edit messages in-place instead of posting each move seperately
+        Edit duel messages in-place instead of posting each move seperately
         """
 
         guild_config = await self.config.guild(ctx.guild).all()
@@ -840,7 +855,6 @@ class RPG(commands.Cog):
         await ctx.send(f"`currency_per_win` set to `{currency_per_win}`")
 
 
-    @checks.admin_or_permissions(administrator=True)
     @_rpgset.command(name="reset_players")
     async def _rpgset_reset_players(self, ctx):
         """
@@ -1167,6 +1181,31 @@ class RPG(commands.Cog):
         await ctx.send('Items reset to default!')
 
 
+    @commands.guild_only()
+    @checks.admin_or_permissions(administrator=True)
+    @commands.command(name="addexp")
+    async def _addexp(self, ctx, amount: int, member: discord.Member = None):
+        """
+        Adds experience to a member (or yourself, if none specified).
+        """
+
+        member = ctx.author if member == None else member
+        await ctx.send(f"Adding {amount} experience to {member.display_name}!")
+        await self.add_experience(member, amount, ctx.channel)
+
+
+    @commands.guild_only()
+    @commands.command(name="level")
+    async def _level(self, ctx, member: discord.Member = None):
+        """
+        Displays your (or another member's) experience, level and required experience to reach the next level.
+        """
+
+        member = ctx.author if member == None else member
+        level, experience = await self.get_member_level(member)
+        await ctx.send(f"{member.display_name}'s current level and experience:\n```http\nLevel: {level}\nExperience: {experience}\nExperience to next level: {EXPERIENCE_PER_LEVEL[level] - experience}```")
+
+
 # UTILS BEGIN
 
     def format_display(self, server, id):
@@ -1350,6 +1389,27 @@ class RPG(commands.Cog):
     async def item_equipped_by_member(self, member, item_name):
         equipped = await self.get_equipped(member)
         return item_name in equipped
+
+
+    async def add_experience(self, member, experience, channel):
+        member_config = await self.config.member(member).all()
+        new_experience = member_config['experience'] + experience
+        max_level = max(EXPERIENCE_PER_LEVEL.keys())
+        while new_experience >= EXPERIENCE_PER_LEVEL[member_config['level']] and member_config['level'] < max_level:
+            new_experience -= EXPERIENCE_PER_LEVEL[member_config['level']]
+            member_config['level'] += 1
+            await channel.send(f"{member.mention} has leveled up to {member_config['level']}!")
+
+        member_config['experience'] = new_experience
+        member_config['experience'] = min(member_config['experience'], EXPERIENCE_PER_LEVEL[max_level])
+        member_config['experience'] = max(member_config['experience'], 0)
+
+        await self.config.member(member).set(member_config)
+
+
+    async def get_member_level(self, member):
+        member_config = await self.config.member(member).all()
+        return member_config['level'], member_config['experience']
 
 
     def generate_action(self, attacker, defender, initial_hp, move_cat=None):
