@@ -1412,8 +1412,6 @@ class RPG(commands.Cog):
         armor_slot = random.choice(ARMOR_PIECES)
         bodypart = random.choice(ARMOR_PIECE_TO_BODY_PARTS[armor_slot])
         armor_piece_name = defender.armor[armor_slot]['name']
-        verb = indicatize(attacker.weapon['verb'])
-        preposition = ''
         obj = attacker.weapon['name']
         target = defender
         if move_cat == 'ATTACK':
@@ -1440,7 +1438,7 @@ class RPG(commands.Cog):
             hp_delta = -initial_hp * 64
 
         target.hp += hp_delta
-        msg = move.format(a=attacker, d=defender, o=obj, v=verb, b=bodypart, p=preposition, ap=armor_piece_name, delta=abs(hp_delta))
+        msg = move.format(a=attacker, d=defender, o=obj, b=bodypart, ap=armor_piece_name, delta=abs(hp_delta))
         msg += f" ({target.hp})"
 
         return msg
