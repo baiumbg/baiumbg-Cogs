@@ -945,7 +945,7 @@ class RPG(commands.Cog):
 
            Template macros: {a} - attacker, {d} - defender, {o} - healing item name, {delta} - amount of healing
 
-           Example: `[p]items add healing_item vampire teeth,1000,8,14,{a} gets hungry and decides to take a bite out of {d}'s neck using his {o}! {a} heals for {delta}!`
+           Example: `[p]items add healing_item vampire teeth|1000|8|14|{a} gets hungry and decides to take a bite out of {d}'s neck using his {o}! {a} heals for {delta}!`
         """
 
         if slot not in DEFAULT_ITEMS.keys():
