@@ -6,8 +6,10 @@ DEFAULT_WEAPONS = [
         'high': 3,
         'crit_chance': 0.05,
         'hit_chance': 0.9,
-        'verb': 'drive',
-        'preposition': 'into'
+        'attack_template': "{a} drives their {o} into {d}'s {b} for {delta} damage!",
+        'block_template': "{a} attempts to drive their {o} into {d}'s {b}, but the attack is completely blocked by {d}'s {ap}!",
+        'crit_template': "Critical hit! {a} drives their {o} with all their might into {d}'s {b} and deal {delta} damage!",
+        'miss_template': "{a} attempts to drive their {o} into {d}'s {b}, but the attack completely misses!"
     },
     {
         'name': 'axe',
@@ -16,8 +18,10 @@ DEFAULT_WEAPONS = [
         'high': 5,
         'crit_chance': 0.08,
         'hit_chance': 0.91,
-        'verb': 'swing',
-        'preposition': 'into'
+        'attack_template': "{a} swings their {o} into {d}'s {b} for {delta} damage!",
+        'block_template': "{a} swings their {o} at {d}'s {b}, but the attack is completely blocked by {d}'s {ap}!",
+        'crit_template': "Critical hit! {a} swings their {o} with exceptional fury into {d}'s {b} and deal {delta} damage!",
+        'miss_template': "{a} attempts to swing their {o} at {d}'s {b}, but the attack completely misses!"
     },
     {
         'name': 'scimitar',
@@ -26,8 +30,10 @@ DEFAULT_WEAPONS = [
         'high': 5,
         'crit_chance': 0.05,
         'hit_chance': 0.82,
-        'verb': 'swing',
-        'preposition': 'into'
+        'attack_template': "{a} swings their {o} into {d}'s {b} for {delta} damage!",
+        'block_template': "{a} swings their {o} at {d}'s {b}, but the attack is completely blocked by {d}'s {ap}!",
+        'crit_template': "Critical hit! {a} swings their {o} with exceptional fury into {d}'s {b} and deal {delta} damage!",
+        'miss_template': "{a} attempts to swing their {o} at {d}'s {b}, but the attack completely misses!"
     },
     {
         'name': 'buzzsaw',
@@ -36,8 +42,10 @@ DEFAULT_WEAPONS = [
         'high': 6,
         'crit_chance': 0.04,
         'hit_chance': 0.82,
-        'verb': 'swing',
-        'preposition': 'into'
+        'attack_template': "{a} drives their {o} into {d}'s {b} for {delta} damage!",
+        'block_template': "{a} tries to drive their {o} into {d}'s {b}, but the attack is completely blocked by {d}'s {ap}!",
+        'crit_template': "Critical hit! {a} drives their {o} deep into {d}'s {b} and deal {delta} damage!",
+        'miss_template': "{a} attempts to drive their {o} into {d}'s {b}, but the attack completely misses!"
     },
     {
         'name': 'chainsaw',
@@ -46,8 +54,10 @@ DEFAULT_WEAPONS = [
         'high': 6,
         'crit_chance': 0.05,
         'hit_chance': 0.9,
-        'verb': 'swing',
-        'preposition': 'into'
+        'attack_template': "{a} swings their {o} at {d}'s {b} for {delta} damage!",
+        'block_template': "{a} swings their {o} at {d}'s {b}, but the attack is completely blocked by {d}'s {ap}!",
+        'crit_template': "Critical hit! {a} swings their {o} at {d}'s {b}, completely cutting it off! {d} takes {delta} damage!",
+        'miss_template': "{a} attempts to swing their {o} at {d}'s {b}, but the attack completely misses!"
     },
     {
         'name': 'broadsword',
@@ -56,8 +66,10 @@ DEFAULT_WEAPONS = [
         'high': 10,
         'crit_chance': 0.04,
         'hit_chance': 0.64,
-        'verb': 'swing',
-        'preposition': 'into'
+        'attack_template': "{a} swings their {o} at {d}'s {b} for {delta} damage!",
+        'block_template': "{a} swings their {o} at {d}'s {b}, but the attack is completely blocked by {d}'s {ap}!",
+        'crit_template': "Critical hit! {a} swings their {o} at {d}'s {b}, completely cutting it off! {d} takes {delta} damage!",
+        'miss_template': "{a} attempts to swing their {o} at {d}'s {b}, but the attack completely misses!"
     },
     {
         'name': 'katana',
@@ -66,8 +78,10 @@ DEFAULT_WEAPONS = [
         'high': 7,
         'crit_chance': 0.15,
         'hit_chance': 0.87,
-        'verb': 'swing',
-        'preposition': 'into'
+        'attack_template': "{a} swings their {o} at {d}'s {b} for {delta} damage!",
+        'block_template': "{a} swings their {o} at {d}'s {b}, but the attack is completely blocked by {d}'s {ap}!",
+        'crit_template': "Critical hit! {a} swings their {o} at {d}'s {b}, completely cutting it off! {d} takes {delta} damage!",
+        'miss_template': "{a} attempts to swing their {o} at {d}'s {b}, but the attack completely misses!"
     },
     {
         'name': 'falchion',
@@ -76,8 +90,10 @@ DEFAULT_WEAPONS = [
         'high': 7,
         'crit_chance': 0.09,
         'hit_chance': 1,
-        'verb': 'swing',
-        'preposition': 'into'
+        'attack_template': "{a} swings their {o} into {d}'s {b} for {delta} damage!",
+        'block_template': "{a} swings their {o} at {d}'s {b}, but the attack is completely blocked by {d}'s {ap}!",
+        'crit_template': "Critical hit! {a} swings their {o} with exceptional fury into {d}'s {b} and deal {delta} damage!",
+        'miss_template': "{a} attempts to swing their {o} at {d}'s {b}, but the attack completely misses!"
     },
     {
         'name': 'raygun',
@@ -86,8 +102,10 @@ DEFAULT_WEAPONS = [
         'high': 6,
         'crit_chance': 0.18,
         'hit_chance': 1,
-        'verb': 'fire',
-        'preposition': 'at'
+        'attack_template': "{a} shoots their {o} at {d}'s {b} for {delta} damage!",
+        'block_template': "{a} shoots their {o} at {d}'s {b}, but the projectile is completely blocked by {d}'s {ap}!",
+        'crit_template': "Critical hit! {a} blows a hole through {d}'s {b} using their {o} and deal {delta} damage!",
+        'miss_template': "{a} attempts to shoot their {o} at {d}'s {b}, but the projectile completely misses!"
     },
     {
         'name': 'flamethrower',
@@ -96,8 +114,10 @@ DEFAULT_WEAPONS = [
         'high': 7,
         'crit_chance': 0,
         'hit_chance': 1,
-        'verb': 'fire',
-        'preposition': 'at'
+        'attack_template': "{a} burns {d}'s {b} using their {o} for {delta} damage!",
+        'block_template': "{a} tries to burn {d}'s {b} using their {o}, but the flames are completely blocked by {d}'s {ap}!",
+        'crit_template': "Critical hit! {a} burns {d}'s {b} into a crisp using their {o} and deal {delta} damage!",
+        'miss_template': "{a} attempts to burn {d}'s {b} using their {o}, but the flames completely miss!"
     },
     {
         'name': 'crossbow',
@@ -106,8 +126,10 @@ DEFAULT_WEAPONS = [
         'high': 5,
         'crit_chance': 0.18,
         'hit_chance': 1,
-        'verb': 'fire',
-        'preposition': 'at'
+        'attack_template': "{a} shoots their {o} into {d}'s {b} for {delta} damage!",
+        'block_template': "{a} shoots their {o} into {d}'s {b}, but the arrow is completely blocked by {d}'s {ap}!",
+        'crit_template': "Critical hit! {a} completely pierces {d}'s {b} with an arrow from their {o} and deal {delta} damage!",
+        'miss_template': "{a} attempts to shoot their {o} into {d}'s {b}, but the arrow completely misses!"
     },
     {
         'name': 'railgun',
@@ -116,8 +138,10 @@ DEFAULT_WEAPONS = [
         'high': 7,
         'crit_chance': 0,
         'hit_chance': 1,
-        'verb': 'fire',
-        'preposition': 'at'
+        'attack_template': "{a} shoots their {o} at {d}'s {b} for {delta} damage!",
+        'block_template': "{a} shoots their {o} into {d}'s {b}, but the projectile is completely blocked by {d}'s {ap}!",
+        'crit_template': "Critical hit! {a} shoots a hole straight through {d}'s {b} with their {o} and deal {delta} damage!",
+        'miss_template': "{a} attempts to shoot their {o} at {d}'s {b}, but the projectile completely misses!"
     },
     {
         'name': 'ballista',
@@ -126,8 +150,10 @@ DEFAULT_WEAPONS = [
         'high': 7,
         'crit_chance': 0.1,
         'hit_chance': 0.91,
-        'verb': 'fire',
-        'preposition': 'at'
+        'attack_template': "{a} shoots their {o} at {d}'s {b} for {delta} damage!",
+        'block_template': "{a} shoots their {o} into {d}'s {b}, but the bolt is completely blocked by {d}'s {ap}!",
+        'crit_template': "Critical hit! {a} shoots a huge bolt straight through {d}'s {b} and deal {delta} damage!",
+        'miss_template': "{a} attempts to shoot their {o} into {d}'s {b}, but the bolt completely misses!"
     },
     {
         'name': 'catapult',
@@ -136,8 +162,10 @@ DEFAULT_WEAPONS = [
         'high': 7,
         'crit_chance': 0.21,
         'hit_chance': 0.9,
-        'verb': 'fire',
-        'preposition': 'at'
+        'attack_template': "{a} hurls a boulder at {d}'s {b} using their {o} for {delta} damage!",
+        'block_template': "{a} hurls a boulder at {d}'s {b} using their {o}, but it is completely blocked by {d}'s {ap}!",
+        'crit_template': "Critical hit! {a} completely smashes {d}'s {b} with a huge boulder from their {o}. They take {delta} damage!",
+        'miss_template': "{a} attempts to hurl a boulder at {d}'s {b}, but it completely misses!"
     },
     {
         'name': 'cannon',
@@ -146,8 +174,10 @@ DEFAULT_WEAPONS = [
         'high': 6,
         'crit_chance': 0.4,
         'hit_chance': 0.95,
-        'verb': 'fire',
-        'preposition': 'at'
+        'attack_template': "{a} fires a cannonball at {d}'s {b} for {delta} damage!",
+        'block_template': "{a} fires a cannonball at {d}'s {b}, but it is completely blocked by {d}'s {ap}!",
+        'crit_template': "Critical hit! {a} fires a cannonball at {d}'s {b}, completely obliterating it! {d} takes {delta} damage!",
+        'miss_template': "{a} attempts to fire a cannonball at {d}'s {b}, but it completely misses!"
     },
     {
         'name': 'mortar',
@@ -156,8 +186,10 @@ DEFAULT_WEAPONS = [
         'high': 5,
         'crit_chance': 0.73,
         'hit_chance': 1,
-        'verb': 'fire',
-        'preposition': 'at'
+        'attack_template': "{a} fires an explosive shell at {d}'s {b} for {delta} damage!",
+        'block_template': "{a} fires an explosive shell at {d}'s {b}, but it is completely blocked by {d}'s {ap}!",
+        'crit_template': "Critical hit! {a} fires an explosive shell at {d}'s {b}, utterly deleting it! {d} takes {delta} damage!",
+        'miss_template': "{a} attempts to fire an explosive shell at {d}'s {b}, but it completely misses!"
     },
     {
         'name': 'naginata',
@@ -166,8 +198,10 @@ DEFAULT_WEAPONS = [
         'high': 6,
         'crit_chance': 0.5,
         'hit_chance': 0.8,
-        'verb': 'drive',
-        'preposition': 'through'
+        'attack_template': "{a} drives their {o} into {d}'s {b} for {delta} damage!",
+        'block_template': "{a} tries to drive their {o} into {d}'s {b}, but the attack is completely blocked by {d}'s {ap}!",
+        'crit_template': "Critical hit! {a} drives their {o} straight through {d}'s {b} and deal {delta} damage!",
+        'miss_template': "{a} attempts to drive their {o} into {d}'s {b}, but the attack completely misses!"
     },
     {
         'name': 'lance',
@@ -176,8 +210,10 @@ DEFAULT_WEAPONS = [
         'high': 6,
         'crit_chance': 0.6,
         'hit_chance': 0.84,
-        'verb': 'drive',
-        'preposition': 'through'
+        'attack_template': "{a} drives their {o} into {d}'s {b} for {delta} damage!",
+        'block_template': "{a} tries to drive their {o} into {d}'s {b}, but the attack is completely blocked by {d}'s {ap}!",
+        'crit_template': "Critical hit! {a} drives their {o} straight through {d}'s {b} and deal {delta} damage!",
+        'miss_template': "{a} attempts to drive their {o} into {d}'s {b}, but the attack completely misses!"
     }
 ]
 
@@ -325,49 +361,49 @@ DEFAULT_HEALING_ITEMS = [
         'cost': 0,
         'low': 2,
         'high': 3,
-        'template': '{a} decides to take a bite out of their {o} instead of attacking.'
+        'template': '{a} decides to take a bite out of their {o} instead of attacking. They heal for {delta}!'
     },
     {
         'name': 'morphine',
         'cost': 100,
         'low': 3,
         'high': 4,
-        'template': '{a} decides to inject himself with some of their {o} instead of attacking.'
+        'template': '{a} decides to inject himself with some of their {o} instead of attacking. They heal for {delta}!'
     },
     {
         'name': 'cake',
         'cost': 100,
         'low': 2,
         'high': 5,
-        'template': '{a} decides to eat some of their {o} instead of attacking.'
+        'template': '{a} decides to eat some of their {o} instead of attacking. They heal for {delta}!'
     },
     {
         'name': 'joint',
         'cost': 200,
         'low': 4,
         'high': 6,
-        'template': '{a} decides to smoke a fat {o} instead of attacking.'
+        'template': '{a} decides to smoke a fat {o} instead of attacking. They heal for {delta}!'
     },
     {
         'name': 'nanites',
         'cost': 200,
         'low': 3,
         'high': 7,
-        'template': '{a} decides to inject himself with some of their {o} instead of attacking.'
+        'template': '{a} decides to inject himself with some of their {o} instead of attacking. They heal for {delta}!'
     },
     {
         'name': 'unicorn piss',
         'cost': 300,
         'low': 6,
         'high': 8,
-        'template': '{a} decides to drink some of their {o} instead of attacking.'
+        'template': '{a} decides to drink some of their {o} instead of attacking. They heal for {delta}!'
     },
     {
         'name': 'goon wine',
         'cost': 300,
         'low': 5,
         'high': 9,
-        'template': '{a} decides to drink some of their {o} instead of attacking.'
+        'template': '{a} decides to drink some of their {o} instead of attacking. They heal for {delta}!'
     }
 ]
 

@@ -169,17 +169,9 @@ class Player:
 # {a} is attacker, {d} is defender/target, {o} is a randomly selected object,
 # {v} is the verb associated with that object, {p} is a preposition associated
 # with that verb, and {b} is a random body part.
-
-ATTACK = "{a} {v} their {o} {p} {d}'s {b}!"
-ATTACK_PROTECTED = "{a} attempts to {v} their {o} {p} {d}'s {b}, but they are completely protected by their {ap}!"
-CRITICAL_ATTACK = "{a} {v} their {o} {p} {d}'s {b}! Critical hit!"
-MISS = "{a} attempts to {v} their {o} {p} {d}'s {b}, but they miss!"
 BOT = "{a} charges its laser aaaaaaaand... BZZZZZZT! {d} is now a smoking crater for daring to challenge the bot."
 
 EQUIPPED = "```http\nWeapon: {w}\nHelmet: {h}\nBody armor: {a}\nPants: {p}\nShoulders: {s}\nGloves: {g}\nBoots: {b}\nHealing item: {heal}```"
-
-HITS = ['deal', 'hit for']
-RECOVERS = ['recover', 'gain', 'heal']
 
 # TEMPLATES END
 
@@ -1425,18 +1417,18 @@ class RPG(commands.Cog):
         obj = attacker.weapon['name']
         target = defender
         if move_cat == 'ATTACK':
-            move = ATTACK
+            move = attacker.weapon['attack_template']
             hp_delta = min(0, -random.randint(attacker.weapon['low'], attacker.weapon['high']) + defender.armor[armor_slot]['armor'])
             preposition = attacker.weapon['preposition']
             if hp_delta == 0:
-                move = ATTACK_PROTECTED
+                move = attacker.weapon['block_template']
                 verb = attacker.weapon['verb']
             elif attacker.weapon['hit_chance'] < random.random():
-                move = MISS
+                move = attacker.weapon['miss_template']
                 verb = attacker.weapon['verb']
                 hp_delta = 0
             elif attacker.weapon['crit_chance'] >= random.random():
-                move = CRITICAL_ATTACK
+                move = attacker.weapon['crit_template']
                 hp_delta = hp_delta * 2 - defender.armor[armor_slot]['armor']
         elif move_cat == 'HEAL':
             move = attacker.healing_item['template']
@@ -1447,17 +1439,9 @@ class RPG(commands.Cog):
             move = BOT
             hp_delta = -initial_hp * 64
 
-        msg = move.format(a=attacker, d=defender, o=obj, v=verb, b=bodypart, p=preposition, ap=armor_piece_name)
-        if hp_delta == 0:
-            pass
-        else:
-            target.hp += hp_delta
-            if hp_delta > 0:
-                s = random.choice(RECOVERS)
-                msg += ' They %s %d HP (%d)' % (s, abs(hp_delta), target.hp)
-            elif hp_delta < 0:
-                s = random.choice(HITS)
-                msg += ' They %s %d damage (%d)' % (s, abs(hp_delta), target.hp)
+        target.hp += hp_delta
+        msg = move.format(a=attacker, d=defender, o=obj, v=verb, b=bodypart, p=preposition, ap=armor_piece_name, delta=abs(hp_delta))
+        msg += f" ({target.hp})"
 
         return msg
 
