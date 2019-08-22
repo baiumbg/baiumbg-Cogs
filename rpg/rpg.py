@@ -1184,7 +1184,11 @@ class RPG(commands.Cog):
     @commands.guild_only()
     @checks.admin_or_permissions(administrator=True)
     @commands.command(name="addexp")
-    async def _add_exp(self, ctx, amount: int, member: discord.Member = None):
+    async def _addexp(self, ctx, amount: int, member: discord.Member = None):
+        """
+        Adds experience to a member (or yourself, if none specified).
+        """
+
         member = ctx.author if member == None else member
         await ctx.send(f"Adding {amount} experience to {member.display_name}!")
         await self.add_experience(member, amount, ctx.channel)
@@ -1193,6 +1197,10 @@ class RPG(commands.Cog):
     @commands.guild_only()
     @commands.command(name="level")
     async def _level(self, ctx, member: discord.Member = None):
+        """
+        Displays your (or another member's) experience, level and required experience to reach the next level.
+        """
+
         member = ctx.author if member == None else member
         level, experience = await self.get_member_level(member)
         await ctx.send(f"{member.display_name}'s current level and experience:\n```http\nLevel: {level}\nExperience: {experience}\nExperience to next level: {EXPERIENCE_PER_LEVEL[level] - experience}```")
