@@ -1417,13 +1417,10 @@ class RPG(commands.Cog):
         if move_cat == 'ATTACK':
             move = attacker.weapon['attack_template']
             hp_delta = min(0, -random.randint(attacker.weapon['low'], attacker.weapon['high']) + defender.armor[armor_slot]['armor'])
-            preposition = attacker.weapon['preposition']
             if hp_delta == 0:
                 move = attacker.weapon['block_template']
-                verb = attacker.weapon['verb']
             elif attacker.weapon['hit_chance'] < random.random():
                 move = attacker.weapon['miss_template']
-                verb = attacker.weapon['verb']
                 hp_delta = 0
             elif attacker.weapon['crit_chance'] >= random.random():
                 move = attacker.weapon['crit_template']
