@@ -69,6 +69,10 @@ ITEM_FIELD_TYPES = {
     'high': int,
     'crit_chance': float,
     'hit_chance': float,
+    'attack_template': str,
+    'block_template': str,
+    'crit_template': str,
+    'miss_template': str,
     'name': str,
     'template': str,
     'verb': str,
@@ -90,18 +94,18 @@ EXPERIENCE_PER_LEVEL = {
     10: 2000
 }
 
-EDIT_ITEM_REGEX = re.compile(r'^([^,]+),([^,]+),([^,]+)$')
+EDIT_ITEM_REGEX = re.compile(r'^([^|]+)\|([^|]+)\|([^|]+)$')
 ADD_SLOT_REGEXES = {
     # name,cost,low,high,crit_chance,hit_chance,verb,preposition
-    'weapon': re.compile(r'^([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)$'),
+    'weapon': re.compile(r'^([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^\|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)$'),
     # name,cost,armor
-    'helmet': re.compile(r'^([^,]+),([^,]+),([^,]+)$'),
-    'gloves': re.compile(r'^([^,]+),([^,]+),([^,]+)$'),
-    'boots': re.compile(r'^([^,]+),([^,]+),([^,]+)$'),
-    'shoulders': re.compile(r'^([^,]+),([^,]+),([^,]+)$'),
-    'body_armor': re.compile(r'^([^,]+),([^,]+),([^,]+)$'),
+    'helmet': re.compile(r'^([^|]+)\|([^|]+)\|([^|]+)$'),
+    'gloves': re.compile(r'^([^|]+)\|([^|]+)\|([^|]+)$'),
+    'boots': re.compile(r'^([^|]+)\|([^|]+)\|([^|]+)$'),
+    'shoulders': re.compile(r'^([^|]+)\|([^|]+)\|([^|]+)$'),
+    'body_armor': re.compile(r'^([^|]+)\|([^|]+)\|([^|]+)$'),
     # name,cost,low,high,template
-    'healing_item': re.compile(r'^([^,]+),([^,]+),([^,]+),([^,]+),(.+)$')
+    'healing_item': re.compile(r'^([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)$')
 }
 
 def indicatize(w):
@@ -927,19 +931,21 @@ class RPG(commands.Cog):
         Valid slots: `helmet`, `body_armor`, `pants`, `shoulders`, `gloves`, `boots`, `healing_item`, `weapon`
 
         Item formats:
-         - helmet, body_armor, pants, shoulders, gloves, boots - `name,cost,armor`
+         - helmet, body_armor, pants, shoulders, gloves, boots - `name|cost|armor`
 
-           Example: `[p]items add body_armor diamond breastplate,1000,8`
+           Example: `[p]items add body_armor diamond breastplate|1000|8`
 
-         - weapon - `name,cost,minimum damage,maximum damage,critical chance,hit chance,verb,preposition`
+         - weapon - `name|cost|minimum damage|maximum damage|critical chance|hit chance|attack template|block template|crit template|miss template`
 
-           Example: `[p]items add weapon dick gun,1000,10,15,0.2,0.9,fire,at`
+           Template macros: {a} - attacker, {d} - defender, {o} - weapon name, {b} - body part, {ap} - defender's armor for that body part, {delta} - damage dealt
+
+           Example: `[p]items add weapon dick gun|1000|10|15|0.2|0.9|{a} shoves their {o} into {d}'s ass for {delta} damage!|{a} tries to shove their {o} into {d}'s ass, but it's completely protected by {d}'s {ap}!|Critical hit! {a} shoves their {o} so deep into {d}'s ass, you can see it through {d}'s mouth! {d} takes {delta} damage!|{a} tries to shove their {o} into {d}'s ass, but completely misses!`
 
          - healing_item - `name,cost,minimum healing,maximum healing,template`
 
-           Template macros: {a} - attacker, {d} - defender, {o} - item name
+           Template macros: {a} - attacker, {d} - defender, {o} - healing item name, {delta} - amount of healing
 
-           Example: `[p]items add healing_item vampire teeth,1000,8,14,{a} gets hungry and decides to take a bite out of {d}'s neck using his {o}!`
+           Example: `[p]items add healing_item vampire teeth,1000,8,14,{a} gets hungry and decides to take a bite out of {d}'s neck using his {o}! {a} heals for {delta}!`
         """
 
         if slot not in DEFAULT_ITEMS.keys():
@@ -970,7 +976,7 @@ class RPG(commands.Cog):
             return
 
         if slot == 'weapon':
-            low, high, crit_chance, hit_chance, verb, preposition = match.group(3, 4, 5, 6, 7, 8)
+            low, high, crit_chance, hit_chance, attack_template, block_template, crit_template, miss_template = match.group(3, 4, 5, 6, 7, 8, 9, 10)
 
             try:
                 low = int(low)
@@ -1021,8 +1027,10 @@ class RPG(commands.Cog):
                 'high': high,
                 'crit_chance': crit_chance,
                 'hit_chance': hit_chance,
-                'verb': verb,
-                'preposition': preposition
+                'attack_template': attack_template,
+                'block_template': block_template,
+                'crit_template': crit_template,
+                'miss_template': miss_template
             }
 
         elif slot == 'healing_item':
@@ -1084,7 +1092,7 @@ class RPG(commands.Cog):
         """
         Edit a property of an item
 
-        Edit format: `item name,property,new value`
+        Edit format: `item name|property|new value`
 
         `helmet`, `body_armor`, `shoulders`, `boots`, `gloves`, `pants` properties:
          * `name` - string
@@ -1098,8 +1106,10 @@ class RPG(commands.Cog):
          * `high` - integer number
          * `crit_chance` - floating point number between 0.0 and 1.0
          * `hit_chance` - floating point number between 0.0 and 1.0
-         * `verb` - string
-         * `preposition` - string
+         * `attack_template` - string. Refer to `[p]items add` for more information on weapon templates.
+         * `block_template` - string. Refer to `[p]items add` for more information on weapon templates.
+         * `crit_template` - string. Refer to `[p]items add` for more information on weapon templates.
+         * `miss_template` - string. Refer to `[p]items add` for more information on weapon templates.
 
         `healing_item` properites:
          * `name` - string
@@ -1109,9 +1119,10 @@ class RPG(commands.Cog):
          * `template` - string. Refer to `[p]items add` for more information on healing item templates.
 
         Examples:
-        `[p]items edit iron cap,cost,200`
-        `[p]items edit axe,name,huge axe`
-        `[p]items edit nanites,high,10`
+        `[p]items edit iron cap|cost|200`
+        `[p]items edit axe|name|huge axe`
+        `[p]items edit nanites|high|10`
+        `[p]items edit katana|crit_template|{a} takes their katana and shoves it way up {d}'s arse! {d} takes {delta} damage!`
         """
 
         match = re.match(EDIT_ITEM_REGEX, edit)
