@@ -35,6 +35,7 @@ HR_STATS = {
     'cost': 'Cost',
     'crit_chance': 'Crit Chance',
     'hit_chance': 'Hit Chance',
+    'type': 'Type',
     'low': 'Low',
     'high': 'High',
     'verb': 'Verb',
@@ -73,6 +74,7 @@ ITEM_FIELD_TYPES = {
     'block_template': str,
     'crit_template': str,
     'miss_template': str,
+    'type': str,
     'name': str,
     'template': str,
     'verb': str,
@@ -80,6 +82,8 @@ ITEM_FIELD_TYPES = {
     'cost': int,
     'armor': int
 }
+
+WEAPON_TYPES = ['strength', 'dexterity', 'intelligence']
 
 EXPERIENCE_PER_LEVEL = {
     1: 100,
@@ -97,7 +101,7 @@ EXPERIENCE_PER_LEVEL = {
 EDIT_ITEM_REGEX = re.compile(r'^([^|]+)\|([^|]+)\|([^|]+)$')
 ADD_SLOT_REGEXES = {
     # name,cost,low,high,crit_chance,hit_chance,verb,preposition
-    'weapon': re.compile(r'^([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^\|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)$'),
+    'weapon': re.compile(r'^([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)$'),
     # name,cost,armor
     'helmet': re.compile(r'^([^|]+)\|([^|]+)\|([^|]+)$'),
     'gloves': re.compile(r'^([^|]+)\|([^|]+)\|([^|]+)$'),
@@ -935,11 +939,12 @@ class RPG(commands.Cog):
 
            Example: `[p]items add body_armor diamond breastplate|1000|8`
 
-         - weapon - `name|cost|minimum damage|maximum damage|critical chance|hit chance|attack template|block template|crit template|miss template`
+         - weapon - `name|cost|type|minimum damage|maximum damage|critical chance|hit chance|attack template|block template|crit template|miss template`
 
+           Weapon types: `strength`, `dexterity`, `intelligence`
            Template macros: {a} - attacker, {d} - defender, {o} - weapon name, {b} - body part, {ap} - defender's armor for that body part, {delta} - damage dealt
 
-           Example: `[p]items add weapon dick gun|1000|10|15|0.2|0.9|{a} shoves their {o} into {d}'s ass for {delta} damage!|{a} tries to shove their {o} into {d}'s ass, but it's completely protected by {d}'s {ap}!|Critical hit! {a} shoves their {o} so deep into {d}'s ass, you can see it through {d}'s mouth! {d} takes {delta} damage!|{a} tries to shove their {o} into {d}'s ass, but completely misses!`
+           Example: `[p]items add weapon dick gun|1000|strength|10|15|0.2|0.9|{a} shoves their {o} into {d}'s ass for {delta} damage!|{a} tries to shove their {o} into {d}'s ass, but it's completely protected by {d}'s {ap}!|Critical hit! {a} shoves their {o} so deep into {d}'s ass, you can see it through {d}'s mouth! {d} takes {delta} damage!|{a} tries to shove their {o} into {d}'s ass, but completely misses!`
 
          - healing_item - `name,cost,minimum healing,maximum healing,template`
 
@@ -976,7 +981,11 @@ class RPG(commands.Cog):
             return
 
         if slot == 'weapon':
-            low, high, crit_chance, hit_chance, attack_template, block_template, crit_template, miss_template = match.group(3, 4, 5, 6, 7, 8, 9, 10)
+            weapon_type, low, high, crit_chance, hit_chance, attack_template, block_template, crit_template, miss_template = match.group(3, 4, 5, 6, 7, 8, 9, 10, 11)
+
+            if weapon_type not in WEAPON_TYPES:
+                await ctx.send(f"`type` must be one of: `{'`, `'.join(WEAPON_TYPES)}`")
+                return
 
             try:
                 low = int(low)
@@ -1027,6 +1036,7 @@ class RPG(commands.Cog):
                 'high': high,
                 'crit_chance': crit_chance,
                 'hit_chance': hit_chance,
+                'type': weapon_type,
                 'attack_template': attack_template,
                 'block_template': block_template,
                 'crit_template': crit_template,
@@ -1482,7 +1492,7 @@ class RPG(commands.Cog):
 
     def to_shop_row(self, item, category):
         if category == 'weapon':
-            return [item['name'], item['damage'], str(int(item['hit_chance'] * 100)) + '%', str(int(item['crit_chance'] * 100)) + '%', item['cost']]
+            return [item['name'], item['type'], item['damage'], str(int(item['hit_chance'] * 100)) + '%', str(int(item['crit_chance'] * 100)) + '%', item['cost']]
 
         if category == 'healing_item':
             return [item['name'], item['healing'], item['cost']]
@@ -1492,7 +1502,7 @@ class RPG(commands.Cog):
 
     def generate_header(self, category):
         if category == 'weapon':
-            return [HR_STATS['name'], HR_STATS['damage'], HR_STATS['hit_chance'], HR_STATS['crit_chance'], HR_STATS['cost']]
+            return [HR_STATS['name'], HR_STATS['type'], HR_STATS['damage'], HR_STATS['hit_chance'], HR_STATS['crit_chance'], HR_STATS['cost']]
 
         if category == 'healing_item':
             return [HR_STATS['name'], HR_STATS['healing'], HR_STATS['cost']]
