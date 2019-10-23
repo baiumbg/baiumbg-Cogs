@@ -49,6 +49,7 @@ SU_ITEMS = [
     'Askarbydd',
     "Serenthia's Scorn",
     'Hellrain',
+    'Implement V.II',
     'Twin Terrors',
     'Dreamweaver',
     'Legio Di Manes',
@@ -101,6 +102,7 @@ SU_ITEMS = [
     'Scales of the Serpent',
     'Robe of Steel',
     'Silks of the Victor',
+    'Khazra Pouch',
     'Lacuni Cowl',
     'Shiverhood',
     'Metalhead',
@@ -125,6 +127,7 @@ SU_ITEMS = [
     "Dacana's Fist",
     'Blind Anger',
     'Hellmouth',
+    'Clockwork Slippers',
     "Titan's Steps",
     'Shrill Sacrament',
     'Binding Treads',
@@ -233,6 +236,7 @@ SSU_ITEMS = [
     'Heart of Fire',
     'Advent of Hatred',
     'Stygian Fury',
+    'Hand of Rathma',
     'Malevolence',
     'Smokeless Fire',
     'The Pyre',
@@ -250,6 +254,7 @@ SSU_ITEMS = [
     "Natalya's Deception",
     'The Petulant',
     'Scales of the Drake',
+    'Flameskin',
     'Hide of the Basilisk',
     "Arkaine's Valor",
     'Wolverine Skin',
@@ -258,6 +263,7 @@ SSU_ITEMS = [
     'Strength Beyond Strength',
     'Goetia Plate',
     'Khazra Plate',
+    "Tinker's Gambit",
     "Skull of the Viz-Jaq'taar",
     'Reapers',
     'Veil of Steel',
@@ -324,12 +330,17 @@ SSU_ITEMS = [
 ]
 
 SSSU_ITEMS = [
+    'Saber of the Stormsail',
     'Azurewrath',
+    'Wintry Majesty',
     'The Point of No Return',
     'Storm Blade',
     'The Searing Heat',
     'The Worshipper',
+    'Arrogance',
+    'The Awakening',
     "Tyrael's Might",
+    'Endless Pride',
     'Desolation'
 ]
 
