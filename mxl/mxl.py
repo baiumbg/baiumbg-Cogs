@@ -791,8 +791,14 @@ class MXL(commands.Cog):
         user_key = await self._config.pastebin_user_key()
         pb = PasteBin(api_key, user_key)
         pb_link = await pb.paste(text, name=title, private='1', expire='1D')
-        print(pb_link)
-        return None if 'Bad API request' in pb_link or 'Post limit' in pb_link else pb_link
+        if 'Bad API request' in pb_link or 'Post limit' in pb_link:
+            print(pb_link)
+            return None
+
+        pb_url = urllib.parse.urlparse(pb_link)
+        pb_url = pb_url._replace(path=f'raw{pb_url.path}')
+        pb_link = urllib.parse.urlunparse(pb_url)
+        return pb_link
 
     def _get_auction_embeds(self, raw_auctions):
         embeds = []
