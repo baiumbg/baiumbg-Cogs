@@ -726,7 +726,24 @@ TROPHIES = [
     'Tran Athulua Trophy',
     'Kingdom of Shadow Trophy',
     'Uldyssian Trophy',
-    'Triune Trophy'
+    'Triune Trophy',
+    'Akarat Fragment',
+    'Black Road Fragment',
+    'Astrogha Fragment',
+    'Legacy of Blood Fragment',
+    'The Lord of Sin Fragment',
+    'Lord Aldric Jitan Fragment',
+    'Archbishop Lazarus Fragment',
+    'Viz-jun Fragment',
+    'Cathedral of Light Fragment',
+    'Quov Tsin Fragment',
+    'Duncraig Fragment',
+    'Rathma Square Fragment',
+    'Judgement Day Fragment',
+    'Tran Athulua Fragment',
+    'Kingdom of Shadow Fragment',
+    'Uldyssian Fragment',
+    'Triune Fragment'
 ]
 
 SHRINE_VESSELS = [
