@@ -14,6 +14,15 @@ class PostGenerationErrors(enum.Enum):
     IMAGE_UPLOAD_FAILED = 1,
     UNKNOWN = 2
 
+class PostTemplateArguments(dict):
+    def __init__(self, *arg, **kwarg):
+        super(PostTemplateArguments, self).__init__(*arg, **kwarg)
+        self.missing_keys = set()
+
+    def __missing__(self, key):
+        self.missing_keys.add(key)
+        return ''
+
 @dataclasses.dataclass
 class Item:
     name: str
@@ -174,7 +183,7 @@ class ItemDump:
                         image_id = flickr_client.upload(image_file).photoid[0].text
                         image_link = flickr_client.photos.getSizes(photo_id=image_id).sizes[0].size[-1]['source']
                     except:
-                        return None, cache_update, PostGenerationErrors.IMAGE_UPLOAD_FAILED
+                        return None, cache_update, PostGenerationErrors.IMAGE_UPLOAD_FAILED, None
                     finally:
                         os.remove(image_file)
 
@@ -229,7 +238,7 @@ class ItemDump:
             item.amount = round(item.amount, 1) if item.amount % 1 else int(item.amount)
             misc_str += f'{item.name} x{item.amount}\n' if item.amount != 1 else f'{item.name}\n'
 
-        return post_template.format(
+        template_args = PostTemplateArguments(
             sets = sets_str,
             su = su_str,
             ssu = ssu_str,
@@ -247,4 +256,6 @@ class ItemDump:
             trophies = trophies_str,
             shrines = shrines_str,
             misc = misc_str
-        ), cache_update, None
+        )
+
+        return post_template.format_map(template_args), cache_update, None, template_args.missing_keys
