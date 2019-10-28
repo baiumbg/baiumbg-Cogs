@@ -518,7 +518,7 @@ class MXL(commands.Cog):
             await ctx.send('No items found.')
             return
 
-        post, cache_update, generation_error = await items.to_trade_post(user_config['post_template'], self.flickr_client, self.item_css, user_config, config['flickr_cache'], self.thread_pool)
+        post, cache_update, generation_error, unknown_arguments = await items.to_trade_post(user_config['post_template'], self.flickr_client, self.item_css, user_config, config['flickr_cache'], self.thread_pool)
         if cache_update:
             current_cache = await self._config.flickr_cache()
             await self._config.flickr_cache.set({**cache_update, **current_cache})
@@ -529,6 +529,9 @@ class MXL(commands.Cog):
         elif generation_error == PostGenerationErrors.UNKNOWN:
             await ctx.send('An unknown error occurred while generating your trade post. Try again later.')
             return
+
+        if unknown_arguments:
+            await ctx.channel.send(f'{ctx.author.mention} Warning: Unknown template macros: {", ".join(unknown_arguments)}')
 
         pastebin_link = await self._create_pastebin(post, f'MXL trade post for characters: {", ".join(characters)}')
         channel = ctx.author.dm_channel or await ctx.author.create_dm()
