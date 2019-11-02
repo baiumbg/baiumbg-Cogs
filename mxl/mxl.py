@@ -698,10 +698,6 @@ class MXL(commands.Cog):
                 items.increment_su(item_name, character, item.parent.parent)
                 continue
 
-            if 'Hanfod' in item_name:
-                items.increment_su('Hanfod Tân', character, item.parent.parent)
-                continue
-
             if item_name == 'Jewel':
                 items.increment_other('Jewel', character, item.parent.parent)
                 continue

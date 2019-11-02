@@ -66,7 +66,7 @@ SU_ITEMS = [
     'Faerie Pyre',
     "Azgar's Mark",
     'Guardian of Scosglen',
-    #'Hanfod Tân', This letter :kek:
+    'Hanfod Tan',
     'Iron Shard',
     "Reaper's Hand",
     "Karybdus' Descent",
