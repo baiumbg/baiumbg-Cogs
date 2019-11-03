@@ -874,7 +874,7 @@ class RPG(commands.Cog):
         """
 
         if ctx.invoked_subcommand == None:
-            await ctx.invoke(self._duelitems_list, category)
+            await ctx.invoke(self._items_list, category)
             return
 
         await ctx.send_help()
