@@ -548,7 +548,7 @@ class Duel(commands.Cog):
         highscore = ""
         place = 1
         members = {uid: server.get_member(uid) for uid, _ in topten}  # only look up once each
-        names = {uid: m.display_name for uid, m in members.items()}
+        names = {uid: m.display_name for uid, m in members.items() if m is not None}
         max_name_len = max([len(n) for n in names.values()])
 
         # header
