@@ -561,6 +561,9 @@ class Duel(commands.Cog):
         highscore += '\n'
 
         for uid, stats in topten:
+            if uid not in names.keys():
+                continue
+
             highscore += str(place).ljust(len(str(top)) + 1)  # pad to digits in longest number
             highscore += names[uid].ljust(max_name_len + 4)
 
