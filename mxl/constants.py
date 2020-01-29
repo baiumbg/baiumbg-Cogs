@@ -1381,7 +1381,9 @@ RUNEWORDS = [
 
 MISC_ITEMS = [
     'Belladonna Extract',
-    'Cycle',
+    'Small Cycle',
+    'Medium Cycle',
+    'Large Cycle',
     'Sunless Crystal Bird',
     'Deity\'s Bow',
     'Mystic Dye',
