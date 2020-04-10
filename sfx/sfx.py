@@ -337,7 +337,7 @@ class SFX(commands.Cog):
             self.current_sfx = None
             return
 
-        if event == lavalink.LavalinkEvents.TRACK_END and player.current.track_identifier == self.last_track_info[0].track_identifier:
+        if event == lavalink.LavalinkEvents.TRACK_END and self.last_track_info is not None and player.current.track_identifier == self.last_track_info[0].track_identifier:
             print(str(self.last_track_info[0].uri))
             if self.current_sfx[1]:
                 os.remove(self.current_sfx[0].uri)
