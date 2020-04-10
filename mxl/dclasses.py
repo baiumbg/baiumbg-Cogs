@@ -175,7 +175,7 @@ class ItemDump:
                         continue
 
                     image_file = os.path.join(tempfile.gettempdir(), ''.join(random.choice('0123456789ABCDEF') for i in range(12)) + '.png')
-                    await loop.run_in_executor(thread_pool, functools.partial(imgkit.from_string, str(tag), image_file, css=css_file, options={'width': '0'}))
+                    await loop.run_in_executor(thread_pool, functools.partial(imgkit.from_string, str(tag), image_file, css=css_file, options={'width': '0', 'xvfb': ''}))
 
                     image_id = ''
                     image_link = ''
