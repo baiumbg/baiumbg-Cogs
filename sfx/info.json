@@ -1,5 +1,5 @@
 {
-    "author" : "baiumbg",
+    "author" : ["baiumbg"],
     "short" : "Allow users to play TTS audio.",
     "requirements" : ["gTTS", "red-lavalink", "pydub", "aiohttp"],
     "tags" : ["tts", "audio"],

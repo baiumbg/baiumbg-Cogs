@@ -1,5 +1,5 @@
 {
-    "author" : "baiumbg",
+    "author" : ["baiumbg"],
     "name" : "useless-cogs",
     "short" : "A bunch of useless cogs",
     "description" : "A bunch of useless cogs (and some questionably useful ones)."

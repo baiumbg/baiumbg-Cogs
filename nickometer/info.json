@@ -1,5 +1,5 @@
 {
-    "author" : "Will/tekulvw",
+    "author" : ["Will/tekulvw", "baiumbg"],
     "description" : "Measures the lameness of names. Ported to V3 by baiumbg.",
     "disabled" : false,
     "short" : "Measures the lameness of names",

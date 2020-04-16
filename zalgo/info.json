@@ -1,5 +1,5 @@
 {
-    "author" : "CalebJ",
+    "author" : ["CalebJ", "baiumbg"],
     "name" : "Zalgo",
     "short" : "HE COMES",
     "description" : "Zalgoifies text. Put a number before the text to adjust intensity from 0-10. Ported to V3 by baiumbg.",
