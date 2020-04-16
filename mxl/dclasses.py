@@ -108,8 +108,8 @@ class ItemDump:
     def increment_charm(self, item_name, character, html):
         self.charms.setdefault(item_name, Item(name=item_name)).increment(character, html)
 
-    def increment_trophy(self, item_name, character, html):
-        self.trophies.setdefault(item_name, Item(name=item_name)).increment(character, html)
+    def increment_trophy(self, item_name, character, html, amount = 1):
+        self.trophies.setdefault(item_name, Item(name=item_name)).increment(character, html, amount)
 
     def increment_shrine(self, item_name, character, html, amount = 1):
         self.shrines.setdefault(item_name, Item(name=item_name)).increment(character, html, amount)

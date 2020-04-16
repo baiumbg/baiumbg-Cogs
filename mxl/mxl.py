@@ -661,19 +661,22 @@ class MXL(commands.Cog):
                     item.font.br.extract()
 
                 item_name = item.font.text
-                set_match = re.search('\[([^\]]+)', item.font.text)
+                set_match = re.search(r'\[([^\]]+)', item.font.text)
             else:
                 if item.span.br:
                     item.span.br.extract()
 
                 item_name = item.span.text
-                set_match = re.search('\[([^\]]+)', item.span.text)
+                set_match = re.search(r'\[([^\]]+)', item.span.text)
+
+            quantity_match = re.search(r'\[(\d+)x\]', item.parent.parent.span.text)
+            item_quantity = int(quantity_match.group(1)) if quantity_match else 1
 
             if item_name in IGNORED_ITEMS:
                 continue
 
             if item_name == 'Eye of Wisdom':
-                class_match = re.search('(Amazon|Assassin|Barbarian|Druid|Necromancer|Paladin|Sorceress)', item.text)
+                class_match = re.search(r'(Amazon|Assassin|Barbarian|Druid|Necromancer|Paladin|Sorceress)', item.text)
                 if not class_match:
                     items.increment_set_item('Unknown', item_name, character, item.parent.parent)
                     continue
@@ -747,7 +750,7 @@ class MXL(commands.Cog):
                 items.increment_charm(item_name, character, item.parent.parent)
                 continue
 
-            shrine_match = re.search('Shrine \(([^\)]+)', item_name)
+            shrine_match = re.search(r'Shrine \(([^\)]+)', item_name)
             if shrine_match:
                 shrine_name = item_name.split('(')[0].strip()
                 amount = int(shrine_match.group(1)) / 10
@@ -755,17 +758,17 @@ class MXL(commands.Cog):
                 continue
 
             if item_name in SHRINE_VESSELS:
-                vessel_amount = int((re.search('Quantity: ([0-9]+)', item.find(class_='color-grey').text)).group(1))
+                vessel_amount = int((re.search(r'Quantity: ([0-9]+)', item.find(class_='color-grey').text)).group(1))
                 shrine_name = VESSEL_TO_SHRINE[item_name]
                 items.increment_shrine(shrine_name, character, item.parent.parent, vessel_amount)
                 continue
 
             if item_name == 'Arcane Cluster':
-                crystals_amount = int((re.search('Quantity: ([0-9]+)', item.find(class_='color-grey').text)).group(1))
+                crystals_amount = int((re.search(r'Quantity: ([0-9]+)', item.find(class_='color-grey').text)).group(1))
                 items.increment_other('Arcane Crystal', character, item.parent.parent, crystals_amount)
                 continue
 
-            AC_shards_match = re.search('Shards \(([^\)]+)', item_name)
+            AC_shards_match = re.search(r'Shards \(([^\)]+)', item_name)
             if AC_shards_match:
                 amount = int(AC_shards_match.group(1)) / 5
                 items.increment_other('Arcane Crystal', character, item.parent.parent, amount)
@@ -780,10 +783,10 @@ class MXL(commands.Cog):
                 continue
 
             if item_name in TROPHIES:
-                items.increment_trophy(item_name, character, item.parent.parent)
+                items.increment_trophy(item_name, character, item.parent.parent, item_quantity)
                 continue
 
-            items.increment_other(item_name, character, item.parent.parent)
+            items.increment_other(item_name, character, item.parent.parent, item_quantity)
 
     async def _create_pastebin(self, text, title=None):
         api_key = await self._config.pastebin_api_key()
