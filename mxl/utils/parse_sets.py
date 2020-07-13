@@ -1,10 +1,13 @@
 import requests
 from bs4 import BeautifulSoup
 import pprint
+import re
+
+set_subname_regex = re.compile(r'\(.*\)')
 
 def clean(span_text):
-    span_text = span_text.replace('\n', '')
-    return span_text.replace('\t', '')
+    span_text = span_text.replace('\n', '').replace('\t', '')
+    return set_subname_regex.sub('', span_text)
 
 if __name__ == "__main__":
     response = requests.get('https://docs.median-xl.com/doc/items/sets')
@@ -13,7 +16,7 @@ if __name__ == "__main__":
     result = {}
     
     for table in tables:
-        row = table.find_all('tr')[1]
+        row = table.find_all('tr')[0]
 
         spans = row.td.find_all('span')
         set_name = clean(spans[0].text)
