@@ -263,9 +263,9 @@ class SFX(commands.Cog):
         for soundname, filepath in cfg_sounds.items():
             paginator.add_line(soundname)
 
-        await ctx.send('Sounds for this server:')
+        await ctx.author.send('Sounds for this server:')
         for page in paginator.pages:
-            await ctx.send(page)
+            await ctx.author.send(page)
 
     @commands.command(no_pm=True, pass_context=True, aliases=['getsound'])
     @commands.cooldown(rate=1, per=2, type=discord.ext.commands.cooldowns.BucketType.guild)
@@ -292,7 +292,11 @@ class SFX(commands.Cog):
 
     async def _play_sfx(self, vc, filepath, is_tts=False):
         player = await lavalink.connect(vc)
-        track = (await player.get_tracks(query=filepath))[0]
+        try:
+            track = (await player.get_tracks(query=filepath))[0]
+        except:
+            print("ERROR: Lavalink did not get any tracks from specified filepath")
+            return
 
         if player.current is None:
             player.queue.append(track)
