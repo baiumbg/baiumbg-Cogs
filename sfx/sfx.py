@@ -8,6 +8,8 @@ import random
 import lavalink
 import pydub
 import aiohttp
+import glob
+import random
 
 class SFX(commands.Cog):
     """Plays uploaded sounds or text-to-speech using gTTS."""
@@ -145,11 +147,24 @@ class SFX(commands.Cog):
             os.makedirs(os.path.join(self.sound_base, str(ctx.guild.id)))
 
         cfg_sounds = await self.config.guild(ctx.guild).sounds()
-        if soundname not in cfg_sounds.keys():
+
+        print("Called:" + soundname)
+        #print("Guild ID:" + str(ctx.guild.id))
+        #print("Base files:" + str(self.sound_base))
+        #print("Searching path:" + os.path.join(self.sound_base, str(ctx.guild.id), soundname + "*"))
+        f = glob.glob(os.path.join(self.sound_base, str(ctx.guild.id), soundname + "*"))
+        print(f)
+        if len(f) >= 1:
+            #Multiple options; pick a random one
+            filepath = random.choice(f)
+            win_fix = filepath.replace('\\', '/')
+            soundname = win_fix.split('/')[-1]
+            print("Picked: " + soundname)
+        if len(f) < 1:
             await ctx.send(f'Sound `{soundname}` does not exist. Try `{ctx.prefix}allsfx` for a list.')
             return
 
-        filepath = os.path.join(self.sound_base, str(ctx.guild.id), cfg_sounds[soundname])
+        filepath = os.path.join(self.sound_base, str(ctx.guild.id), soundname)
         if not os.path.exists(filepath):
             del cfg_sounds[soundname]
             await self.config.guild(ctx.guild).sounds.set(cfg_sounds)
@@ -275,9 +290,16 @@ class SFX(commands.Cog):
         if str(ctx.guild.id) not in os.listdir(self.sound_base):
             os.makedirs(os.path.join(self.sound_base, str(ctx.guild.id)))
 
+        print("Called:" + soundname)
+        print("Guild ID:" + str(ctx.guild.id))
+        f = glob.glob(os.path.join("sounds/", ctx.guild.id, soundname + "*"))
+        print(f)
+
         cfg_sounds = await self.config.guild(ctx.guild).sounds()
 
         if soundname not in cfg_sounds.keys():
+            f = glob.glob(os.path.join("sounds/", ctx.guild.id, soundname + "*"))
+            print(f)
             await ctx.send(f'Sound `{soundname}` does not exist. Try `{ctx.prefix}allsfx` for a list.')
             return
 
@@ -292,10 +314,14 @@ class SFX(commands.Cog):
 
     async def _play_sfx(self, vc, filepath, is_tts=False):
         player = await lavalink.connect(vc)
+        print("Filepath:" + str(filepath))
         try:
-            track = (await player.get_tracks(query=filepath))[0]
-        except:
+            tracks = (await player.get_tracks(query=filepath))
+            track = tracks[0]
+            
+        except Exception as e:
             print("ERROR: Lavalink did not get any tracks from specified filepath")
+            print(tracks, e)
             return
 
         if player.current is None:
