@@ -195,15 +195,15 @@ class SFX(commands.Cog):
         cfg_sounds = await self.config.guild(ctx.guild).sounds()
         #Randomly picks a sound that's close
         soundname = await self.getsfxname(ctx.author.voice.channel, ctx, soundname)
+        if soundname:
+            filepath = os.path.join(self.sound_base, str(ctx.guild.id), soundname)
+            if not os.path.exists(filepath):
+                del cfg_sounds[soundname]
+                await self.config.guild(ctx.guild).sounds.set(cfg_sounds)
+                await ctx.send('Looks like this sound\'s file has gone missing! I\'ve removed it from the list of sounds.')
+                return
 
-        filepath = os.path.join(self.sound_base, str(ctx.guild.id), soundname)
-        if not os.path.exists(filepath):
-            del cfg_sounds[soundname]
-            await self.config.guild(ctx.guild).sounds.set(cfg_sounds)
-            await ctx.send('Looks like this sound\'s file has gone missing! I\'ve removed it from the list of sounds.')
-            return
-
-        await self._play_sfx(ctx.author.voice.channel, filepath)
+            await self._play_sfx(ctx.author.voice.channel, filepath)
 
     @commands.command()
     @checks.mod()
