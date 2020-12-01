@@ -165,13 +165,13 @@ class SFX(commands.Cog):
                     return soundname
                     
                 except:
-                    await ctx.send(f'Sound `{searchstring}` causes issues, please remove or reupload. Trying a different sound.')
+                    await ctx.send(f'Sound `{soundname}` causes issues, please remove or reupload. Trying a different sound.')
                     #TODO: Probably need to remove the invalid tracks from the search, instead of just choosing randomly again
                     numTries += 1
             
             return
         if len(f) < 1:
-            await ctx.send(f'Sound `{soundname}` does not exist. Try `{ctx.prefix}allsfx` for a list.')
+            await ctx.send(f'Sound `{searchstring}` does not exist. Try `{ctx.prefix}allsfx` for a list.')
             return
 
     @commands.command(pass_context=True)
@@ -331,8 +331,8 @@ class SFX(commands.Cog):
 
         if soundname not in cfg_sounds.keys():
             f = glob.glob(os.path.join("sounds/", ctx.guild.id, soundname + "*"))
-            print(f)
-            await ctx.send(f'Sound `{soundname}` does not exist. Try `{ctx.prefix}allsfx` for a list.')
+            #print(f)
+            #await ctx.send(f'Sound `{soundname}` does not exist. Try `{ctx.prefix}allsfx` for a list.')
             return
 
         filepath = os.path.join(self.sound_base, str(ctx.guild.id), cfg_sounds[soundname])
