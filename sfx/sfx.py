@@ -132,6 +132,52 @@ class SFX(commands.Cog):
 
         await ctx.send(f"List of valid languages: {', '.join(self.tts_languages)}")
 
+    async def getsfxname(self, vc, ctx, searchstring: str):
+        """
+        Returns a valid sound, reports when a sound does not work
+        """
+
+        print("Called:" + searchstring)
+        #print("Guild ID:" + str(ctx.guild.id))
+        #print("Base files:" + str(self.sound_base))
+        #print("Searching path:" + os.path.join(self.sound_base, str(ctx.guild.id), soundname + "*"))
+        f = glob.glob(os.path.join(self.sound_base, str(ctx.guild.id), searchstring + "*"))
+        print(f)
+        if len(f) >= 1:
+            #Multiple options; pick a random one
+
+            player = await lavalink.connect(vc)
+
+            fileInvalid = True
+            numTries = len(f)
+            while fileInvalid and numTries >= 0:
+                try:
+
+                    filepath = random.choice(f)
+                    win_fix = filepath.replace('\\', '/')
+                    soundname = win_fix.split('/')[-1]
+                    print("Picked: " + soundname)
+                    filepath = os.path.join(self.sound_base, str(ctx.guild.id), soundname)
+                    tracks = (await player.get_tracks(query=filepath))
+                    #If this line doesn't error out, get_tracks() has worked correctly
+                    track = tracks[0]
+                    #This track will play, return it to sfx()
+                    return soundname
+                    
+                except:
+                    await ctx.send(f'Sound `{soundname}` causes issues, please remove or reupload. Trying a different sound.')
+                    #TODO: Probably need to remove the invalid tracks from the search, instead of just choosing randomly again
+                    numTries += 1
+            
+            return
+        if len(f) < 1:
+            await ctx.send(f'Sound `{soundname}` does not exist. Try `{ctx.prefix}allsfx` for a list.')
+            return
+
+    @commands.command(pass_context=True)
+    async def leavevc(self, player):
+        await player.disconnect()
+
     @commands.command()
     @commands.cooldown(rate=1, per=1, type=discord.ext.commands.cooldowns.BucketType.guild)
     async def sfx(self, ctx, soundname: str):
@@ -147,22 +193,8 @@ class SFX(commands.Cog):
             os.makedirs(os.path.join(self.sound_base, str(ctx.guild.id)))
 
         cfg_sounds = await self.config.guild(ctx.guild).sounds()
-
-        print("Called:" + soundname)
-        #print("Guild ID:" + str(ctx.guild.id))
-        #print("Base files:" + str(self.sound_base))
-        #print("Searching path:" + os.path.join(self.sound_base, str(ctx.guild.id), soundname + "*"))
-        f = glob.glob(os.path.join(self.sound_base, str(ctx.guild.id), soundname + "*"))
-        print(f)
-        if len(f) >= 1:
-            #Multiple options; pick a random one
-            filepath = random.choice(f)
-            win_fix = filepath.replace('\\', '/')
-            soundname = win_fix.split('/')[-1]
-            print("Picked: " + soundname)
-        if len(f) < 1:
-            await ctx.send(f'Sound `{soundname}` does not exist. Try `{ctx.prefix}allsfx` for a list.')
-            return
+        #Randomly picks a sound that's close
+        soundname = await self.getsfxname(ctx.author.voice.channel, ctx, soundname)
 
         filepath = os.path.join(self.sound_base, str(ctx.guild.id), soundname)
         if not os.path.exists(filepath):
@@ -320,8 +352,7 @@ class SFX(commands.Cog):
             track = tracks[0]
             
         except Exception as e:
-            print("ERROR: Lavalink did not get any tracks from specified filepath")
-            print(tracks, e)
+            print("ERROR: Lavalink could not load: " + filepath + "; " + e)
             return
 
         if player.current is None:
