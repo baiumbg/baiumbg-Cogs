@@ -307,7 +307,7 @@ class SFX(commands.Cog):
             return
 
         paginator = discord.ext.commands.help.Paginator()
-        for soundname, filepath in cfg_sounds.items():
+        for soundname, filepath in sorted(cfg_sounds.items()):
             paginator.add_line(soundname)
 
         await ctx.author.send('Sounds for this server:')
