@@ -137,12 +137,12 @@ class SFX(commands.Cog):
         Returns a valid sound, reports when a sound does not work
         """
 
-        print("Called:" + searchstring)
+        #print("Called:" + searchstring)
         #print("Guild ID:" + str(ctx.guild.id))
         #print("Base files:" + str(self.sound_base))
         #print("Searching path:" + os.path.join(self.sound_base, str(ctx.guild.id), soundname + "*"))
         f = glob.glob(os.path.join(self.sound_base, str(ctx.guild.id), searchstring + "*"))
-        print(f)
+        #print(f)
         if len(f) >= 1:
             #Multiple options; pick a random one
 
@@ -156,7 +156,7 @@ class SFX(commands.Cog):
                     filepath = random.choice(f)
                     win_fix = filepath.replace('\\', '/')
                     soundname = win_fix.split('/')[-1]
-                    print("Picked: " + soundname)
+                    #print("Picked: " + soundname)
                     filepath = os.path.join(self.sound_base, str(ctx.guild.id), soundname)
                     tracks = (await player.get_tracks(query=filepath))
                     #If this line doesn't error out, get_tracks() has worked correctly
@@ -165,7 +165,7 @@ class SFX(commands.Cog):
                     return soundname
                     
                 except:
-                    await ctx.send(f'Sound `{soundname}` causes issues, please remove or reupload. Trying a different sound.')
+                    await ctx.send(f'Sound `{searchstring}` causes issues, please remove or reupload. Trying a different sound.')
                     #TODO: Probably need to remove the invalid tracks from the search, instead of just choosing randomly again
                     numTries += 1
             
@@ -322,10 +322,10 @@ class SFX(commands.Cog):
         if str(ctx.guild.id) not in os.listdir(self.sound_base):
             os.makedirs(os.path.join(self.sound_base, str(ctx.guild.id)))
 
-        print("Called:" + soundname)
-        print("Guild ID:" + str(ctx.guild.id))
+        #print("Called:" + soundname)
+        #print("Guild ID:" + str(ctx.guild.id))
         f = glob.glob(os.path.join("sounds/", ctx.guild.id, soundname + "*"))
-        print(f)
+        #print(f)
 
         cfg_sounds = await self.config.guild(ctx.guild).sounds()
 
@@ -346,7 +346,7 @@ class SFX(commands.Cog):
 
     async def _play_sfx(self, vc, filepath, is_tts=False):
         player = await lavalink.connect(vc)
-        print("Filepath:" + str(filepath))
+        #print("Filepath:" + str(filepath))
         try:
             tracks = (await player.get_tracks(query=filepath))
             track = tracks[0]
