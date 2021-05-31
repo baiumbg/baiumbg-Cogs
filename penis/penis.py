@@ -7,7 +7,15 @@ class Penis(commands.Cog):
     """Penis related commands."""
 
     def __init__(self):
-        pass
+        default_config = {'king_dong': 134621854878007296}
+        self._config = Config.get_conf(self, identifier=134621854878007300)
+        self._config.register_global(**default_config)
+
+    @commands.command()
+    async def set_king_dong(self, ctx, *user: discord.Member):
+        """Sets the king dong
+        
+        Totally not cheating because you rolled a 0 dick length."""
 
     @commands.command()
     async def penis(self, ctx, *users: discord.Member):
@@ -27,7 +35,12 @@ class Penis(commands.Cog):
         random.setstate(state)
         dongs = sorted(dongs.items(), key=lambda x: x[1])
 
+        king_dong = await self._config.king_dong()
+
         for user, dong in dongs:
+            if user.id == king_dong:
+                dong = 40
+
             msg += "**{}'s size:**\n{}\n".format(user.display_name, dong)
 
         for page in pagify(msg):
