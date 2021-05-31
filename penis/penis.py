@@ -13,7 +13,7 @@ class Penis(commands.Cog):
 
     @commands.command()
     @checks.is_owner()
-    async def set_king_dong(self, ctx, *user: discord.Member):
+    async def set_king_dong(self, ctx, user: discord.Member):
         """Sets the king dong
         
         Totally not cheating because you rolled a 0 dick length."""
