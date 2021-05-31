@@ -30,6 +30,7 @@ class Penis(commands.Cog):
         dongs = {}
         msg = ""
         state = random.getstate()
+        king_dong = await self._config.king_dong()
 
         for user in users:
             random.seed(user.id)
@@ -43,8 +44,6 @@ class Penis(commands.Cog):
 
         random.setstate(state)
         dongs = sorted(dongs.items(), key=lambda x: x[1])
-
-        king_dong = await self._config.king_dong()
 
         for user, dong in dongs:
             msg += "**{}'s size:**\n{}\n".format(user.display_name, dong)
