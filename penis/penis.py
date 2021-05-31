@@ -33,7 +33,13 @@ class Penis(commands.Cog):
 
         for user in users:
             random.seed(user.id)
-            dongs[user] = "8{}D".format("=" * random.randint(0, 30))
+
+            if user.id == king_dong:
+                dong_size = 40
+            else:
+                dong_size = random.randint(0, 30)
+
+            dongs[user] = "8{}D".format("=" * dong_size)
 
         random.setstate(state)
         dongs = sorted(dongs.items(), key=lambda x: x[1])
@@ -41,9 +47,6 @@ class Penis(commands.Cog):
         king_dong = await self._config.king_dong()
 
         for user, dong in dongs:
-            if user.id == king_dong:
-                dong = 40
-
             msg += "**{}'s size:**\n{}\n".format(user.display_name, dong)
 
         for page in pagify(msg):
