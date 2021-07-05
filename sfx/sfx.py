@@ -167,7 +167,7 @@ class SFX(commands.Cog):
                 except:
                     await ctx.send(f'Sound `{soundname}` causes issues, please remove or reupload. Trying a different sound.')
                     #TODO: Probably need to remove the invalid tracks from the search, instead of just choosing randomly again
-                    numTries += 1
+                    numTries -= 1
             
             return
         if len(f) < 1:
