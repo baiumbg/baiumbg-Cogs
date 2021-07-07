@@ -432,9 +432,9 @@ class Duel(commands.Cog):
     async def _protect_user(self, ctx, user: discord.Member):
         """Adds a member to the protection list"""
         if await self.protect_common(user, True):
-            await ctx.send("%s has been successfully added to the protection list." % user.display_name)
+            await ctx.send("%s has been successfully added to the protection list." % user.display_name, allowed_mentions=discord.AllowedMentions.none())
         else:
-            await ctx.send("%s is already in the protection list." % user.display_name)
+            await ctx.send("%s is already in the protection list." % user.display_name, allowed_mentions=discord.AllowedMentions.none())
 
     @checks.admin_or_permissions(administrator=True)
     @_protect.command(name="role")
@@ -462,9 +462,9 @@ class Duel(commands.Cog):
     async def _unprotect_user(self, ctx, user: discord.Member):
         """Removes a member from the duel protection list"""
         if await self.protect_common(user, False):
-            await ctx.send("%s has been successfully removed from the protection list." % user.display_name)
+            await ctx.send("%s has been successfully removed from the protection list." % user.display_name, allowed_mentions=discord.AllowedMentions.none())
         else:
-            await ctx.send("%s is not in the protection list." % user.display_name)
+            await ctx.send("%s is not in the protection list." % user.display_name, allowed_mentions=discord.AllowedMentions.none())
 
     @checks.admin_or_permissions(administrator=True)
     @_unprotect.command(name="role")
@@ -625,7 +625,7 @@ class Duel(commands.Cog):
         elif await self.is_protected(author):
             await ctx.send("You can't duel anyone while you're on the protected users list.")
         elif await self.is_protected(user):
-            await ctx.send("%s is on the protected users list." % user.display_name)
+            await ctx.send("%s is on the protected users list." % user.display_name, allowed_mentions=discord.AllowedMentions.none())
         else:
             abort = False
 
