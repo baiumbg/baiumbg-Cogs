@@ -161,8 +161,9 @@ class SFX(commands.Cog):
                     result = (await player.load_tracks(query=filepath))
                     #If this line doesn't error out, get_tracks() has worked correctly
                     track = result.tracks[0]
+                    split_text = soundname.split('.')[0]
                     #This track will play, return it to sfx()
-                    await ctx.send(f'Playing `{soundname.split('.')[0]}`')
+                    await ctx.send(f'Playing `{split_text}`')
                     return soundname
                     
                 except:
