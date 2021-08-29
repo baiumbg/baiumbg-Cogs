@@ -158,9 +158,9 @@ class SFX(commands.Cog):
                     soundname = win_fix.split('/')[-1]
                     #print("Picked: " + soundname)
                     filepath = os.path.join(self.sound_base, str(ctx.guild.id), soundname)
-                    tracks = (await player.get_tracks(query=filepath))
+                    result = (await player.load_tracks(query=filepath))
                     #If this line doesn't error out, get_tracks() has worked correctly
-                    track = tracks[0]
+                    track = result.tracks[0]
                     #This track will play, return it to sfx()
                     await ctx.send(f'Playing `{soundname}`')
                     return soundname
@@ -349,8 +349,8 @@ class SFX(commands.Cog):
         player = await lavalink.connect(vc)
         #print("Filepath:" + str(filepath))
         try:
-            tracks = (await player.get_tracks(query=filepath))
-            track = tracks[0]
+            result = (await player.load_tracks(query=filepath))
+            track = result.tracks[0]
             
         except Exception as e:
             print("ERROR: Lavalink could not load: " + filepath + "; " + e)
