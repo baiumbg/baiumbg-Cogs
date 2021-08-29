@@ -162,7 +162,7 @@ class SFX(commands.Cog):
                     #If this line doesn't error out, get_tracks() has worked correctly
                     track = result.tracks[0]
                     #This track will play, return it to sfx()
-                    await ctx.send(f'Playing `{soundname}`')
+                    await ctx.send(f'Playing `{soundname.split('.')[0]}`')
                     return soundname
                     
                 except:
