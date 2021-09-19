@@ -13,9 +13,12 @@ class Bless(commands.Cog):
         self._config.register_user(**default_user_config)
         self._bot = bot
 
-        self._bot.loop.create_task(self.watch_auctions())
+        self.watch_task = self._bot.loop.create_task(self.watch_auctions())
 
     async def watch_auctions(self):
         while True:
             print("Watching...")
             await asyncio.sleep(10)
+
+    def cog_unload(self):
+        self.watch_task.cancel()
