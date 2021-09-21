@@ -42,7 +42,7 @@ class Bless(commands.Cog):
         print(html.text)
 
         soup = BeautifulSoup(html.text, features="html.parser")
-        item_rows = soup.find("tr", class_=re.compile(r"row-buyitem.*"))
+        item_rows = soup.find_all("tr", class_=re.compile(r"row-buyitem.*"))
         i = 0
         for item in item_rows:
             row_columns = item.find_all("td")
