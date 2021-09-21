@@ -131,7 +131,7 @@ class MarketItemFilter():
         }
 
     def from_dict(d):
-        f = MarketItemFilter(d.id)
+        f = MarketItemFilter(d["id"])
         f.name = d["name"]
         f.quality = MarketItemQuality(d["quality"])
         f.grade = d["grade"]
