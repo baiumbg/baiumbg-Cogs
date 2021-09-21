@@ -1,24 +1,193 @@
 from redbot.core import commands, checks, Config
 from redbot.core.utils.chat_formatting import pagify
-import discord
-import random
+from bs4 import BeautifulSoup
+from .market_item import MarketItem, MarketItemQuality
+from .market_item_filter import MarketItemFilter, MarketItemPriceType
 import asyncio
+import requests
+import re
+
+OPTION_MIN_GRADE_REGEX = re.compile(r"mingrade=(\d+)", re.IGNORECASE)
+OPTION_MIN_UPGRADE_REGEX = re.compile(r"minupgrade=(\d+)", re.IGNORECASE)
+OPTION_MIN_OPT_REGEX = re.compile(r"minopt=(\d+)", re.IGNORECASE)
+OPTION_MAX_PRICE_REGEX = re.compile(r"maxprice=((\d*[.])?\d+)(k+|bon)")
+OPTION_SELLER_REGEX = re.compile(r"seller=(.+)")
 
 class Bless(commands.Cog):
     """Bless MU Online utilities."""
 
     def __init__(self, bot):
-        default_user_config = {'watchlist': []}
-        self._config = Config.get_conf(self, identifier=134621854878007301)
-        self._config.register_user(**default_user_config)
-        self._bot = bot
-
-        self.watch_task = self._bot.loop.create_task(self.watch_auctions())
+        default_member_config = {'watchlist': [], 'filter_id': 0}
+        default_guild_config = {'notification_channel': 0}
+        self.config = Config.get_conf(self, identifier=134621854878007301)
+        self.config.register_member(**default_member_config)
+        self.config.register_guild(**default_guild_config)
+        self.bot = bot
+        self.last_seen = []
+        self.filters = {}
+        self.watch_task = self.bot.loop.create_task(self.watch_auctions())
 
     async def watch_auctions(self):
+        raw_filters = await self.config.all_members()
+        for guild, members in raw_filters.items():
+            for member, watchlist in members.items():
+                for i in range(0, len(watchlist)):
+                    watchlist[i] = MarketItemFilter.from_dict(watchlist[i])
+
+        self.filters = raw_filters
+
         while True:
-            print("Watching...")
+            try:
+                html = requests.get("https://mu.bless.gs/en/index.php?page=market&serv=server3")
+            except Exception as e:
+                await asyncio.sleep(10)
+                continue
+
+            soup = BeautifulSoup(html.text)
+            item_rows = soup.find("tr", class_=re.compile(r"row-buyitem.*"))
+            i = 0
+            for item in item_rows:
+                row_columns = item.find_all("td")
+                if row_columns[1].a["title"] == "":
+                    continue
+
+                market_item = MarketItem(row_columns)
+                if (market_item.serial, market_item.seller, market_item.price) in self.last_seen:
+                    break
+
+                for guild_id, members in self.filters.items():
+                    guild = await self.bot.get_guild(guild_id)
+                    for member_id, watchlist in members.items():
+                        for item_filter in watchlist:
+                            if item_filter.matches_item(market_item):
+                                channel_id = await self.config.guild(guild).notification_channel()
+                                channel = await guild.get_channel(channel_id)
+                                member = await guild.fetch_member(member_id)
+                                await channel.send(f'{member.mention} an item has been found for you:\n```Name: {market_item.name}\nSeller: {market_item.seller}\nPrice: {market_item.price} {"bons" if market_item.price_type == MarketItemPriceType.BONS else "Zen"}```')
+
+                self.last_seen.insert(i, (market_item.serial, market_item.seller, market_item.price))
+                i += 1
+                if len(self.last_seen) > 100:
+                    self.last_seen.pop()
+
             await asyncio.sleep(10)
+
+    @commands.guild_only()
+    @commands.group(name="bless")
+    async def bless(self, ctx):
+        """A bunch of stuff for the Bless MU Online server."""
+
+        pass
+
+    @bless.command(name="watch")
+    async def watch(self, ctx, item_name : str, *options):
+        filter_id = await self.config.member(ctx.author).filter_id()
+        item_filter = MarketItemFilter(filter_id)
+        item_filter.name = item_name
+
+        for option in options:
+            if option.lower() == "exc":
+                item_filter.quality = MarketItemQuality.EXCELLENT
+                continue
+
+            if option.lower() == "anc":
+                item_filter.quality = MarketItemQuality.ANCIENT
+                continue
+
+            if option.lower() == "normal":
+                item_filter.quality = MarketItemQuality.NORMAL
+                continue
+
+            if option.lower() == "luck":
+                item_filter.luck = True
+                continue
+
+            if option.lower() == "zen" or option.lower() == "manaok":
+                item_filter.zen_or_mana = True
+                continue
+
+            if option.lower() == "ref" or option.lower() == "speed":
+                item_filter.ref_or_speed = True
+                continue
+
+            if option.lower() == "mana" or option.lower() == "dmg/20":
+                item_filter.mana_or_dmg_per_lvl = True
+                continue
+
+            if option.lower() == "rate" or option.lower() == "hpok":
+                item_filter.def_rate_or_hp = True
+                continue
+
+            if option.lower() == "dd" or option.lower() == "dmg":
+                item_filter.dd_or_dmg = True
+                continue
+
+            if option.lower() == "hp" or option.lower() == "excrate":
+                item_filter.hp_or_exc_rate = True
+                continue
+
+            min_grade_match = OPTION_MIN_GRADE_REGEX.match(option)
+            if min_grade_match:
+                item_filter.grade = int(min_grade_match.group(1))
+                continue
+
+            min_upgrade_match = OPTION_MIN_UPGRADE_REGEX.match(option)
+            if min_upgrade_match:
+                item_filter.upgrade_level = int(min_upgrade_match.group(1))
+                continue
+
+            min_opt_match = OPTION_MIN_OPT_REGEX.match(option)
+            if min_opt_match:
+                item_filter.life = int(min_upgrade_match.group(1))
+                continue
+
+            max_price_match = OPTION_MAX_PRICE_REGEX.match(option)
+            if max_price_match:
+                if max_price_match.group(3).lower() == "bon":
+                    item_filter.price_type = MarketItemPriceType.BONS
+                    item_filter.price = float(max_price_match.group(1)) * (1000 ** (max_price_match.group(3).count("k") - 2))
+                else:
+                    item_filter.price_type = MarketItemPriceType.ZEN
+                    item_filter.price = int(max_price_match.group(1))
+
+                continue
+
+            await ctx.channel.send(f"Unknown option or format: {option}")
+            return
+
+        self.filters[ctx.guild.id][ctx.author.id].append(item_filter)
+        await self.config.member(ctx.author).watchlist.set([f.to_dict() for f in self.filters[ctx.guild.id][ctx.author.id]])
+
+        filter_id += 1
+        await self.config.member(ctx.author).filter_id.set(filter_id)
+
+        await ctx.channel.send(f"{ctx.author.mention} Added filter `{filter_id}`.")
+        
+
+    @bless.command
+    async def filters(self, ctx):
+        if not self.filters[ctx.guild.id][ctx.author.id]:
+            await ctx.channel.send(f"{ctx.author.mention} You have not registered any item filters.")
+            return
+        
+        for page in pagify("\n".join(self.filters[ctx.guild.id][ctx.author.id]), page_length=1993):
+            await ctx.channel.send(f"```py\n{page}```")
+
+    @bless.command
+    async def unwatch(self, ctx, id : int):
+        if not self.filters[ctx.guild.id][ctx.author.id]:
+            await ctx.channel.send(f"{ctx.author.mention} Filter `{id}` not found.")
+            return
+
+        for i in range(0, len(self.filters[ctx.guild.id][ctx.author.id]))
+            if self.filters[ctx.guild.id][ctx.author.id][i].id == id:
+                del self.filters[ctx.guild.id][ctx.author.id][i]
+                await self.config.member(ctx.author).watchlist.set([f.to_dict() for f in self.filters[ctx.guild.id][ctx.author.id]])
+
+                await ctx.channel.send(f"{ctx.author.mention} Filter `{id}` removed.")
+                return
+
+        await ctx.channel.send(f"{ctx.author.mention} Filter `{id}` not found.")
 
     def cog_unload(self):
         self.watch_task.cancel()
