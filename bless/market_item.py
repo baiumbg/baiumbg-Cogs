@@ -99,4 +99,4 @@ class MarketItem:
         self.serial = serial_match.group(1) if serial_match else ""
 
     def __str__(self):
-        return f"[{', '.join([str(a) for a in self.__dict__])}]"
+        return str(self.__dict__)
