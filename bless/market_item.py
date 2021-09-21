@@ -86,7 +86,7 @@ class MarketItem:
 
         price_bons_match = MARKET_PRICE_BONS_REGEX.match(row_columns[3].text)
         if price_bons_match:
-            self.price = price_bons_match.group(1)
+            self.price = float(price_bons_match.group(1))
             self.price_type = MarketItemPriceType.BONS
         else:
             price_zen_match = MARKET_PRICE_ZEN_REGEX.match(row_columns[3].text)
