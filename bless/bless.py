@@ -1,5 +1,6 @@
 from redbot.core import commands, checks, Config
 from redbot.core.utils.chat_formatting import pagify
+import discord
 from bs4 import BeautifulSoup
 from .market_item import MarketItem, MarketItemQuality
 from .market_item_filter import MarketItemFilter, MarketItemPriceType
@@ -79,7 +80,7 @@ class Bless(commands.Cog):
 
         pass
 
-    @bless.command(name="watch")
+    @bless.command()
     async def watch(self, ctx, item_name : str, *options):
         filter_id = await self.config.member(ctx.author).filter_id()
         item_filter = MarketItemFilter(filter_id)
@@ -164,7 +165,7 @@ class Bless(commands.Cog):
         await ctx.channel.send(f"{ctx.author.mention} Added filter `{filter_id}`.")
         
 
-    @bless.command
+    @bless.command()
     async def filters(self, ctx):
         if not self.filters[ctx.guild.id][ctx.author.id]:
             await ctx.channel.send(f"{ctx.author.mention} You have not registered any item filters.")
@@ -173,7 +174,7 @@ class Bless(commands.Cog):
         for page in pagify("\n".join(self.filters[ctx.guild.id][ctx.author.id]), page_length=1993):
             await ctx.channel.send(f"```py\n{page}```")
 
-    @bless.command
+    @bless.command()
     async def unwatch(self, ctx, id : int):
         if not self.filters[ctx.guild.id][ctx.author.id]:
             await ctx.channel.send(f"{ctx.author.mention} Filter `{id}` not found.")
@@ -188,6 +189,11 @@ class Bless(commands.Cog):
                 return
 
         await ctx.channel.send(f"{ctx.author.mention} Filter `{id}` not found.")
+
+    @bless.command()
+    async def setchannel(self, ctx, channel : discord.TextChannel):
+        await self.config.guild(ctx.guild).notification_channel.set(channel.id)
+
 
     def cog_unload(self):
         self.watch_task.cancel()
