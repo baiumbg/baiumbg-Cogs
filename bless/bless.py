@@ -180,7 +180,7 @@ class Bless(commands.Cog):
             await ctx.channel.send(f"{ctx.author.mention} Filter `{id}` not found.")
             return
 
-        for i in range(0, len(self.filters[ctx.guild.id][ctx.author.id]))
+        for i in range(0, len(self.filters[ctx.guild.id][ctx.author.id])):
             if self.filters[ctx.guild.id][ctx.author.id][i].id == id:
                 del self.filters[ctx.guild.id][ctx.author.id][i]
                 await self.config.member(ctx.author).watchlist.set([f.to_dict() for f in self.filters[ctx.guild.id][ctx.author.id]])
