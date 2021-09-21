@@ -75,10 +75,10 @@ class Bless(commands.Cog):
         print("[Bless] Starting to watch market.")
         raw_filters = await self.config.all_members()
         print(f"raw_filters: {raw_filters}")
-        # for _, members in raw_filters.items():
-        #     for member, member_config in members.items():
-        #         member_watchlist = [MarketItemFilter.from_dict(f) for f in member_config["watchlist"]]
-        #         members[member] = member_watchlist
+        for _, members in raw_filters.items():
+            for member, member_config in members.items():
+                member_watchlist = [MarketItemFilter.from_dict(f) for f in member_config["watchlist"]]
+                members[member] = member_watchlist
 
         # self.filters = raw_filters
 
