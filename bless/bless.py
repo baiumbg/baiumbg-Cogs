@@ -193,10 +193,10 @@ class Bless(commands.Cog):
             if max_price_match:
                 if max_price_match.group(3).lower() == "bon":
                     item_filter.price_type = MarketItemPriceType.BONS
-                    item_filter.price = float(max_price_match.group(1)) * (1000 ** (max_price_match.group(3).count("k") - 2))
+                    item_filter.price = int(max_price_match.group(1))
                 else:
                     item_filter.price_type = MarketItemPriceType.ZEN
-                    item_filter.price = int(max_price_match.group(1))
+                    item_filter.price = float(max_price_match.group(1)) * (1000 ** (max_price_match.group(3).count("k") - 2))
 
                 continue
 
