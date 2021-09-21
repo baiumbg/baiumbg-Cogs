@@ -220,7 +220,7 @@ class Bless(commands.Cog):
     @bless.command()
     async def channel(self, ctx):
         notification_channel = await self.config.guild(ctx.guild).notification_channel()
-        await ctx.channel.send(f"{ctx.author.mention} Notification channel set to {notification_channel}.")
+        await ctx.channel.send(f"{ctx.author.mention} Notification channel set to {await ctx.guild.get_channel(notification_channel)}.")
 
     def cog_unload(self):
         self.watch_task.cancel()
