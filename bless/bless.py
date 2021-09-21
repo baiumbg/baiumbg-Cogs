@@ -47,6 +47,8 @@ class Bless(commands.Cog):
                 await asyncio.sleep(10)
                 continue
 
+            print(html.text)
+
             soup = BeautifulSoup(html.text, features="html.parser")
             item_rows = soup.find("tr", class_=re.compile(r"row-buyitem.*"))
             i = 0
