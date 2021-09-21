@@ -114,7 +114,7 @@ class MarketItemFilter():
         return {
             "id": self.id,
             "name": self.name, 
-            "quality": self.quality,
+            "quality": self.quality.value,
             "grade": self.grade,
             "upgrade_level": self.upgrade_level,
             "life": self.life,
@@ -126,14 +126,14 @@ class MarketItemFilter():
             "dd_or_dmg": self.dd_or_dmg,
             "hp_or_exc_rate": self.hp_or_exc_rate,
             "price": self.price,
-            "price_type": self.price_type,
+            "price_type": self.price_type.value,
             "seller": self.seller
         }
 
     def from_dict(d):
         f = MarketItemFilter(d.id)
         f.name = d["name"]
-        f.quality = d["quality"]
+        f.quality = MarketItemQuality(d["quality"])
         f.grade = d["grade"]
         f.upgrade_level = d["upgrade_level"]
         f.life = d["life"]
@@ -145,7 +145,7 @@ class MarketItemFilter():
         f.dd_or_dmg = d["dd_or_dmg"]
         f.hp_or_exc_rate = d["hp_or_exc_rate"]
         f.price = d["price"]
-        f.price_type = d["price_type"]
+        f.price_type = MarketItemPriceType(d["price_type"])
         f.seller = d["seller"]
 
         return f
