@@ -7,6 +7,7 @@ from .market_item import MarketItem, MarketItemQuality
 from .market_item_filter import MarketItemFilter, MarketItemPriceType
 import requests
 import re
+import traceback
 
 OPTION_MIN_GRADE_REGEX = re.compile(r"mingrade=(\d+)", re.IGNORECASE)
 OPTION_MIN_UPGRADE_REGEX = re.compile(r"minupgrade=(\d+)", re.IGNORECASE)
@@ -80,6 +81,10 @@ class Bless(commands.Cog):
                 members[member] = member_watchlist
 
         self.filters = raw_filters
+
+    @watch_auctions.error
+    async def watch_error(self, ex):
+        traceback.print_exception(type(ex), ex, ex.__traceback__)
 
     @commands.guild_only()
     @commands.group(name="bless")
