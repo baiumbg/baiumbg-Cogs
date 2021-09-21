@@ -18,7 +18,7 @@ class MarketItemFilter():
         self.dd_or_dmg = False
         self.hp_or_exc_rate = False
         self.price = math.inf
-        self.price_type = MarketItemPriceType.BONS
+        self.price_type = MarketItemPriceType.UNKNOWN
         self.seller = ""
 
     def __str__(self):
@@ -99,10 +99,10 @@ class MarketItemFilter():
         if self.hp_or_exc_rate and not market_item.hp_or_exc_rate:
             return False
 
-        if self.price_type != market_item.price_type:
+        if self.price_type != MarketItemPriceType.UNKNOWN and self.price_type != market_item.price_type:
             return False
 
-        if self.price < market_item.price:
+        if self.price_type == market_item.price_type and self.price < market_item.price:
             return False
 
         if self.seller != "" and self.seller.lower() != market_item.seller.lower():
