@@ -9,6 +9,7 @@ MARKET_ITEM_GRADE_REGEX = re.compile(r"Grade: (\d+)")
 MARKET_ITEM_UPGRADE_LEVEL_REGEX = re.compile(r"\+(\d+)")
 MARKET_ITEM_ARMOR_LIFE_REGEX = re.compile(r"Additional defense \+(\d+)")
 MARKET_ITEM_WEAPON_LIFE_REGEX = re.compile(r"Additional Dmg \+(\d+)")
+MARKET_ITEM_SERIAL_REGEX = re.compile(r"Serial: (\d+)")
 OPTION_ZEN_TEXT = "Increase Zen from monsters +40%"
 OPTION_MANA_ON_KILL_TEXT = "Increase Mana after monster +Mana/8"
 OPTION_REF_TEXT = "Reflect Damage +5%"
@@ -93,3 +94,4 @@ class MarketItem:
             self.price_type = MarketItemPriceType.ZEN
 
         self.seller = row_columns[2].text
+        self.serial = MARKET_ITEM_SERIAL_REGEX.match(tooltip_soup.find_all("div")[-1])
