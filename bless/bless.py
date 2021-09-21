@@ -43,7 +43,7 @@ class Bless(commands.Cog):
         for item in item_rows:
             row_columns = item.find_all("td")
             try:
-                if row_columns[1].a["title"] == "":
+                if not row_columns[1].a["title"]:
                     continue
             except Exception as e:
                 print(row_columns[1])
