@@ -23,7 +23,7 @@ class MarketItemFilter():
 
     def __str__(self):
         s = f"ID: {self.id}"
-        if self.name != "": s += f"\nItem name:{self.name}"
+        if self.name != "": s += f"\nItem name: {self.name}"
         if self.quality != MarketItemQuality.UNKNOWN: s += f"\nItem quality: {self.quality.name.lower()}"
         if self.grade > 0: s += f"\nMin grade: {self.grade}"
         if self.upgrade_level > 0: s += f"\nMin upgrade level: {self.upgrade_level}"
