@@ -31,9 +31,9 @@ class Bless(commands.Cog):
     async def watch_auctions(self):
         raw_filters = await self.config.all_members()
         for guild, members in raw_filters.items():
-            for member, watchlist in members.items():
-                for i in range(0, len(watchlist)):
-                    watchlist[i] = MarketItemFilter.from_dict(watchlist[i])
+            for member, member_config in members.items():
+                member_watchlist = [MarketItemFilter.from_dict(f) for f in member_config["watchlist"]]
+                members[member] = member_watchlist
 
         self.filters = raw_filters
 
@@ -41,6 +41,7 @@ class Bless(commands.Cog):
             try:
                 html = requests.get("https://mu.bless.gs/en/index.php?page=market&serv=server3")
             except Exception as e:
+                print(e)
                 await asyncio.sleep(10)
                 continue
 
