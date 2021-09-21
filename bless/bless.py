@@ -187,7 +187,7 @@ class Bless(commands.Cog):
             await ctx.channel.send(f"{ctx.author.mention} You have not registered any item filters.")
             return
         
-        for page in pagify("\n".join(self.filters[ctx.guild.id][ctx.author.id]), page_length=1993):
+        for page in pagify("\n".join([str(f) for f in self.filters[ctx.guild.id][ctx.author.id]]), page_length=1993):
             await ctx.channel.send(f"```py\n{page}```")
 
     @bless.command()
