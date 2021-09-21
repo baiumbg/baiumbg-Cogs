@@ -42,7 +42,11 @@ class Bless(commands.Cog):
         i = 0
         for item in item_rows:
             row_columns = item.find_all("td")
-            if row_columns[1].a["title"] == "":
+            try:
+                if row_columns[1].a["title"] == "":
+                    continue
+            except Exception as e:
+                print(row_columns[1])
                 continue
 
             market_item = MarketItem(row_columns)
