@@ -1,7 +1,7 @@
 from redbot.core import commands, checks, Config
 from redbot.core.utils.chat_formatting import pagify
 import discord
-import discord.ext
+from discord.ext import tasks
 from bs4 import BeautifulSoup
 from .market_item import MarketItem, MarketItemQuality
 from .market_item_filter import MarketItemFilter, MarketItemPriceType
@@ -29,7 +29,7 @@ class Bless(commands.Cog):
         self.filters = {}
         self.watch_auctions.start()
 
-    @discord.ext.tasks.loop(seconds=10.0)
+    @tasks.loop(seconds=10.0)
     async def watch_auctions(self):
         try:
             html = requests.get("https://mu.bless.gs/en/index.php?page=market&serv=server3")
