@@ -28,7 +28,7 @@ class Bless(commands.Cog):
         self.filters = {}
         self.watch_auctions.start()
 
-    @discord.tasks.loop(seconds=10.0)
+    @discord.ext.tasks.loop(seconds=10.0)
     async def watch_auctions(self):
         try:
             html = requests.get("https://mu.bless.gs/en/index.php?page=market&serv=server3")
