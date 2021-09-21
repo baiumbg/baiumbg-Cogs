@@ -72,15 +72,16 @@ class Bless(commands.Cog):
     async def load_filters(self):
         await self.bot.wait_until_ready()
 
-        print("[Bless] Starting to watch market.")
-        raw_filters = await self.config.all_members()
-        print(f"raw_filters: {raw_filters}")
-        for _, members in raw_filters.items():
-            for member, member_config in members.items():
-                member_watchlist = [MarketItemFilter.from_dict(f) for f in member_config["watchlist"]]
-                members[member] = member_watchlist
+        print("before loop")
+        # print("[Bless] Starting to watch market.")
+        # raw_filters = await self.config.all_members()
+        # print(f"raw_filters: {raw_filters}")
+        # for _, members in raw_filters.items():
+        #     for member, member_config in members.items():
+        #         member_watchlist = [MarketItemFilter.from_dict(f) for f in member_config["watchlist"]]
+        #         members[member] = member_watchlist
 
-        self.filters = raw_filters
+        # self.filters = raw_filters
 
     @watch_auctions.after_loop
     async def asdf(self):
