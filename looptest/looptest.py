@@ -15,3 +15,6 @@ class LoopTest(commands.Cog):
     async def looptest_before(self):
         await self.bot.wait_until_ready()
         print("before")
+
+    def cog_unload(self):
+        self.looptest.cancel()
