@@ -39,14 +39,11 @@ class Bless(commands.Cog):
 
         soup = BeautifulSoup(html.text, features="html.parser")
         item_rows = soup.find_all("tr", class_=re.compile(r"row-buyitem.*"))
+        print(f"Retrieved market. # of items: {len(item_rows)}")
         i = 0
         for item in item_rows:
             row_columns = item.find_all("td")
-            try:
-                if "title" not in row_columns[1].a.attrs.keys():
-                    continue
-            except Exception as e:
-                print(row_columns[1])
+            if "title" not in row_columns[1].a.attrs.keys():
                 continue
 
             market_item = MarketItem(row_columns)
