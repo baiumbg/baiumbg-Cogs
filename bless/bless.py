@@ -40,6 +40,7 @@ class Bless(commands.Cog):
         self.filters = raw_filters
 
         while True:
+            print("entering")
             try:
                 html = requests.get("https://mu.bless.gs/en/index.php?page=market&serv=server3")
             except Exception as e:
