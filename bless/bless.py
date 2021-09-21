@@ -161,6 +161,12 @@ class Bless(commands.Cog):
             await ctx.channel.send(f"Unknown option or format: {option}")
             return
 
+        if ctx.guild.id not in self.filters.keys():
+            self.filters[ctx.guild.id] = {}
+
+        if ctx.author.id not in self.filters[ctx.guild.id].keys():
+            self.filters[ctx.guild.id][ctx.author.id] = []
+
         self.filters[ctx.guild.id][ctx.author.id].append(item_filter)
         await self.config.member(ctx.author).watchlist.set([f.to_dict() for f in self.filters[ctx.guild.id][ctx.author.id]])
 
@@ -209,6 +215,12 @@ class Bless(commands.Cog):
     async def setchannel(self, ctx, channel : discord.TextChannel):
         await self.config.guild(ctx.guild).notification_channel.set(channel.id)
 
+        await ctx.channel.send(f"{ctx.author.mention} Notification channel set to {channel}.")
+
+    @bless.command()
+    async def channel(self, ctx):
+        notification_channel = await self.config.guild(ctx.guild).notification_channel()
+        await ctx.channel.send(f"{ctx.author.mention} Notification channel set to {notification_channel}.")
 
     def cog_unload(self):
         self.watch_task.cancel()
