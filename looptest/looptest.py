@@ -1,7 +1,7 @@
 from redbot.core import commands, checks, Config
 from discord.ext import tasks
 
-class Bless(commands.Cog):
+class LoopTest(commands.Cog):
     """Bless MU Online utilities."""
     def __init__(self, bot):
         self.bot = bot
