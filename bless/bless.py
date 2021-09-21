@@ -77,6 +77,8 @@ class Bless(commands.Cog):
         print(f"raw_filters: {raw_filters}")
         for _, members in raw_filters.items():
             for member, member_config in members.items():
+                print(member)
+                print(member_config)
                 member_watchlist = [MarketItemFilter.from_dict(f) for f in member_config["watchlist"]]
                 members[member] = member_watchlist
 
