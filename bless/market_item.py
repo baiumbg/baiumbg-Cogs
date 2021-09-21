@@ -49,6 +49,8 @@ class MarketItem:
             self.quality = MarketItemQuality.ANCIENT
         else:
             self.quality = MarketItemQuality.NORMAL
+
+        print(tooltip_soup.text)
         
         grade_match = MARKET_ITEM_GRADE_REGEX.match(tooltip_soup.text)
         self.grade = int(grade_match.group(1)) if grade_match else 0
