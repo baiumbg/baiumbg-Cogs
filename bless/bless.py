@@ -50,7 +50,7 @@ class Bless(commands.Cog):
                 break
 
             for guild_id, members in self.filters.items():
-                guild = await self.bot.get_guild(guild_id)
+                guild = self.bot.get_guild(guild_id)
                 for member_id, watchlist in members.items():
                     for item_filter in watchlist:
                         if item_filter.matches_item(market_item):
