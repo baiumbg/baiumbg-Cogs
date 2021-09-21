@@ -58,7 +58,7 @@ class Bless(commands.Cog):
                             channel_id = await self.config.guild(guild).notification_channel()
                             channel = guild.get_channel(channel_id)
                             member = await guild.fetch_member(member_id)
-                            await channel.send(f'{member.mention} an item has been found for you:\n```Name: {market_item.name}\nSeller: {market_item.seller}\nPrice: {market_item.price} {"bons" if market_item.price_type == MarketItemPriceType.BONS else "Zen"}```')
+                            await channel.send(f'{member.mention} an item has been found for you:\n```Name: {market_item.name}\nSeller: {market_item.seller}\nPrice: {market_item.price}{"bons" if market_item.price_type == MarketItemPriceType.BONS else "kk Zen"}```')
 
             self.last_seen.insert(i, (market_item.serial, market_item.seller, market_item.price))
             i += 1

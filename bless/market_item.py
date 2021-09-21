@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 from enum import Enum
 import re
 
-MARKET_PRICE_ZEN_REGEX = re.compile(r"((\d*[.])?\d+) (k+) Zen.")
+MARKET_PRICE_ZEN_REGEX = re.compile(r"((\d*[.])?\d+) (k* )?Zen.")
 MARKET_PRICE_BONS_REGEX = re.compile(r"(\d+) Bon.")
 MARKET_ITEM_NAME_REGEX = re.compile(r"overinfo-name.*")
 MARKET_ITEM_GRADE_REGEX = re.compile(r"Grade: (\d+)")
@@ -90,7 +90,8 @@ class MarketItem:
             self.price_type = MarketItemPriceType.BONS
         else:
             price_zen_match = MARKET_PRICE_ZEN_REGEX.match(row_columns[3].text)
-            self.price = float(price_zen_match.group(1)) * (1000 ** (price_zen_match.group(3).count("k") - 2))
+            power = price_zen_match.group(3).count("k") - 2 if price_zen_match.group(3) else -2
+            self.price = float(price_zen_match.group(1)) * (1000 ** power)
             self.price_type = MarketItemPriceType.ZEN
 
         self.seller = row_columns[2].text
