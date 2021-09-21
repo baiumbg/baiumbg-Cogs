@@ -94,4 +94,5 @@ class MarketItem:
             self.price_type = MarketItemPriceType.ZEN
 
         self.seller = row_columns[2].text
-        self.serial = MARKET_ITEM_SERIAL_REGEX.match(tooltip_soup.find_all("div")[-1].text)
+        serial_match = MARKET_ITEM_SERIAL_REGEX.match(tooltip_soup.find_all("div")[-1].text)
+        self.serial = serial_match.group(1) if serial_match else ""
