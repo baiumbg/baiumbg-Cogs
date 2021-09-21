@@ -31,15 +31,11 @@ class Bless(commands.Cog):
 
     @tasks.loop(seconds=10.0, minutes=0.0, hours=0.0, count=None)
     async def watch_auctions(self):
-        print("called")
         try:
             html = requests.get("https://mu.bless.gs/en/index.php?page=market&serv=server3")
         except Exception as e:
             print(e)
             return
-
-        print("fetched")
-        print(html.text)
 
         soup = BeautifulSoup(html.text, features="html.parser")
         item_rows = soup.find_all("tr", class_=re.compile(r"row-buyitem.*"))
@@ -74,21 +70,12 @@ class Bless(commands.Cog):
 
         print("[Bless] Starting to watch market.")
         raw_filters = await self.config.all_members()
-        print(f"raw_filters: {raw_filters}")
         for _, members in raw_filters.items():
             for member, member_config in members.items():
                 member_watchlist = [MarketItemFilter.from_dict(f) for f in member_config["watchlist"]]
                 members[member] = member_watchlist
 
         self.filters = raw_filters
-
-    @watch_auctions.after_loop
-    async def asdf(self):
-        print("after loop")
-
-    @watch_auctions.error
-    async def watch_error(self, ex):
-        traceback.print_exception(type(ex), ex, ex.__traceback__)
 
     @commands.guild_only()
     @commands.group(name="bless")
