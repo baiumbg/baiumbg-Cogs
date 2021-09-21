@@ -167,7 +167,7 @@ class Bless(commands.Cog):
 
     @bless.command()
     async def filters(self, ctx):
-        if not self.filters[ctx.guild.id][ctx.author.id]:
+        if not self.filters or not self.filters[ctx.guild.id] or not self.filters[ctx.guild.id][ctx.author.id]:
             await ctx.channel.send(f"{ctx.author.mention} You have not registered any item filters.")
             return
         
@@ -176,7 +176,7 @@ class Bless(commands.Cog):
 
     @bless.command()
     async def unwatch(self, ctx, id : int):
-        if not self.filters[ctx.guild.id][ctx.author.id]:
+        if not self.filters or not self.filters[ctx.guild.id] or not self.filters[ctx.guild.id][ctx.author.id]:
             await ctx.channel.send(f"{ctx.author.mention} Filter `{id}` not found.")
             return
 
