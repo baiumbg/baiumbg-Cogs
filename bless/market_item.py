@@ -38,7 +38,7 @@ class MarketItemPriceType(Enum):
 class MarketItem:
     def __init__(self, row_columns):
         #row_columns = item_soup.find_all("td") # [0] - category, [1] - item, [2] - seller, [3] - price
-        tooltip_soup = row_columns[1].a["title"]
+        tooltip_soup = BeautifulSoup(row_columns[1].a["title"], features="html.parser")
 
         name_div = tooltip_soup.find("div", class_=MARKET_ITEM_NAME_REGEX)
         self.name = name_div.text
