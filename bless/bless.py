@@ -62,7 +62,7 @@ class Bless(commands.Cog):
                         for item_filter in watchlist:
                             if item_filter.matches_item(market_item):
                                 channel_id = await self.config.guild(guild).notification_channel()
-                                channel = await guild.get_channel(channel_id)
+                                channel = guild.get_channel(channel_id)
                                 member = await guild.fetch_member(member_id)
                                 await channel.send(f'{member.mention} an item has been found for you:\n```Name: {market_item.name}\nSeller: {market_item.seller}\nPrice: {market_item.price} {"bons" if market_item.price_type == MarketItemPriceType.BONS else "Zen"}```')
 
@@ -220,7 +220,7 @@ class Bless(commands.Cog):
     @bless.command()
     async def channel(self, ctx):
         notification_channel = await self.config.guild(ctx.guild).notification_channel()
-        await ctx.channel.send(f"{ctx.author.mention} Notification channel set to {await ctx.guild.get_channel(notification_channel)}.")
+        await ctx.channel.send(f"{ctx.author.mention} Notification channel set to {ctx.guild.get_channel(notification_channel)}.")
 
     def cog_unload(self):
         self.watch_task.cancel()
