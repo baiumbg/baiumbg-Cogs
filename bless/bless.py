@@ -1,6 +1,7 @@
 from redbot.core import commands, checks, Config
 from redbot.core.utils.chat_formatting import pagify
 import discord
+import discord.ext
 from bs4 import BeautifulSoup
 from .market_item import MarketItem, MarketItemQuality
 from .market_item_filter import MarketItemFilter, MarketItemPriceType
