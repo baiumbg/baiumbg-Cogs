@@ -82,6 +82,11 @@ class Bless(commands.Cog):
 
     @bless.command()
     async def watch(self, ctx, item_name : str, *options):
+        channel = await self.config.guild(ctx.guild).notification_channel()
+        if channel == 0:
+            await ctx.channel.send(f"This server's admin has not set a channel for notifications. See `{ctx.prefix}help bless setchannel`.")
+            return
+
         filter_id = await self.config.member(ctx.author).filter_id()
         item_filter = MarketItemFilter(filter_id)
         item_filter.name = item_name
@@ -167,6 +172,11 @@ class Bless(commands.Cog):
 
     @bless.command()
     async def filters(self, ctx):
+        channel = await self.config.guild(ctx.guild).notification_channel()
+        if channel == 0:
+            await ctx.channel.send(f"This server's admin has not set a channel for notifications. See `{ctx.prefix}help bless setchannel`.")
+            return
+
         if not self.filters or not self.filters[ctx.guild.id] or not self.filters[ctx.guild.id][ctx.author.id]:
             await ctx.channel.send(f"{ctx.author.mention} You have not registered any item filters.")
             return
@@ -176,6 +186,11 @@ class Bless(commands.Cog):
 
     @bless.command()
     async def unwatch(self, ctx, id : int):
+        channel = await self.config.guild(ctx.guild).notification_channel()
+        if channel == 0:
+            await ctx.channel.send(f"This server's admin has not set a channel for notifications. See `{ctx.prefix}help bless setchannel`.")
+            return
+
         if not self.filters or not self.filters[ctx.guild.id] or not self.filters[ctx.guild.id][ctx.author.id]:
             await ctx.channel.send(f"{ctx.author.mention} Filter `{id}` not found.")
             return
