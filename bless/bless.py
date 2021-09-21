@@ -215,12 +215,12 @@ class Bless(commands.Cog):
     async def setchannel(self, ctx, channel : discord.TextChannel):
         await self.config.guild(ctx.guild).notification_channel.set(channel.id)
 
-        await ctx.channel.send(f"{ctx.author.mention} Notification channel set to {channel}.")
+        await ctx.channel.send(f"{ctx.author.mention} Notification channel set to {channel.mention}.")
 
     @bless.command()
     async def channel(self, ctx):
         notification_channel = await self.config.guild(ctx.guild).notification_channel()
-        await ctx.channel.send(f"{ctx.author.mention} Notification channel set to {ctx.guild.get_channel(notification_channel)}.")
+        await ctx.channel.send(f"{ctx.author.mention} Notification channel set to {ctx.guild.get_channel(notification_channel).mention}.")
 
     def cog_unload(self):
         self.watch_task.cancel()
