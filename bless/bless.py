@@ -87,6 +87,41 @@ class Bless(commands.Cog):
 
     @bless.command()
     async def watch(self, ctx, item_name : str, *options):
+        """Registers a filter to match new market items against. Pings the filter owner if an item matches the filter.
+
+        Item name must be in quotations if it has multiple words.
+        Use "" if you don't care about item name.
+
+        List of options:
+        luck - self-explanatory
+        normal - normal quality
+        exc - excellent quality
+        anc - ancient quality
+        minopt=4 - minimum luck options
+        mingrade=30 - minimum item grade
+        minupgrade=11 - minimum item upgrade level
+        maxprice=10bon, maxprice=10kkzen - maximum item price, bon format - {number}bon, zen format - {number}{kk or kkk}zen
+        seller=Kopile - seller name
+        dd - damage decrease
+        ref - reflect
+        zen - self-explanatory
+        manaok - mana on kill (weapons)
+        speed - self-explanatory
+        mana - %mana
+        dmg/20 - self-explanatory
+        rate - def rate
+        hpok - hp on kill (weapons)
+        dmg - 2% dmg
+        hp - self-explanatory
+        excrate - excellent damage rate
+
+        Examples:
+        [p]bless watch "Thunder Hawk" exc minopt=4 luck dd ref
+        [p]bless watch "" anc luck mingrade=30
+        [p]bless watch Spyro anc minupgrade=11
+        [p]bless watch Atlantis exc dmg excrate minupgrade=13
+        [p]bless watch "Ring of Magic" hp ref dd
+        """
         channel = await self.config.guild(ctx.guild).notification_channel()
         if channel == 0:
             await ctx.channel.send(f"This server's admin has not set a channel for notifications. See `{ctx.prefix}help bless setchannel`.")
@@ -149,7 +184,7 @@ class Bless(commands.Cog):
 
             min_opt_match = OPTION_MIN_OPT_REGEX.match(option)
             if min_opt_match:
-                item_filter.life = int(min_upgrade_match.group(1))
+                item_filter.life = int(min_opt_match.group(1))
                 continue
 
             max_price_match = OPTION_MAX_PRICE_REGEX.match(option)
