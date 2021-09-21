@@ -32,41 +32,41 @@ class Bless(commands.Cog):
     @tasks.loop(seconds=10.0, minutes=0.0, hours=0.0, count=None)
     async def watch_auctions(self):
         print("called")
-        try:
-            html = requests.get("https://mu.bless.gs/en/index.php?page=market&serv=server3")
-        except Exception as e:
-            print(e)
-            return
+        # try:
+        #     html = requests.get("https://mu.bless.gs/en/index.php?page=market&serv=server3")
+        # except Exception as e:
+        #     print(e)
+        #     return
 
-        print("fetched")
-        print(html.text)
+        # print("fetched")
+        # print(html.text)
 
-        soup = BeautifulSoup(html.text, features="html.parser")
-        item_rows = soup.find("tr", class_=re.compile(r"row-buyitem.*"))
-        i = 0
-        for item in item_rows:
-            row_columns = item.find_all("td")
-            if row_columns[1].a["title"] == "":
-                continue
+        # soup = BeautifulSoup(html.text, features="html.parser")
+        # item_rows = soup.find("tr", class_=re.compile(r"row-buyitem.*"))
+        # i = 0
+        # for item in item_rows:
+        #     row_columns = item.find_all("td")
+        #     if row_columns[1].a["title"] == "":
+        #         continue
 
-            market_item = MarketItem(row_columns)
-            if (market_item.serial, market_item.seller, market_item.price) in self.last_seen:
-                break
+        #     market_item = MarketItem(row_columns)
+        #     if (market_item.serial, market_item.seller, market_item.price) in self.last_seen:
+        #         break
 
-            for guild_id, members in self.filters.items():
-                guild = await self.bot.get_guild(guild_id)
-                for member_id, watchlist in members.items():
-                    for item_filter in watchlist:
-                        if item_filter.matches_item(market_item):
-                            channel_id = await self.config.guild(guild).notification_channel()
-                            channel = guild.get_channel(channel_id)
-                            member = await guild.fetch_member(member_id)
-                            await channel.send(f'{member.mention} an item has been found for you:\n```Name: {market_item.name}\nSeller: {market_item.seller}\nPrice: {market_item.price} {"bons" if market_item.price_type == MarketItemPriceType.BONS else "Zen"}```')
+        #     for guild_id, members in self.filters.items():
+        #         guild = await self.bot.get_guild(guild_id)
+        #         for member_id, watchlist in members.items():
+        #             for item_filter in watchlist:
+        #                 if item_filter.matches_item(market_item):
+        #                     channel_id = await self.config.guild(guild).notification_channel()
+        #                     channel = guild.get_channel(channel_id)
+        #                     member = await guild.fetch_member(member_id)
+        #                     await channel.send(f'{member.mention} an item has been found for you:\n```Name: {market_item.name}\nSeller: {market_item.seller}\nPrice: {market_item.price} {"bons" if market_item.price_type == MarketItemPriceType.BONS else "Zen"}```')
 
-            self.last_seen.insert(i, (market_item.serial, market_item.seller, market_item.price))
-            i += 1
-            if len(self.last_seen) > 100:
-                self.last_seen.pop()
+        #     self.last_seen.insert(i, (market_item.serial, market_item.seller, market_item.price))
+        #     i += 1
+        #     if len(self.last_seen) > 100:
+        #         self.last_seen.pop()
 
     @watch_auctions.before_loop
     async def load_filters(self):
