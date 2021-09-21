@@ -26,7 +26,7 @@ class Bless(commands.Cog):
         self.bot = bot
         self.last_seen = []
         self.filters = {}
-        self.watch_task = self.bot.loop.create_task(self.watch_auctions())
+        self.watch_auctions.start()
 
     @discord.tasks.loop(seconds=10.0)
     async def watch_auctions(self):
@@ -73,7 +73,7 @@ class Bless(commands.Cog):
         print("[Bless] Starting to watch market.")
         raw_filters = await self.config.all_members()
         print(f"raw_filters: {raw_filters}")
-        for guild, members in raw_filters.items():
+        for _, members in raw_filters.items():
             for member, member_config in members.items():
                 member_watchlist = [MarketItemFilter.from_dict(f) for f in member_config["watchlist"]]
                 members[member] = member_watchlist
