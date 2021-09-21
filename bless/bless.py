@@ -82,6 +82,10 @@ class Bless(commands.Cog):
 
         self.filters = raw_filters
 
+    @watch_auctions.after_loop
+    async def asdf(self):
+        print("after loop")
+
     @watch_auctions.error
     async def watch_error(self, ex):
         traceback.print_exception(type(ex), ex, ex.__traceback__)
