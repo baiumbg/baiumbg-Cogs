@@ -31,12 +31,15 @@ class Bless(commands.Cog):
 
     @tasks.loop(seconds=10.0)
     async def watch_auctions(self):
+        print("called")
         try:
             html = requests.get("https://mu.bless.gs/en/index.php?page=market&serv=server3")
         except Exception as e:
             print(e)
-            await asyncio.sleep(10)
             return
+
+        print("fetched")
+        print(html.text)
 
         soup = BeautifulSoup(html.text, features="html.parser")
         item_rows = soup.find("tr", class_=re.compile(r"row-buyitem.*"))
@@ -64,8 +67,6 @@ class Bless(commands.Cog):
             i += 1
             if len(self.last_seen) > 100:
                 self.last_seen.pop()
-
-        await asyncio.sleep(10)
 
     @watch_auctions.before_loop
     async def load_filters(self):
