@@ -28,7 +28,48 @@ class Bless(commands.Cog):
         self.filters = {}
         self.watch_task = self.bot.loop.create_task(self.watch_auctions())
 
+    @discord.tasks.loop(seconds=10.0)
     async def watch_auctions(self):
+        try:
+            html = requests.get("https://mu.bless.gs/en/index.php?page=market&serv=server3")
+        except Exception as e:
+            print(e)
+            await asyncio.sleep(10)
+            return
+
+        soup = BeautifulSoup(html.text, features="html.parser")
+        item_rows = soup.find("tr", class_=re.compile(r"row-buyitem.*"))
+        i = 0
+        for item in item_rows:
+            row_columns = item.find_all("td")
+            if row_columns[1].a["title"] == "":
+                continue
+
+            market_item = MarketItem(row_columns)
+            if (market_item.serial, market_item.seller, market_item.price) in self.last_seen:
+                break
+
+            for guild_id, members in self.filters.items():
+                guild = await self.bot.get_guild(guild_id)
+                for member_id, watchlist in members.items():
+                    for item_filter in watchlist:
+                        if item_filter.matches_item(market_item):
+                            channel_id = await self.config.guild(guild).notification_channel()
+                            channel = guild.get_channel(channel_id)
+                            member = await guild.fetch_member(member_id)
+                            await channel.send(f'{member.mention} an item has been found for you:\n```Name: {market_item.name}\nSeller: {market_item.seller}\nPrice: {market_item.price} {"bons" if market_item.price_type == MarketItemPriceType.BONS else "Zen"}```')
+
+            self.last_seen.insert(i, (market_item.serial, market_item.seller, market_item.price))
+            i += 1
+            if len(self.last_seen) > 100:
+                self.last_seen.pop()
+
+        await asyncio.sleep(10)
+
+    @watch_auctions.before_loop
+    async def load_filters(self):
+        await self.bot.wait_until_ready()
+
         print("[Bless] Starting to watch market.")
         raw_filters = await self.config.all_members()
         print(f"raw_filters: {raw_filters}")
@@ -38,46 +79,6 @@ class Bless(commands.Cog):
                 members[member] = member_watchlist
 
         self.filters = raw_filters
-
-        while True:
-            print("entering")
-            try:
-                html = requests.get("https://mu.bless.gs/en/index.php?page=market&serv=server3")
-            except Exception as e:
-                print(e)
-                await asyncio.sleep(10)
-                continue
-
-            print(html.text)
-
-            soup = BeautifulSoup(html.text, features="html.parser")
-            item_rows = soup.find("tr", class_=re.compile(r"row-buyitem.*"))
-            i = 0
-            for item in item_rows:
-                row_columns = item.find_all("td")
-                if row_columns[1].a["title"] == "":
-                    continue
-
-                market_item = MarketItem(row_columns)
-                if (market_item.serial, market_item.seller, market_item.price) in self.last_seen:
-                    break
-
-                for guild_id, members in self.filters.items():
-                    guild = await self.bot.get_guild(guild_id)
-                    for member_id, watchlist in members.items():
-                        for item_filter in watchlist:
-                            if item_filter.matches_item(market_item):
-                                channel_id = await self.config.guild(guild).notification_channel()
-                                channel = guild.get_channel(channel_id)
-                                member = await guild.fetch_member(member_id)
-                                await channel.send(f'{member.mention} an item has been found for you:\n```Name: {market_item.name}\nSeller: {market_item.seller}\nPrice: {market_item.price} {"bons" if market_item.price_type == MarketItemPriceType.BONS else "Zen"}```')
-
-                self.last_seen.insert(i, (market_item.serial, market_item.seller, market_item.price))
-                i += 1
-                if len(self.last_seen) > 100:
-                    self.last_seen.pop()
-
-            await asyncio.sleep(10)
 
     @commands.guild_only()
     @commands.group(name="bless")
