@@ -97,3 +97,6 @@ class MarketItem:
         self.seller = row_columns[2].text
         serial_match = MARKET_ITEM_SERIAL_REGEX.match(tooltip_soup.find_all("div")[-1].text)
         self.serial = serial_match.group(1) if serial_match else ""
+
+    def __str__(self):
+        return f"[{', '.join([str(a) for a in self.__dict__])}]"
