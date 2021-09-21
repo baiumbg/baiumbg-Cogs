@@ -5,7 +5,6 @@ from discord.ext import tasks
 from bs4 import BeautifulSoup
 from .market_item import MarketItem, MarketItemQuality
 from .market_item_filter import MarketItemFilter, MarketItemPriceType
-import asyncio
 import requests
 import re
 
@@ -29,7 +28,7 @@ class Bless(commands.Cog):
         self.filters = {}
         self.watch_auctions.start()
 
-    @tasks.loop(seconds=10.0)
+    @tasks.loop(seconds=10.0, minutes=0.0, hours=0.0, count=None)
     async def watch_auctions(self):
         print("called")
         try:
@@ -232,4 +231,4 @@ class Bless(commands.Cog):
         await ctx.channel.send(f"{ctx.author.mention} Notification channel set to {ctx.guild.get_channel(notification_channel).mention}.")
 
     def cog_unload(self):
-        self.watch_task.cancel()
+        self.watch_auctions.cancel()
