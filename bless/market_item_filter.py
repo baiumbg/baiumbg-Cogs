@@ -1,6 +1,5 @@
 from .market_item import MarketItemQuality, MarketItemPriceType
 import math
-import textwrap
 
 class MarketItemFilter():
     def __init__(self, id):

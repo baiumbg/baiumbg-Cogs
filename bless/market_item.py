@@ -52,17 +52,17 @@ class MarketItem:
 
         print(tooltip_soup.text)
         
-        grade_match = MARKET_ITEM_GRADE_REGEX.match(tooltip_soup.text)
+        grade_match = MARKET_ITEM_GRADE_REGEX.search(tooltip_soup.text)
         self.grade = int(grade_match.group(1)) if grade_match else 0
 
-        upgrade_level_match = MARKET_ITEM_UPGRADE_LEVEL_REGEX.match(self.name)
+        upgrade_level_match = MARKET_ITEM_UPGRADE_LEVEL_REGEX.search(self.name)
         self.upgrade_level = int(upgrade_level_match.group(1)) if upgrade_level_match else 0
 
-        armor_life_match = MARKET_ITEM_ARMOR_LIFE_REGEX.match(tooltip_soup.text)
+        armor_life_match = MARKET_ITEM_ARMOR_LIFE_REGEX.search(tooltip_soup.text)
         if armor_life_match:
             self.life = int(armor_life_match.group(1))
         else:
-            weapon_life_match = MARKET_ITEM_WEAPON_LIFE_REGEX.match(tooltip_soup.text)
+            weapon_life_match = MARKET_ITEM_WEAPON_LIFE_REGEX.search(tooltip_soup.text)
             if weapon_life_match:
                 self.life = int(weapon_life_match.group(1))
             else:
