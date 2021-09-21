@@ -50,6 +50,8 @@ class Bless(commands.Cog):
             if (market_item.serial, market_item.seller, market_item.price) in self.last_seen:
                 break
 
+            print(market_item)
+
             for guild_id, members in self.filters.items():
                 guild = self.bot.get_guild(guild_id)
                 for member_id, watchlist in members.items():
