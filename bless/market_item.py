@@ -90,6 +90,8 @@ class MarketItem:
             self.price_type = MarketItemPriceType.BONS
         else:
             price_zen_match = MARKET_PRICE_ZEN_REGEX.match(row_columns[3].text)
+            if not price_zen_match:
+                print(self)
             power = price_zen_match.group(3).count("k") - 2 if price_zen_match.group(3) else -2
             self.price = float(price_zen_match.group(1)) * (1000 ** power)
             self.price_type = MarketItemPriceType.ZEN
