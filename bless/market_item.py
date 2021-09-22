@@ -3,7 +3,7 @@ from enum import Enum
 import re
 
 MARKET_PRICE_ZEN_REGEX = re.compile(r"((\d*[.])?\d+) (k* )?Zen.")
-MARKET_PRICE_BONS_REGEX = re.compile(r"(\d+) Bon.")
+MARKET_PRICE_BONS_REGEX = re.compile(r"((\d+,*)+) Bon.")
 MARKET_ITEM_NAME_REGEX = re.compile(r"overinfo-name.*")
 MARKET_ITEM_GRADE_REGEX = re.compile(r"Grade: (\d+)")
 MARKET_ITEM_UPGRADE_LEVEL_REGEX = re.compile(r"\+(\d+)")
