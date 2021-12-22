@@ -50,6 +50,14 @@ class Bless(commands.Cog):
             if (market_item.serial, market_item.seller, market_item.price) in self.last_seen:
                 break
 
+            self.last_seen.insert(i, (market_item.serial, market_item.seller, market_item.price))
+            i += 1
+            if len(self.last_seen) > 100:
+                self.last_seen.pop()
+
+            if item_rows[38].find("img", src=re.compile(r".*lock.*")):
+                continue
+
             for guild_id, members in self.filters.items():
                 guild = self.bot.get_guild(guild_id)
                 for member_id, watchlist in members.items():
@@ -59,11 +67,6 @@ class Bless(commands.Cog):
                             channel = guild.get_channel(channel_id)
                             member = await guild.fetch_member(member_id)
                             await channel.send(f'{member.mention} an item has been found for you:\n```Name: {market_item.name}\nSeller: {market_item.seller}\nPrice: {market_item.price}{"bons" if market_item.price_type == MarketItemPriceType.BONS else "kk Zen"}```')
-
-            self.last_seen.insert(i, (market_item.serial, market_item.seller, market_item.price))
-            i += 1
-            if len(self.last_seen) > 100:
-                self.last_seen.pop()
 
     @watch_auctions.before_loop
     async def load_filters(self):
