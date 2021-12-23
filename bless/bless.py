@@ -55,7 +55,7 @@ class Bless(commands.Cog):
             if len(self.last_seen) > 100:
                 self.last_seen.pop()
 
-            if item_rows[38].find("img", src=re.compile(r".*lock.*")):
+            if item.find("img", src=re.compile(r".*lock.*")):
                 continue
 
             for guild_id, members in self.filters.items():
