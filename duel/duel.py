@@ -291,11 +291,11 @@ class Duel(commands.Cog):
     async def _get_stats(self, user):
         return await self.config.member(user.member).all()
 
-    def get_player(self, user: discord.Member):
+    async def get_player(self, user: discord.Member):
         return Player(self, user)
 
-    def get_all_players(self, server: discord.Guild):
-        return [self.get_player(m) for m in server.members]
+    async def get_all_players(self, server: discord.Guild):
+        return [await self.get_player(m) for m in server.members]
 
     def format_display(self, server, id):
         if id.startswith('r'):
@@ -634,8 +634,8 @@ class Duel(commands.Cog):
             bucket._tokens += 1  # Sorry, Danny
             return
 
-        p1 = Player(self, author)
-        p2 = Player(self, user)
+        p1 = await self.get_player(author)
+        p2 = await self.get_player(user)
         self.underway.add(channel.id)
 
         try:
