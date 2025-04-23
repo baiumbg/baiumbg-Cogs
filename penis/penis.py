@@ -19,6 +19,7 @@ class Penis(commands.Cog):
         Totally not cheating because you rolled a 0 dick length."""
 
         await self._config.king_dong.set(user.id)
+        await ctx.send(f"King dong set to {user.display_name}.")
 
     @commands.command()
     async def penis(self, ctx, *users: discord.Member):
