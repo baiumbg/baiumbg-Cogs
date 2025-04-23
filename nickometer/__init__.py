@@ -1,5 +1,5 @@
 from .nickometer import Nickometer
 
-def setup(bot):
+async def setup(bot):
     n = Nickometer()
-    bot.add_cog(n)
+    await bot.add_cog(n)
